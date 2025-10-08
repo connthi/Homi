@@ -54,3 +54,6 @@ Homi was created to simplify the moving experience by giving users a way to plan
    ```bash
    git clone https://github.com/your-username/homi.git
    cd homi
+
+2. **Living Document**
+```https://docs.google.com/document/d/1E2BtWbL34D-I5gje0G1xclRfbXhPhTDIb9RfgBJMiEo/edit?usp=sharing
