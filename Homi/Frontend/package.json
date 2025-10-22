@@ -1,0 +1,12 @@
+{
+  "name": "frontend",
+  "version": "1.0.0",
+  "description": "The native iOS frontend for Homi, built with SwiftUI and SceneKit for high-performance 3D room design and visualization.",
+  "main": "index.js",
+  "scripts": {
+    "ios": "xcodebuild -project Homi/Homi.xcodeproj -scheme Homi -sdk iphonesimulator -configuration Debug -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' && xcrun simctl install booted ~/Library/Developer/Xcode/DerivedData/*/Build/Products/Debug-iphonesimulator/Homi.app && xcrun simctl launch booted com.phongtang.Homi"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
