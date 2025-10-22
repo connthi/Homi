@@ -1,14 +1,23 @@
 import mongoose from "mongoose";
 
 const catalogSchema = new mongoose.Schema({
-  name: String,
-  type: String,
+  name: { type: String, required: true },
+  type: { type: String, required: true },
   defaultDimensions: {
-    width: Number,
-    height: Number,
-    depth: Number
+    width: { type: Number, required: true },
+    height: { type: Number, required: true },
+    depth: { type: Number, required: true }
   },
-  materialOptions: [String]
+  materialOptions: [{ type: String }]
+});
+
+// Transform the output to match Swift expectations
+catalogSchema.set('toJSON', {
+  transform: function(doc, ret) {
+    // Convert _id ObjectId to string
+    ret._id = ret._id.toString();
+    return ret;
+  }
 });
 
 export default mongoose.model("Catalog", catalogSchema);
