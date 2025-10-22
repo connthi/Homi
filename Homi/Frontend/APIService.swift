@@ -3,7 +3,7 @@ import Foundation
 class APIService: ObservableObject {
     static let shared = APIService()
     
-    private let baseURL = "http://localhost:5000/api"
+    private let baseURL = "http://127.0.0.1:5001/api"
     private let session = URLSession.shared
     
     private init() {}

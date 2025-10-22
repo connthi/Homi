@@ -3,36 +3,23 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		A1234567890ABCDEF001 /* HomiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF002 /* HomiApp.swift */; };
-		A1234567890ABCDEF003 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF004 /* ContentView.swift */; };
-		A1234567890ABCDEF005 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF006 /* Assets.xcassets */; };
-		A1234567890ABCDEF007 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF008 /* Preview Assets.xcassets */; };
-		A1234567890ABCDEF009 /* RoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF010 /* RoomView.swift */; };
-		A1234567890ABCDEF011 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF012 /* Models.swift */; };
-		A1234567890ABCDEF013 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF014 /* APIService.swift */; };
-		A1234567890ABCDEF015 /* CatalogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF016 /* CatalogView.swift */; };
-		A1234567890ABCDEF017 /* LayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1234567890ABCDEF018 /* LayoutManager.swift */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
-		A1234567890ABCDEF001 /* Homi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Homi.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A1234567890ABCDEF002 /* HomiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomiApp.swift; sourceTree = "<group>"; };
-		A1234567890ABCDEF004 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		A1234567890ABCDEF006 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		A1234567890ABCDEF008 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		A1234567890ABCDEF010 /* RoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomView.swift; sourceTree = "<group>"; };
-		A1234567890ABCDEF012 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		A1234567890ABCDEF014 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
-		A1234567890ABCDEF016 /* CatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogView.swift; sourceTree = "<group>"; };
-		A1234567890ABCDEF018 /* LayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutManager.swift; sourceTree = "<group>"; };
+		796C44C32EA85957004A2403 /* Homi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Homi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		796C44C52EA85957004A2403 /* Homi */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Homi;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
 /* Begin PBXFrameworksBuildPhase section */
-		A1234567890ABCDEF019 /* Frameworks */ = {
+		796C44C02EA85957004A2403 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -42,130 +29,103 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		A1234567890ABCDEF020 = {
+		796C44BA2EA85957004A2403 = {
 			isa = PBXGroup;
 			children = (
-				A1234567890ABCDEF021 /* Homi */,
-				A1234567890ABCDEF022 /* Products */,
+				796C44C52EA85957004A2403 /* Homi */,
+				796C44C42EA85957004A2403 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		A1234567890ABCDEF021 /* Homi */ = {
+		796C44C42EA85957004A2403 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A1234567890ABCDEF002 /* HomiApp.swift */,
-				A1234567890ABCDEF004 /* ContentView.swift */,
-				A1234567890ABCDEF010 /* RoomView.swift */,
-				A1234567890ABCDEF016 /* CatalogView.swift */,
-				A1234567890ABCDEF012 /* Models.swift */,
-				A1234567890ABCDEF014 /* APIService.swift */,
-				A1234567890ABCDEF018 /* LayoutManager.swift */,
-				A1234567890ABCDEF006 /* Assets.xcassets */,
-				A1234567890ABCDEF023 /* Preview Content */,
-			);
-			path = Homi;
-			sourceTree = "<group>";
-		};
-		A1234567890ABCDEF022 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				A1234567890ABCDEF001 /* Homi.app */,
+				796C44C32EA85957004A2403 /* Homi.app */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		A1234567890ABCDEF023 /* Preview Content */ = {
-			isa = PBXGroup;
-			children = (
-				A1234567890ABCDEF008 /* Preview Assets.xcassets */,
-			);
-			path = "Preview Content";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A1234567890ABCDEF024 /* Homi */ = {
+		796C44C22EA85957004A2403 /* Homi */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A1234567890ABCDEF025 /* Build configuration list for PBXNativeTarget "Homi" */;
+			buildConfigurationList = 796C44CE2EA85959004A2403 /* Build configuration list for PBXNativeTarget "Homi" */;
 			buildPhases = (
-				A1234567890ABCDEF026 /* Sources */,
-				A1234567890ABCDEF019 /* Frameworks */,
-				A1234567890ABCDEF027 /* Resources */,
+				796C44BF2EA85957004A2403 /* Sources */,
+				796C44C02EA85957004A2403 /* Frameworks */,
+				796C44C12EA85957004A2403 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
+			fileSystemSynchronizedGroups = (
+				796C44C52EA85957004A2403 /* Homi */,
+			);
 			name = Homi;
+			packageProductDependencies = (
+			);
 			productName = Homi;
-			productReference = A1234567890ABCDEF001 /* Homi.app */;
+			productReference = 796C44C32EA85957004A2403 /* Homi.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		A1234567890ABCDEF028 /* Project object */ = {
+		796C44BB2EA85957004A2403 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1500;
-				LastUpgradeCheck = 1500;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					A1234567890ABCDEF024 = {
-						CreatedOnToolsVersion = 15.0;
+					796C44C22EA85957004A2403 = {
+						CreatedOnToolsVersion = 26.0.1;
 					};
 				};
 			};
-			buildConfigurationList = A1234567890ABCDEF029 /* Build configuration list for PBXProject "Homi" */;
-			compatibilityVersion = "Xcode 14.0";
+			buildConfigurationList = 796C44BE2EA85957004A2403 /* Build configuration list for PBXProject "Homi" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = A1234567890ABCDEF020;
-			productRefGroup = A1234567890ABCDEF022 /* Products */;
+			mainGroup = 796C44BA2EA85957004A2403;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 796C44C42EA85957004A2403 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A1234567890ABCDEF024 /* Homi */,
+				796C44C22EA85957004A2403 /* Homi */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A1234567890ABCDEF027 /* Resources */ = {
+		796C44C12EA85957004A2403 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1234567890ABCDEF007 /* Preview Assets.xcassets in Resources */,
-				A1234567890ABCDEF005 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		A1234567890ABCDEF026 /* Sources */ = {
+		796C44BF2EA85957004A2403 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1234567890ABCDEF003 /* ContentView.swift in Sources */,
-				A1234567890ABCDEF001 /* HomiApp.swift in Sources */,
-				A1234567890ABCDEF009 /* RoomView.swift in Sources */,
-				A1234567890ABCDEF011 /* Models.swift in Sources */,
-				A1234567890ABCDEF013 /* APIService.swift in Sources */,
-				A1234567890ABCDEF015 /* CatalogView.swift in Sources */,
-				A1234567890ABCDEF017 /* LayoutManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		A1234567890ABCDEF030 /* Debug */ = {
+		796C44CC2EA85959004A2403 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -217,7 +177,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -228,7 +188,7 @@
 			};
 			name = Debug;
 		};
-		A1234567890ABCDEF031 /* Release */ = {
+		796C44CD2EA85959004A2403 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -274,7 +234,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -284,14 +244,13 @@
 			};
 			name = Release;
 		};
-		A1234567890ABCDEF032 /* Debug */ = {
+		796C44CF2EA85959004A2403 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Homi/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -304,22 +263,25 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.homi.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Homi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
-		A1234567890ABCDEF033 /* Release */ = {
+		796C44D02EA85959004A2403 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"Homi/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -332,9 +294,13 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.homi.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Homi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -343,25 +309,25 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1234567890ABCDEF025 /* Build configuration list for PBXNativeTarget "Homi" */ = {
+		796C44BE2EA85957004A2403 /* Build configuration list for PBXProject "Homi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A1234567890ABCDEF032 /* Debug */,
-				A1234567890ABCDEF033 /* Release */,
+				796C44CC2EA85959004A2403 /* Debug */,
+				796C44CD2EA85959004A2403 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A1234567890ABCDEF029 /* Build configuration list for PBXProject "Homi" */ = {
+		796C44CE2EA85959004A2403 /* Build configuration list for PBXNativeTarget "Homi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				A1234567890ABCDEF030 /* Debug */,
-				A1234567890ABCDEF031 /* Release */,
+				796C44CF2EA85959004A2403 /* Debug */,
+				796C44D02EA85959004A2403 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
-	rootObject = A1234567890ABCDEF028 /* Project object */;
+	rootObject = 796C44BB2EA85957004A2403 /* Project object */;
 }
