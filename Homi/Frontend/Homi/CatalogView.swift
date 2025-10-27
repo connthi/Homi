@@ -69,9 +69,7 @@ struct CatalogView: View {
                                 GridItem(.flexible())
                             ], spacing: 16) {
                                 ForEach(filteredItems) { item in
-                                    CatalogItemCard(item: item) {
-                                        addToRoom(item)
-                                    }
+                                    CatalogItemCard(item: item)
                                 }
                             }
                             .padding()
@@ -116,12 +114,6 @@ struct CatalogView: View {
             }
         }
     }
-    
-    private func addToRoom(_ item: CatalogItem) {
-        // In a real implementation, this would open the room view and allow placement
-        // For now, we'll just show a confirmation
-        print("Adding \(item.name) to room")
-    }
 }
 
 struct SearchBar: View {
@@ -136,10 +128,10 @@ struct SearchBar: View {
                 .textFieldStyle(PlainTextFieldStyle())
             
             if !text.isEmpty {
-                Button("Clear") {
-                    text = ""
+                Button(action: { text = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
                 }
-                .foregroundColor(.blue)
             }
         }
         .padding(.horizontal, 12)
@@ -170,76 +162,96 @@ struct CategoryButton: View {
 
 struct CatalogItemCard: View {
     let item: CatalogItem
-    let onAdd: () -> Void
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Furniture Preview (placeholder)
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray5))
-                .frame(height: 120)
-                .overlay(
-                    VStack {
-                        Image(systemName: furnitureIcon(for: item.type))
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                        Text(item.type)
-                            .font(.caption)
-                            .foregroundColor(.gray)
+        VStack(alignment: .leading, spacing: 8) {
+            // Furniture Image
+            if let imageUrl = item.imageUrl, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        ZStack {
+                            Rectangle()
+                                .fill(Color(.systemGray6))
+                                .frame(height: 140)
+                            ProgressView()
+                        }
+                        .cornerRadius(12)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: .infinity, height: 140)
+                            .clipped()
+                            .cornerRadius(12)
+                    case .failure:
+                        FallbackIcon(type: item.type)
+                    @unknown default:
+                        FallbackIcon(type: item.type)
                     }
-                )
+                }
+                .frame(height: 140)
+            } else {
+                FallbackIcon(type: item.type)
+            }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
                     .font(.headline)
                     .lineLimit(2)
+                    .minimumScaleFactor(0.9)
                 
                 Text(item.type)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 
-                Text("\(Int(item.defaultDimensions.width))×\(Int(item.defaultDimensions.depth))×\(Int(item.defaultDimensions.height))")
+                Text("\(String(format: "%.1f", item.defaultDimensions.width))m × \(String(format: "%.1f", item.defaultDimensions.depth))m × \(String(format: "%.1f", item.defaultDimensions.height))m")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                if !item.materialOptions.isEmpty {
-                    Text("Materials: \(item.materialOptions.joined(separator: ", "))")
-                        .font(.caption)
+                if let description = item.description {
+                    Text(description)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                 }
             }
-            
-            Spacer()
-            
-            Button("Add to Room") {
-                onAdd()
-            }
-            .buttonStyle(.borderedProminent)
-            .frame(maxWidth: .infinity)
         }
-        .padding()
+        .padding(12)
         .background(Color(.systemBackground))
         .cornerRadius(12)
-        .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
+        .shadow(color: .black.opacity(0.1), radius: 3, x: 0, y: 2)
+    }
+}
+
+struct FallbackIcon: View {
+    let type: String
+    
+    var body: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color(.systemGray5))
+            .frame(height: 140)
+            .overlay(
+                VStack {
+                    Image(systemName: furnitureIcon(for: type))
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray)
+                    Text(type)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                }
+            )
     }
     
     private func furnitureIcon(for type: String) -> String {
         switch type.lowercased() {
-        case "sofa":
-            return "sofa.fill"
-        case "chair":
-            return "chair.fill"
-        case "table":
-            return "table.furniture.fill"
-        case "bed":
-            return "bed.double.fill"
-        case "storage":
-            return "cabinet.fill"
-        case "lighting":
-            return "lightbulb.fill"
-        default:
-            return "cube.fill"
+        case "sofa": return "sofa.fill"
+        case "chair": return "chair.fill"
+        case "table": return "table.furniture.fill"
+        case "bed": return "bed.double.fill"
+        case "storage": return "cabinet.fill"
+        case "lighting": return "lightbulb.fill"
+        default: return "cube.fill"
         }
     }
 }

@@ -68,10 +68,12 @@ struct CatalogItem: Codable, Identifiable {
     let type: String
     let defaultDimensions: Dimensions
     let materialOptions: [String]
+    let imageUrl: String?
+    let description: String?
     
     enum CodingKeys: String, CodingKey {
         case id = "_id"
-        case name, type, defaultDimensions, materialOptions
+        case name, type, defaultDimensions, materialOptions, imageUrl, description
     }
 }
 
@@ -118,10 +120,11 @@ class FurnitureNode: SCNNode {
     }
     
     func updateTransform() {
-        // Update position
+        // Update position - ensure Y is at proper floor level
+        let yPosition = catalogItem?.defaultDimensions.height ?? furnitureItem.position.y
         position = SCNVector3(
             furnitureItem.position.x,
-            furnitureItem.position.y,
+            Double(Float(yPosition)) / 2.0, // Half height to sit on floor
             furnitureItem.position.z
         )
         

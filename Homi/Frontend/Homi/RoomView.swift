@@ -72,7 +72,7 @@ struct RoomView: View {
                 Spacer()
                 
                 // Camera Controls Hint
-                if !isEditing && !showingCatalogSheet {
+                if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil {
                     VStack(spacing: 4) {
                         Text("Camera Controls")
                             .font(.caption)
@@ -85,6 +85,40 @@ struct RoomView: View {
                     .foregroundColor(.white)
                     .padding(8)
                     .background(Color.black.opacity(0.6))
+                    .cornerRadius(8)
+                    .padding()
+                }
+                
+                // Furniture Selected Hint
+                if !isEditing && selectedFurnitureNode != nil {
+                    VStack(spacing: 4) {
+                        Text("Furniture Selected")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                        Text("Tap 'Edit' to move, scale, or rotate")
+                    }
+                    .font(.caption2)
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Color.blue.opacity(0.7))
+                    .cornerRadius(8)
+                    .padding()
+                }
+                
+                // Edit Mode Hint
+                if isEditing && selectedFurnitureNode != nil {
+                    VStack(spacing: 4) {
+                        Text("Edit Mode")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                        Text("• Drag: Move furniture")
+                        Text("• Pinch: Scale")
+                        Text("• Rotate: Turn")
+                    }
+                    .font(.caption2)
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Color.green.opacity(0.7))
                     .cornerRadius(8)
                     .padding()
                 }
@@ -168,8 +202,9 @@ struct RoomView: View {
             CatalogSelectionView(
                 catalogItems: layoutManager.catalogItems,
                 onSelectItem: { item in
-                    // Add furniture to center of room
-                    layoutManager.addFurniture(catalogItem: item, at: SCNVector3(0, 0.5, 0))
+                    // Add furniture to center of room on floor
+                    let yPosition = item.defaultDimensions.height / 2.0 // Half height to sit on floor
+                    layoutManager.addFurniture(catalogItem: item, at: SCNVector3(0, Float(yPosition), 0))
                     showingCatalogSheet = false
                 }
             )
@@ -367,10 +402,45 @@ struct Interactive3DRoomView: UIViewRepresentable {
             let location = gesture.location(in: sceneView)
             let hitResults = sceneView.hitTest(location, options: [:])
             
+            // Remove previous selection highlight
+            if let previousSelection = parent.selectedNode {
+                removeSelectionHighlight(from: previousSelection)
+            }
+            
             if let hit = hitResults.first(where: { $0.node is FurnitureNode }) {
-                parent.selectedNode = hit.node as? FurnitureNode
+                let furnitureNode = hit.node as? FurnitureNode
+                parent.selectedNode = furnitureNode
+                
+                // Add selection highlight
+                if let selected = furnitureNode {
+                    addSelectionHighlight(to: selected)
+                }
             } else {
                 parent.selectedNode = nil
+            }
+        }
+        
+        private func addSelectionHighlight(to node: FurnitureNode) {
+            // Create a subtle outline effect
+            if let geometry = node.geometry {
+                let outlineMaterial = SCNMaterial()
+                outlineMaterial.diffuse.contents = UIColor.systemBlue.withAlphaComponent(0.3)
+                outlineMaterial.emission.contents = UIColor.systemBlue.withAlphaComponent(0.5)
+                
+                // Store original materials
+                node.setValue(geometry.materials, forKey: "originalMaterials")
+                
+                // Apply highlight
+                var highlightedMaterials = geometry.materials
+                highlightedMaterials.append(outlineMaterial)
+                geometry.materials = highlightedMaterials
+            }
+        }
+        
+        private func removeSelectionHighlight(from node: FurnitureNode) {
+            if let originalMaterials = node.value(forKey: "originalMaterials") as? [SCNMaterial],
+               let geometry = node.geometry {
+                geometry.materials = originalMaterials
             }
         }
         
@@ -378,24 +448,59 @@ struct Interactive3DRoomView: UIViewRepresentable {
             let translation = gesture.translation(in: gesture.view)
             
             if isEditing && parent.selectedNode != nil {
-                // Move furniture
+                // Move furniture with collision detection
                 guard let selected = parent.selectedNode else { return }
-                let newPosition = SCNVector3(
-                    selected.position.x + Float(translation.x) * 0.01,
-                    selected.position.y,
-                    selected.position.z - Float(translation.y) * 0.01
+                
+                let moveSpeed: Float = 0.01
+                var newPosition = SCNVector3(
+                    selected.position.x + Float(translation.x) * moveSpeed,
+                    0.5, // Keep furniture on floor (raised slightly to avoid z-fighting)
+                    selected.position.z - Float(translation.y) * moveSpeed
                 )
+                
+                // Apply collision detection with room boundaries
+                newPosition = applyRoomBoundaries(position: newPosition, furniture: selected)
+                
                 selected.position = newPosition
                 parent.onFurnitureMoved(selected.furnitureItem, newPosition)
+                
+                gesture.setTranslation(.zero, in: gesture.view)
             } else {
                 // Rotate camera
                 cameraAngleY += Float(translation.x) * 0.5
                 cameraAngleX -= Float(translation.y) * 0.5
                 cameraAngleX = max(-89, min(89, cameraAngleX))
                 updateCameraPosition()
+                
+                gesture.setTranslation(.zero, in: gesture.view)
             }
+        }
+        
+        private func applyRoomBoundaries(position: SCNVector3, furniture: FurnitureNode) -> SCNVector3 {
+            // Room dimensions (from RoomConfiguration)
+            let roomWidth: Float = 4.0
+            let roomLength: Float = 6.0
             
-            gesture.setTranslation(.zero, in: gesture.view)
+            // Get furniture dimensions from catalog item
+            let furnitureWidth = Float(furniture.catalogItem?.defaultDimensions.width ?? 1.0) / 2.0
+            let furnitureDepth = Float(furniture.catalogItem?.defaultDimensions.depth ?? 1.0) / 2.0
+            
+            var clampedPosition = position
+            
+            // Clamp X position (left-right walls)
+            let minX = -roomWidth / 2.0 + furnitureWidth + 0.1 // 0.1 for wall thickness
+            let maxX = roomWidth / 2.0 - furnitureWidth - 0.1
+            clampedPosition.x = max(minX, min(maxX, position.x))
+            
+            // Clamp Z position (front-back walls)
+            let minZ = -roomLength / 2.0 + furnitureDepth + 0.1
+            let maxZ = roomLength / 2.0 - furnitureDepth - 0.1
+            clampedPosition.z = max(minZ, min(maxZ, position.z))
+            
+            // Keep Y position at floor level
+            clampedPosition.y = Float(furniture.catalogItem?.defaultDimensions.height ?? 1.0) / 2.0
+            
+            return clampedPosition
         }
         
         @objc func handleTwoFingerPan(_ gesture: UIPanGestureRecognizer) {
