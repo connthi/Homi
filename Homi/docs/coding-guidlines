@@ -1,0 +1,54 @@
+# Coding Guidelines
+
+## Swift
+**Reference:** [Apple Swift API Design Guidelines](https://swift.org/documentation/api-design-guidelines/)
+
+**Reasoning:** Provides consistent, idiomatic Swift style for readability, maintainability, and performance. Enforced via Xcode warnings and PR code reviews.
+
+**Key Principles:**
+- Use clear, descriptive names that avoid abbreviations
+- Follow camelCase conventions (lowercase for variables/functions, uppercase for types)
+- Prefer immutable values (`let`) over mutable ones (`var`) when possible
+- Use Swift's type system effectively with optionals and generics
+- Follow SwiftUI's declarative syntax patterns consistently
+
+**Enforcement:** SwiftLint integration in Xcode, automated checks in CI/CD pipeline, mandatory code reviews for all Swift code changes.
+
+## JavaScript (Node.js)
+**Reference:** [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript)
+
+**Reasoning:** Industry-standard style for readability and consistency. Enforced with ESLint during CI/CD pipeline.
+
+**Key Principles:**
+- Use meaningful variable and function names with camelCase
+- Prefer `const` and `let` over `var` for variable declarations
+- Use arrow functions for short, simple functions
+- Follow consistent indentation (2 spaces)
+- Use semicolons consistently
+- Prefer template literals over string concatenation
+- Use async/await over callbacks for asynchronous operations
+- Follow Express.js conventions for route handlers and middleware
+
+**Enforcement:** ESLint with Airbnb configuration, Prettier for automatic formatting, pre-commit hooks, automated testing in CI/CD pipeline.
+
+## JSON
+**Reference:** [RFC 8259 JSON standard](https://tools.ietf.org/html/rfc8259)
+
+**Reasoning:** Standardized serialization format for API payloads. Checked via automated tests.
+
+**Key Principles:**
+- Use camelCase for property names to match JavaScript conventions
+- Ensure all string values are properly escaped
+- Use consistent data types (e.g., always use strings for IDs)
+- Include proper error handling for malformed JSON
+- Validate JSON structure matches API schema expectations
+- Use meaningful property names that clearly indicate data purpose
+
+**Enforcement:** Automated tests verify correct JSON structure and data types, API endpoint testing validates request/response formats, schema validation middleware in Express.js.
+
+## Enforcement
+- **PR reviews** ensure adherence to guidelines with mandatory approval from at least one team member
+- **CI/CD pipelines** run linters (SwiftLint, ESLint) and fail builds with style violations
+- **Automated tests** verify the correct JSON structure and data types for all API endpoints
+- **Pre-commit hooks** prevent commits that don't pass linting checks
+- **Documentation requirements** for all public APIs and complex functions
