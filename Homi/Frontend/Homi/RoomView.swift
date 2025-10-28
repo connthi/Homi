@@ -449,17 +449,23 @@ struct Interactive3DRoomView: UIViewRepresentable {
             
             if isEditing && parent.selectedNode != nil {
                 // Move furniture with collision detection
-                guard let selected = parent.selectedNode else { return }
+                guard let selected = parent.selectedNode,
+                    let sceneView = gesture.view as? SCNView,
+                    let scene = sceneView.scene else { return }
                 
                 let moveSpeed: Float = 0.01
                 var newPosition = SCNVector3(
                     selected.position.x + Float(translation.x) * moveSpeed,
-                    0.5, // Keep furniture on floor (raised slightly to avoid z-fighting)
+                    selected.position.y, // Maintain current Y position
                     selected.position.z - Float(translation.y) * moveSpeed
                 )
                 
-                // Apply collision detection with room boundaries
-                newPosition = applyRoomBoundaries(position: newPosition, furniture: selected)
+                // Apply collision detection with room boundaries and other furniture
+                newPosition = applyCollisionDetection(
+                    position: newPosition,
+                    furniture: selected,
+                    scene: scene
+                )
                 
                 selected.position = newPosition
                 parent.onFurnitureMoved(selected.furnitureItem, newPosition)
@@ -474,6 +480,76 @@ struct Interactive3DRoomView: UIViewRepresentable {
                 
                 gesture.setTranslation(.zero, in: gesture.view)
             }
+        }
+        // collision detection for objects
+        private func applyCollisionDetection(position: SCNVector3, furniture: FurnitureNode, scene: SCNScene) -> SCNVector3 {
+            // First, apply room boundary constraints
+            var clampedPosition = applyRoomBoundaries(position: position, furniture: furniture)
+            
+            // Then check for collisions with other furniture
+            let allFurniture = scene.rootNode.childNodes.compactMap { $0 as? FurnitureNode }
+            
+            // Get dimensions of the furniture being moved
+            let furnitureWidth = Float(furniture.catalogItem?.defaultDimensions.width ?? 1.0)
+            let furnitureDepth = Float(furniture.catalogItem?.defaultDimensions.depth ?? 1.0)
+            
+            // Check collision with each other furniture piece
+            for otherFurniture in allFurniture {
+                // Skip checking collision with itself
+                if otherFurniture.furnitureItem.id == furniture.furnitureItem.id {
+                    continue
+                }
+                
+                let otherWidth = Float(otherFurniture.catalogItem?.defaultDimensions.width ?? 1.0)
+                let otherDepth = Float(otherFurniture.catalogItem?.defaultDimensions.depth ?? 1.0)
+                
+                // Calculate bounding boxes with a small buffer for spacing
+                let buffer: Float = 0.1 // 10cm spacing between furniture
+                
+                let minX = clampedPosition.x - furnitureWidth / 2.0
+                let maxX = clampedPosition.x + furnitureWidth / 2.0
+                let minZ = clampedPosition.z - furnitureDepth / 2.0
+                let maxZ = clampedPosition.z + furnitureDepth / 2.0
+                
+                let otherMinX = otherFurniture.position.x - otherWidth / 2.0 - buffer
+                let otherMaxX = otherFurniture.position.x + otherWidth / 2.0 + buffer
+                let otherMinZ = otherFurniture.position.z - otherDepth / 2.0 - buffer
+                let otherMaxZ = otherFurniture.position.z + otherDepth / 2.0 + buffer
+                
+                // Check if bounding boxes overlap (AABB collision detection)
+                let xOverlap = maxX > otherMinX && minX < otherMaxX
+                let zOverlap = maxZ > otherMinZ && minZ < otherMaxZ
+                
+                if xOverlap && zOverlap {
+                    // Collision detected! Calculate the best direction to push back
+                    let currentPos = furniture.position
+                    
+                    // Calculate overlap amounts in each direction
+                    let overlapLeft = maxX - otherMinX
+                    let overlapRight = otherMaxX - minX
+                    let overlapFront = maxZ - otherMinZ
+                    let overlapBack = otherMaxZ - minZ
+                    
+                    // Find minimum overlap to resolve collision
+                    let minOverlap = min(overlapLeft, overlapRight, overlapFront, overlapBack)
+                    
+                    // Push back in the direction of least resistance
+                    if minOverlap == overlapLeft {
+                        clampedPosition.x = otherMinX - furnitureWidth / 2.0
+                    } else if minOverlap == overlapRight {
+                        clampedPosition.x = otherMaxX + furnitureWidth / 2.0
+                    } else if minOverlap == overlapFront {
+                        clampedPosition.z = otherMinZ - furnitureDepth / 2.0
+                    } else if minOverlap == overlapBack {
+                        clampedPosition.z = otherMaxZ + furnitureDepth / 2.0
+                    }
+                    
+                    // Reapply room boundaries after collision resolution
+                    clampedPosition = applyRoomBoundaries(position: clampedPosition, furniture: furniture)
+                }
+            }
+            
+            return clampedPosition
         }
         
         private func applyRoomBoundaries(position: SCNVector3, furniture: FurnitureNode) -> SCNVector3 {
@@ -497,7 +573,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
             let maxZ = roomLength / 2.0 - furnitureDepth - 0.1
             clampedPosition.z = max(minZ, min(maxZ, position.z))
             
-            // Keep Y position at floor level
+            // Keep Y position at proper height
             clampedPosition.y = Float(furniture.catalogItem?.defaultDimensions.height ?? 1.0) / 2.0
             
             return clampedPosition
