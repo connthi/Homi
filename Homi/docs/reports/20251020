@@ -1,0 +1,45 @@
+# Weekly Status Reports
+
+This document contains weekly status reports from team members, tracking progress, completed tasks, and upcoming priorities.
+
+---
+
+## Connor Thibault (Project Manager)
+
+### Week of 10-20-25
+
+**Completed Tasks:**
+- **Coding Guidelines Documentation**: Led the creation and refinement of comprehensive coding guidelines for the Homi project, covering Swift (iOS frontend), JavaScript/Node.js (backend), and JSON standards
+- **Frontend Architecture Consultation**: Provided strategic input and ideas for frontend development approaches, focusing on SwiftUI and SceneKit integration for optimal 3D room visualization performance
+- **Project Documentation**: Ensured alignment of coding standards with project requirements and team workflow
+
+**Key Contributions:**
+- Established standardized coding practices across all project technologies
+- Defined enforcement mechanisms including CI/CD integration, code reviews, and automated testing
+- Collaborated with frontend team on architectural decisions for 3D rendering and user interaction patterns
+- Created actionable guidelines that balance code quality with development efficiency
+
+**Next Steps:**
+- Monitor implementation of coding guidelines across team development workflow
+- Continue providing project management oversight for frontend development milestones
+- Facilitate team coordination for upcoming architecture and design deliverables
+
+---
+
+## Team Member Status Reports
+
+*Additional team member status reports will be added here as they are submitted.*
+
+### Phong Tang (Full Stack Engineer - Frontend/UI)
+*Status report pending*
+
+### Zubair Sabry (Full Stack Engineer - 3D Rendering & Interaction)
+*Status report pending*
+
+### Ebrahim Elmi (Full Stack Engineer / DevOps)
+*Status report pending*
+
+### Hussein Abdi (Full Stack Engineer - Backend & Database)
+*Status report pending*
+
+
