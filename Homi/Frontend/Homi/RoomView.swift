@@ -10,6 +10,7 @@ struct RoomView: View {
     @State private var newLayoutName = ""
     @State private var selectedFurnitureNode: FurnitureNode?
     @State private var isEditing = false
+    @State private var isFirstPersonMode = false
     @State private var showSuccessMessage = false
     
     var body: some View {
@@ -19,6 +20,7 @@ struct RoomView: View {
                 furnitureNodes: layoutManager.furnitureNodes,
                 selectedNode: $selectedFurnitureNode,
                 isEditing: $isEditing,
+                isFirstPersonMode: $isFirstPersonMode,
                 onFurnitureMoved: { furnitureItem, position in
                     layoutManager.updateFurniturePosition(furnitureItem, position: position)
                 },
@@ -48,6 +50,21 @@ struct RoomView: View {
                     
                     Spacer()
                     
+                    // First Person View Button
+                    Button(action: {
+                        withAnimation {
+                            isFirstPersonMode.toggle()
+                        }
+                    }) {
+                        Image(systemName: isFirstPersonMode ? "camera.fill" : "person.fill")
+                            .font(.title3)
+                    }
+                    .buttonStyle(.bordered)
+                    .background(isFirstPersonMode ? Color.blue.opacity(0.2) : Color.clear)
+                    .cornerRadius(8)
+                    
+                    Spacer()
+                    
                     if let layout = layoutManager.currentLayout {
                         Text(layout.name)
                             .font(.headline)
@@ -72,7 +89,7 @@ struct RoomView: View {
                 Spacer()
                 
                 // Camera Controls Hint
-                if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil {
+                if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
                     VStack(spacing: 4) {
                         Text("Camera Controls")
                             .font(.caption)
@@ -85,6 +102,25 @@ struct RoomView: View {
                     .foregroundColor(.white)
                     .padding(8)
                     .background(Color.black.opacity(0.6))
+                    .cornerRadius(8)
+                    .padding()
+                }
+                
+                // First Person Mode Hint
+                if isFirstPersonMode && !isEditing {
+                    VStack(spacing: 4) {
+                        Image(systemName: "person.fill.viewfinder")
+                            .font(.title2)
+                        Text("First Person View")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                        Text("• Drag: Look around")
+                        Text("• Tap person icon to exit")
+                    }
+                    .font(.caption2)
+                    .foregroundColor(.white)
+                    .padding(8)
+                    .background(Color.blue.opacity(0.8))
                     .cornerRadius(8)
                     .padding()
                 }
@@ -238,6 +274,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
     let furnitureNodes: [FurnitureNode]
     @Binding var selectedNode: FurnitureNode?
     @Binding var isEditing: Bool
+    @Binding var isFirstPersonMode: Bool
     let onFurnitureMoved: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureRotated: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureScaled: (FurnitureItem, SCNVector3) -> Void
@@ -252,6 +289,9 @@ struct Interactive3DRoomView: UIViewRepresentable {
         let scene = SCNScene()
         sceneView.scene = scene
         
+        // Store reference to sceneView in coordinator
+        context.coordinator.sceneView = sceneView
+        
         context.coordinator.setupRoom(scene: scene)
         context.coordinator.setupCamera(scene: scene)
         context.coordinator.setupLighting(scene: scene)
@@ -263,6 +303,16 @@ struct Interactive3DRoomView: UIViewRepresentable {
     func updateUIView(_ uiView: SCNView, context: Context) {
         context.coordinator.updateFurnitureNodes(scene: uiView.scene!, nodes: furnitureNodes)
         context.coordinator.isEditing = isEditing
+        
+        // Switch camera mode
+        if isFirstPersonMode != context.coordinator.isFirstPersonMode {
+            context.coordinator.isFirstPersonMode = isFirstPersonMode
+            if isFirstPersonMode {
+                context.coordinator.switchToFirstPersonView()
+            } else {
+                context.coordinator.switchToOrbitView()
+            }
+        }
     }
     
     func makeCoordinator() -> Coordinator {
@@ -271,24 +321,29 @@ struct Interactive3DRoomView: UIViewRepresentable {
     
     class Coordinator: NSObject {
         let parent: Interactive3DRoomView
+        weak var sceneView: SCNView?
         var cameraNode: SCNNode?
         var cameraOrbit: SCNNode?
         var cameraPivot: SCNNode?
+        var firstPersonCamera: SCNNode?
         var isEditing: Bool = false
+        var isFirstPersonMode: Bool = false
         
-        private var cameraDistance: Float = 6.0
+        private var cameraDistance: Float = 10.0
         private var cameraAngleX: Float = -25.0
         private var cameraAngleY: Float = 30.0
+        private var firstPersonAngleX: Float = 0.0
+        private var firstPersonAngleY: Float = 0.0
         
         init(_ parent: Interactive3DRoomView) {
             self.parent = parent
         }
         
         func setupRoom(scene: SCNScene) {
-            // Simple box room - 4m x 6m x 2.5m
-            let roomWidth: CGFloat = 4.0
-            let roomLength: CGFloat = 6.0
-            let roomHeight: CGFloat = 2.5
+            // Larger room - 8m x 10m x 3m
+            let roomWidth: CGFloat = 8.0
+            let roomLength: CGFloat = 10.0
+            let roomHeight: CGFloat = 3.0
             
             // Floor
             let floorGeometry = SCNBox(width: roomWidth, height: 0.1, length: roomLength, chamferRadius: 0)
@@ -326,8 +381,9 @@ struct Interactive3DRoomView: UIViewRepresentable {
         }
         
         func setupCamera(scene: SCNScene) {
+            // Orbit camera setup (centered on room center)
             cameraPivot = SCNNode()
-            cameraPivot?.position = SCNVector3(0, 1.0, 0)
+            cameraPivot?.position = SCNVector3(0, 1.5, 0)
             
             cameraOrbit = SCNNode()
             
@@ -340,7 +396,36 @@ struct Interactive3DRoomView: UIViewRepresentable {
             cameraPivot?.addChildNode(cameraOrbit!)
             cameraOrbit?.addChildNode(cameraNode!)
             
+            // First person camera setup (at center of room, eye level)
+            firstPersonCamera = SCNNode()
+            firstPersonCamera?.camera = SCNCamera()
+            firstPersonCamera?.camera?.zFar = 100
+            firstPersonCamera?.camera?.fieldOfView = 70
+            firstPersonCamera?.position = SCNVector3(0, 1.6, 0)
+            scene.rootNode.addChildNode(firstPersonCamera!)
+            
+            // Set initial camera
             updateCameraPosition()
+            sceneView?.pointOfView = cameraNode
+        }
+        
+        func switchToFirstPersonView() {
+            // Reset first person angles to look forward
+            firstPersonAngleX = 0.0
+            firstPersonAngleY = 0.0
+            
+            // Position first person camera at center of room at head height
+            firstPersonCamera?.position = SCNVector3(0, 1.6, 0)
+            firstPersonCamera?.eulerAngles = SCNVector3(0, 0, 0)
+            
+            // Switch the active camera
+            sceneView?.pointOfView = firstPersonCamera
+        }
+        
+        func switchToOrbitView() {
+            // Switch back to orbit camera
+            updateCameraPosition()
+            sceneView?.pointOfView = cameraNode
         }
         
         func updateCameraPosition() {
@@ -367,7 +452,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
             mainLight.castsShadow = true
             let mainLightNode = SCNNode()
             mainLightNode.light = mainLight
-            mainLightNode.position = SCNVector3(3, 5, 3)
+            mainLightNode.position = SCNVector3(5, 8, 5)
             mainLightNode.look(at: SCNVector3(0, 0, 0))
             scene.rootNode.addChildNode(mainLightNode)
         }
@@ -395,7 +480,33 @@ struct Interactive3DRoomView: UIViewRepresentable {
             
             let rotation = UIRotationGestureRecognizer(target: self, action: #selector(handleRotation(_:)))
             sceneView.addGestureRecognizer(rotation)
+            
+            // Add scroll wheel support for macOS (zoom)
+            #if targetEnvironment(macCatalyst)
+            let scrollRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handleScroll(_:)))
+            scrollRecognizer.allowedScrollTypesMask = .continuous
+            sceneView.addGestureRecognizer(scrollRecognizer)
+            #endif
         }
+        
+        #if targetEnvironment(macCatalyst)
+        @objc func handleScroll(_ gesture: UIPanGestureRecognizer) {
+            let translation = gesture.translation(in: gesture.view)
+            
+            if isFirstPersonMode {
+                // In first person, scroll zooms field of view
+                firstPersonCamera?.camera?.fieldOfView -= Double(translation.y * 0.1)
+                firstPersonCamera?.camera?.fieldOfView = max(30, min(110, firstPersonCamera?.camera?.fieldOfView ?? 70))
+            } else {
+                // In orbit, scroll zooms distance
+                cameraDistance += Float(translation.y) * 0.05
+                cameraDistance = max(5.0, min(20.0, cameraDistance))
+                updateCameraPosition()
+            }
+            
+            gesture.setTranslation(.zero, in: gesture.view)
+        }
+        #endif
         
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
             guard let sceneView = gesture.view as? SCNView else { return }
@@ -421,16 +532,13 @@ struct Interactive3DRoomView: UIViewRepresentable {
         }
         
         private func addSelectionHighlight(to node: FurnitureNode) {
-            // Create a subtle outline effect
             if let geometry = node.geometry {
                 let outlineMaterial = SCNMaterial()
                 outlineMaterial.diffuse.contents = UIColor.systemBlue.withAlphaComponent(0.3)
                 outlineMaterial.emission.contents = UIColor.systemBlue.withAlphaComponent(0.5)
                 
-                // Store original materials
                 node.setValue(geometry.materials, forKey: "originalMaterials")
                 
-                // Apply highlight
                 var highlightedMaterials = geometry.materials
                 highlightedMaterials.append(outlineMaterial)
                 geometry.materials = highlightedMaterials
@@ -448,32 +556,37 @@ struct Interactive3DRoomView: UIViewRepresentable {
             let translation = gesture.translation(in: gesture.view)
             
             if isEditing && parent.selectedNode != nil {
-                // Move furniture with collision detection
                 guard let selected = parent.selectedNode,
-                    let sceneView = gesture.view as? SCNView,
-                    let scene = sceneView.scene else { return }
-                
+                      let scene = sceneView?.scene else { return }
+
                 let moveSpeed: Float = 0.01
                 var newPosition = SCNVector3(
                     selected.position.x + Float(translation.x) * moveSpeed,
-                    selected.position.y, // Maintain current Y position
+                    selected.position.y,
                     selected.position.z - Float(translation.y) * moveSpeed
                 )
                 
-                // Apply collision detection with room boundaries and other furniture
-                newPosition = applyCollisionDetection(
-                    position: newPosition,
-                    furniture: selected,
-                    scene: scene
-                )
+                newPosition = applyCollisionDetection(position: newPosition, furniture: selected, scene: scene)
                 
                 selected.position = newPosition
                 parent.onFurnitureMoved(selected.furnitureItem, newPosition)
                 
                 gesture.setTranslation(.zero, in: gesture.view)
+            } else if isFirstPersonMode {
+                firstPersonAngleY -= Float(translation.x) * 0.5
+                firstPersonAngleX -= Float(translation.y) * 0.5
+                
+                firstPersonAngleX = max(-89, min(89, firstPersonAngleX))
+                
+                firstPersonCamera?.eulerAngles = SCNVector3(
+                    firstPersonAngleX * .pi / 180.0,
+                    firstPersonAngleY * .pi / 180.0,
+                    0
+                )
+                
+                gesture.setTranslation(.zero, in: gesture.view)
             } else {
-                // Rotate camera
-                cameraAngleY += Float(translation.x) * 0.5
+                cameraAngleY -= Float(translation.x) * 0.5
                 cameraAngleX -= Float(translation.y) * 0.5
                 cameraAngleX = max(-89, min(89, cameraAngleX))
                 updateCameraPosition()
@@ -481,106 +594,73 @@ struct Interactive3DRoomView: UIViewRepresentable {
                 gesture.setTranslation(.zero, in: gesture.view)
             }
         }
-        // collision detection for objects
+        
         private func applyCollisionDetection(position: SCNVector3, furniture: FurnitureNode, scene: SCNScene) -> SCNVector3 {
-            // First, apply room boundary constraints
-            var clampedPosition = applyRoomBoundaries(position: position, furniture: furniture)
+            let roomWidth: Float = 8.0
+            let roomLength: Float = 10.0
             
-            // Then check for collisions with other furniture
-            let allFurniture = scene.rootNode.childNodes.compactMap { $0 as? FurnitureNode }
+            let furnitureWidth = Float(furniture.catalogItem?.defaultDimensions.width ?? 1.0) / 2.0
+            let furnitureDepth = Float(furniture.catalogItem?.defaultDimensions.depth ?? 1.0) / 2.0
             
-            // Get dimensions of the furniture being moved
-            let furnitureWidth = Float(furniture.catalogItem?.defaultDimensions.width ?? 1.0)
-            let furnitureDepth = Float(furniture.catalogItem?.defaultDimensions.depth ?? 1.0)
+            var clampedPosition = position
             
-            // Check collision with each other furniture piece
-            for otherFurniture in allFurniture {
-                // Skip checking collision with itself
-                if otherFurniture.furnitureItem.id == furniture.furnitureItem.id {
-                    continue
-                }
+            let minX = -roomWidth / 2.0 + furnitureWidth + 0.1
+            let maxX = roomWidth / 2.0 - furnitureWidth - 0.1
+            clampedPosition.x = max(minX, min(maxX, position.x))
+            
+            let minZ = -roomLength / 2.0 + furnitureDepth + 0.1
+            let maxZ = roomLength / 2.0 - furnitureDepth - 0.1
+            clampedPosition.z = max(minZ, min(maxZ, position.z))
+            
+            clampedPosition.y = Float(furniture.catalogItem?.defaultDimensions.height ?? 1.0) / 2.0
+            
+            let allFurniture = scene.rootNode.childNodes.filter { $0 is FurnitureNode && $0 !== furniture }
+            
+            for otherNode in allFurniture {
+                guard let otherFurniture = otherNode as? FurnitureNode else { continue }
                 
-                let otherWidth = Float(otherFurniture.catalogItem?.defaultDimensions.width ?? 1.0)
-                let otherDepth = Float(otherFurniture.catalogItem?.defaultDimensions.depth ?? 1.0)
+                let otherWidth = Float(otherFurniture.catalogItem?.defaultDimensions.width ?? 1.0) / 2.0
+                let otherDepth = Float(otherFurniture.catalogItem?.defaultDimensions.depth ?? 1.0) / 2.0
                 
-                // Calculate bounding boxes with a small buffer for spacing
-                let buffer: Float = 0.1 // 10cm spacing between furniture
+                let thisMinX = clampedPosition.x - furnitureWidth
+                let thisMaxX = clampedPosition.x + furnitureWidth
+                let thisMinZ = clampedPosition.z - furnitureDepth
+                let thisMaxZ = clampedPosition.z + furnitureDepth
                 
-                let minX = clampedPosition.x - furnitureWidth / 2.0
-                let maxX = clampedPosition.x + furnitureWidth / 2.0
-                let minZ = clampedPosition.z - furnitureDepth / 2.0
-                let maxZ = clampedPosition.z + furnitureDepth / 2.0
+                let otherMinX = otherNode.position.x - otherWidth
+                let otherMaxX = otherNode.position.x + otherWidth
+                let otherMinZ = otherNode.position.z - otherDepth
+                let otherMaxZ = otherNode.position.z + otherDepth
                 
-                let otherMinX = otherFurniture.position.x - otherWidth / 2.0 - buffer
-                let otherMaxX = otherFurniture.position.x + otherWidth / 2.0 + buffer
-                let otherMinZ = otherFurniture.position.z - otherDepth / 2.0 - buffer
-                let otherMaxZ = otherFurniture.position.z + otherDepth / 2.0 + buffer
-                
-                // Check if bounding boxes overlap (AABB collision detection)
-                let xOverlap = maxX > otherMinX && minX < otherMaxX
-                let zOverlap = maxZ > otherMinZ && minZ < otherMaxZ
-                
-                if xOverlap && zOverlap {
-                    // Collision detected! Calculate the best direction to push back
-                    let currentPos = furniture.position
+                if thisMaxX > otherMinX && thisMinX < otherMaxX &&
+                   thisMaxZ > otherMinZ && thisMinZ < otherMaxZ {
+                    let overlapX = min(thisMaxX - otherMinX, otherMaxX - thisMinX)
+                    let overlapZ = min(thisMaxZ - otherMinZ, otherMaxZ - thisMinZ)
                     
-                    // Calculate overlap amounts in each direction
-                    let overlapLeft = maxX - otherMinX
-                    let overlapRight = otherMaxX - minX
-                    let overlapFront = maxZ - otherMinZ
-                    let overlapBack = otherMaxZ - minZ
-                    
-                    // Find minimum overlap to resolve collision
-                    let minOverlap = min(overlapLeft, overlapRight, overlapFront, overlapBack)
-                    
-                    // Push back in the direction of least resistance
-                    if minOverlap == overlapLeft {
-                        clampedPosition.x = otherMinX - furnitureWidth / 2.0
-                    } else if minOverlap == overlapRight {
-                        clampedPosition.x = otherMaxX + furnitureWidth / 2.0
-                    } else if minOverlap == overlapFront {
-                        clampedPosition.z = otherMinZ - furnitureDepth / 2.0
-                    } else if minOverlap == overlapBack {
-                        clampedPosition.z = otherMaxZ + furnitureDepth / 2.0
+                    if overlapX < overlapZ {
+                        if clampedPosition.x > otherNode.position.x {
+                            clampedPosition.x = otherMaxX + furnitureWidth + 0.05
+                        } else {
+                            clampedPosition.x = otherMinX - furnitureWidth - 0.05
+                        }
+                    } else {
+                        if clampedPosition.z > otherNode.position.z {
+                            clampedPosition.z = otherMaxZ + furnitureDepth + 0.05
+                        } else {
+                            clampedPosition.z = otherMinZ - furnitureDepth - 0.05
+                        }
                     }
                     
-                    // Reapply room boundaries after collision resolution
-                    clampedPosition = applyRoomBoundaries(position: clampedPosition, furniture: furniture)
+                    clampedPosition.x = max(minX, min(maxX, clampedPosition.x))
+                    clampedPosition.z = max(minZ, min(maxZ, clampedPosition.z))
                 }
             }
             
             return clampedPosition
         }
         
-        private func applyRoomBoundaries(position: SCNVector3, furniture: FurnitureNode) -> SCNVector3 {
-            // Room dimensions (from RoomConfiguration)
-            let roomWidth: Float = 4.0
-            let roomLength: Float = 6.0
-            
-            // Get furniture dimensions from catalog item
-            let furnitureWidth = Float(furniture.catalogItem?.defaultDimensions.width ?? 1.0) / 2.0
-            let furnitureDepth = Float(furniture.catalogItem?.defaultDimensions.depth ?? 1.0) / 2.0
-            
-            var clampedPosition = position
-            
-            // Clamp X position (left-right walls)
-            let minX = -roomWidth / 2.0 + furnitureWidth + 0.1 // 0.1 for wall thickness
-            let maxX = roomWidth / 2.0 - furnitureWidth - 0.1
-            clampedPosition.x = max(minX, min(maxX, position.x))
-            
-            // Clamp Z position (front-back walls)
-            let minZ = -roomLength / 2.0 + furnitureDepth + 0.1
-            let maxZ = roomLength / 2.0 - furnitureDepth - 0.1
-            clampedPosition.z = max(minZ, min(maxZ, position.z))
-            
-            // Keep Y position at proper height
-            clampedPosition.y = Float(furniture.catalogItem?.defaultDimensions.height ?? 1.0) / 2.0
-            
-            return clampedPosition
-        }
-        
         @objc func handleTwoFingerPan(_ gesture: UIPanGestureRecognizer) {
-            guard let pivot = cameraPivot else { return }
+            guard !isFirstPersonMode, let pivot = cameraPivot else { return }
             let translation = gesture.translation(in: gesture.view)
             pivot.position.x -= Float(translation.x) * 0.01
             pivot.position.z += Float(translation.y) * 0.01
@@ -598,9 +678,9 @@ struct Interactive3DRoomView: UIViewRepresentable {
                 )
                 selected.scale = newScale
                 parent.onFurnitureScaled(selected.furnitureItem, newScale)
-            } else {
+            } else if !isFirstPersonMode {
                 cameraDistance /= Float(gesture.scale)
-                cameraDistance = max(3.0, min(12.0, cameraDistance))
+                cameraDistance = max(5.0, min(20.0, cameraDistance))
                 updateCameraPosition()
             }
             gesture.scale = 1.0
