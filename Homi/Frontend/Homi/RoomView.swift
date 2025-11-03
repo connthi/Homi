@@ -12,6 +12,11 @@ struct RoomView: View {
     @State private var isEditing = false
     @State private var isFirstPersonMode = false
     @State private var showSuccessMessage = false
+    @State private var editMode: EditMode = .move
+    
+    enum EditMode {
+        case move, rotate, scale
+    }
     
     var body: some View {
         ZStack {
@@ -20,6 +25,7 @@ struct RoomView: View {
                 furnitureNodes: layoutManager.furnitureNodes,
                 selectedNode: $selectedFurnitureNode,
                 isEditing: $isEditing,
+                editMode: $editMode,
                 isFirstPersonMode: $isFirstPersonMode,
                 onFurnitureMoved: { furnitureItem, position in
                     layoutManager.updateFurniturePosition(furnitureItem, position: position)
@@ -37,10 +43,7 @@ struct RoomView: View {
             VStack {
                 // Top Controls
                 HStack {
-                    Button(action: {
-                        // Go back to main menu
-                        dismiss()
-                    }) {
+                    Button(action: { dismiss() }) {
                         HStack {
                             Image(systemName: "chevron.left")
                             Text("Back")
@@ -50,7 +53,6 @@ struct RoomView: View {
                     
                     Spacer()
                     
-                    // First Person View Button
                     Button(action: {
                         withAnimation {
                             isFirstPersonMode.toggle()
@@ -88,80 +90,89 @@ struct RoomView: View {
                 
                 Spacer()
                 
-                // Camera Controls Hint
-                if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
-                    VStack(spacing: 4) {
-                        Text("Camera Controls")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                        Text("• Drag: Rotate camera")
-                        Text("• Two fingers: Pan")
-                        Text("• Pinch: Zoom")
-                    }
-                    .font(.caption2)
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(Color.black.opacity(0.6))
-                    .cornerRadius(8)
-                    .padding()
-                }
-                
-                // First Person Mode Hint
-                if isFirstPersonMode && !isEditing {
-                    VStack(spacing: 4) {
-                        Image(systemName: "person.fill.viewfinder")
-                            .font(.title2)
-                        Text("First Person View")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                        Text("• Drag: Look around")
-                        Text("• Tap person icon to exit")
-                    }
-                    .font(.caption2)
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(Color.blue.opacity(0.8))
-                    .cornerRadius(8)
-                    .padding()
-                }
-                
-                // Furniture Selected Hint
-                if !isEditing && selectedFurnitureNode != nil {
-                    VStack(spacing: 4) {
-                        Text("Furniture Selected")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                        Text("Tap 'Edit' to move, scale, or rotate")
-                    }
-                    .font(.caption2)
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(Color.blue.opacity(0.7))
-                    .cornerRadius(8)
-                    .padding()
-                }
-                
-                // Edit Mode Hint
+                // Edit Mode Selector
                 if isEditing && selectedFurnitureNode != nil {
-                    VStack(spacing: 4) {
-                        Text("Edit Mode")
-                            .font(.caption)
-                            .fontWeight(.semibold)
-                        Text("• Drag: Move furniture")
-                        Text("• Pinch: Scale")
-                        Text("• Rotate: Turn")
+                    HStack(spacing: 12) {
+                        EditModeButton(
+                            mode: .move,
+                            currentMode: editMode,
+                            icon: "arrow.up.and.down.and.arrow.left.and.right",
+                            label: "Move"
+                        ) {
+                            editMode = .move
+                        }
+                        
+                        EditModeButton(
+                            mode: .rotate,
+                            currentMode: editMode,
+                            icon: "arrow.clockwise",
+                            label: "Rotate"
+                        ) {
+                            editMode = .rotate
+                        }
+                        
+                        EditModeButton(
+                            mode: .scale,
+                            currentMode: editMode,
+                            icon: "arrow.up.left.and.arrow.down.right",
+                            label: "Scale"
+                        ) {
+                            editMode = .scale
+                        }
                     }
-                    .font(.caption2)
-                    .foregroundColor(.white)
-                    .padding(8)
-                    .background(Color.green.opacity(0.7))
-                    .cornerRadius(8)
                     .padding()
+                    .background(Color(.systemBackground).opacity(0.9))
+                    .cornerRadius(12)
+                    .shadow(radius: 5)
+                    .padding(.horizontal)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
+                
+                // Hints
+                if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
+                    HintView(
+                        title: "Camera Controls",
+                        hints: [
+                            "Drag: Rotate camera",
+                            "Two fingers: Pan",
+                            "Pinch: Zoom"
+                        ]
+                    )
+                } else if isFirstPersonMode && !isEditing {
+                    HintView(
+                        title: "First Person View",
+                        icon: "person.fill.viewfinder",
+                        hints: [
+                            "Drag: Look around",
+                            "Tap person icon to exit"
+                        ],
+                        color: .blue
+                    )
+                } else if !isEditing && selectedFurnitureNode != nil {
+                    HintView(
+                        title: "Furniture Selected",
+                        hints: ["Tap 'Edit' to modify"],
+                        color: .blue
+                    )
+                } else if isEditing && selectedFurnitureNode != nil {
+                    HintView(
+                        title: editMode == .move ? "Move Mode" : (editMode == .rotate ? "Rotate Mode" : "Scale Mode"),
+                        hints: editMode == .move ? [
+                            "Drag slowly to move",
+                            "Furniture snaps to walls"
+                        ] : editMode == .rotate ? [
+                            "Drag left/right to rotate",
+                            "Smooth 360° rotation"
+                        ] : [
+                            "Pinch to scale",
+                            "Maintains proportions"
+                        ],
+                        color: .green
+                    )
                 }
                 
                 // Bottom Controls
                 HStack(spacing: 16) {
-                    // Add Furniture Button
                     Button(action: {
                         if layoutManager.currentLayout == nil {
                             showingNewLayoutDialog = true
@@ -176,16 +187,19 @@ struct RoomView: View {
                     .controlSize(.large)
                     
                     if selectedFurnitureNode != nil {
-                        // Edit Mode Toggle
                         Button(action: {
-                            isEditing.toggle()
+                            withAnimation {
+                                isEditing.toggle()
+                                if !isEditing {
+                                    editMode = .move
+                                }
+                            }
                         }) {
                             Label(isEditing ? "Done" : "Edit", systemImage: isEditing ? "checkmark.circle" : "pencil.circle")
                         }
                         .buttonStyle(.bordered)
                         .controlSize(.large)
                         
-                        // Delete Button
                         Button(action: {
                             if let node = selectedFurnitureNode {
                                 layoutManager.removeFurniture(furnitureItem: node.furnitureItem)
@@ -238,9 +252,8 @@ struct RoomView: View {
             CatalogSelectionView(
                 catalogItems: layoutManager.catalogItems,
                 onSelectItem: { item in
-                    // Add furniture to center of room on floor
-                    let yPosition = item.defaultDimensions.height / 2.0 // Half height to sit on floor
-                    layoutManager.addFurniture(catalogItem: item, at: SCNVector3(0, Float(yPosition), 0))
+                    
+                    layoutManager.addFurniture(catalogItem: item, at: SCNVector3(0, 0, 0))
                     showingCatalogSheet = false
                 }
             )
@@ -252,13 +265,16 @@ struct RoomView: View {
             do {
                 try await layoutManager.saveCurrentLayout()
                 await MainActor.run {
-                    showSuccessMessage = true
+                    withAnimation {
+                        showSuccessMessage = true
+                    }
                 }
                 
-                // Hide success message after 2 seconds and return to main menu
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
                 await MainActor.run {
-                    showSuccessMessage = false
+                    withAnimation {
+                        showSuccessMessage = false
+                    }
                     dismiss()
                 }
             } catch {
@@ -268,12 +284,75 @@ struct RoomView: View {
     }
 }
 
+// MARK: - Helper Views
+
+struct EditModeButton: View {
+    let mode: RoomView.EditMode
+    let currentMode: RoomView.EditMode
+    let icon: String
+    let label: String
+    let action: () -> Void
+    
+    var isSelected: Bool {
+        mode == currentMode
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.title2)
+                Text(label)
+                    .font(.caption)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
+            .background(isSelected ? Color.green.opacity(0.2) : Color.clear)
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isSelected ? Color.green : Color.gray.opacity(0.3), lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct HintView: View {
+    let title: String
+    var icon: String? = nil
+    let hints: [String]
+    var color: Color = .primary
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            if let icon = icon {
+                Image(systemName: icon)
+                    .font(.title2)
+            }
+            Text(title)
+                .font(.caption)
+                .fontWeight(.semibold)
+            ForEach(hints, id: \.self) { hint in
+                Text("• \(hint)")
+            }
+        }
+        .font(.caption2)
+        .foregroundColor(.white)
+        .padding(8)
+        .background(color == .blue ? Color.blue.opacity(0.8) : (color == .green ? Color.green.opacity(0.7) : Color.black.opacity(0.6)))
+        .cornerRadius(8)
+        .padding()
+    }
+}
+
 // MARK: - Interactive 3D Room View
 
 struct Interactive3DRoomView: UIViewRepresentable {
     let furnitureNodes: [FurnitureNode]
     @Binding var selectedNode: FurnitureNode?
     @Binding var isEditing: Bool
+    @Binding var editMode: RoomView.EditMode
     @Binding var isFirstPersonMode: Bool
     let onFurnitureMoved: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureRotated: (FurnitureItem, SCNVector3) -> Void
@@ -289,9 +368,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
         let scene = SCNScene()
         sceneView.scene = scene
         
-        // Store reference to sceneView in coordinator
         context.coordinator.sceneView = sceneView
-        
         context.coordinator.setupRoom(scene: scene)
         context.coordinator.setupCamera(scene: scene)
         context.coordinator.setupLighting(scene: scene)
@@ -303,8 +380,8 @@ struct Interactive3DRoomView: UIViewRepresentable {
     func updateUIView(_ uiView: SCNView, context: Context) {
         context.coordinator.updateFurnitureNodes(scene: uiView.scene!, nodes: furnitureNodes)
         context.coordinator.isEditing = isEditing
+        context.coordinator.editMode = editMode
         
-        // Switch camera mode
         if isFirstPersonMode != context.coordinator.isFirstPersonMode {
             context.coordinator.isFirstPersonMode = isFirstPersonMode
             if isFirstPersonMode {
@@ -327,6 +404,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
         var cameraPivot: SCNNode?
         var firstPersonCamera: SCNNode?
         var isEditing: Bool = false
+        var editMode: RoomView.EditMode = .move
         var isFirstPersonMode: Bool = false
         
         private var cameraDistance: Float = 10.0
@@ -335,12 +413,15 @@ struct Interactive3DRoomView: UIViewRepresentable {
         private var firstPersonAngleX: Float = 0.0
         private var firstPersonAngleY: Float = 0.0
         
+        // IMPROVED: Smoother movement with damping
+        private var lastPanTranslation: CGPoint = .zero
+        private var panVelocity: CGPoint = .zero
+        
         init(_ parent: Interactive3DRoomView) {
             self.parent = parent
         }
         
         func setupRoom(scene: SCNScene) {
-            // Larger room - 8m x 10m x 3m
             let roomWidth: CGFloat = 8.0
             let roomLength: CGFloat = 10.0
             let roomHeight: CGFloat = 3.0
@@ -349,18 +430,23 @@ struct Interactive3DRoomView: UIViewRepresentable {
             let floorGeometry = SCNBox(width: roomWidth, height: 0.1, length: roomLength, chamferRadius: 0)
             let floorMaterial = SCNMaterial()
             floorMaterial.diffuse.contents = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+            floorMaterial.lightingModel = .physicallyBased
+            floorMaterial.roughness.contents = 0.8
             floorGeometry.materials = [floorMaterial]
             
             let floorNode = SCNNode(geometry: floorGeometry)
             floorNode.position = SCNVector3(0, 0, 0)
             scene.rootNode.addChildNode(floorNode)
             
-            // Back wall
-            let backWall = SCNBox(width: roomWidth, height: roomHeight, length: 0.1, chamferRadius: 0)
+            // Walls
             let wallMaterial = SCNMaterial()
             wallMaterial.diffuse.contents = UIColor(white: 0.95, alpha: 1.0)
-            backWall.materials = [wallMaterial]
+            wallMaterial.lightingModel = .physicallyBased
+            wallMaterial.roughness.contents = 0.9
             
+            // Back wall
+            let backWall = SCNBox(width: roomWidth, height: roomHeight, length: 0.1, chamferRadius: 0)
+            backWall.materials = [wallMaterial]
             let backWallNode = SCNNode(geometry: backWall)
             backWallNode.position = SCNVector3(0, roomHeight/2, -roomLength/2)
             scene.rootNode.addChildNode(backWallNode)
@@ -381,12 +467,10 @@ struct Interactive3DRoomView: UIViewRepresentable {
         }
         
         func setupCamera(scene: SCNScene) {
-            // Orbit camera setup (centered on room center)
             cameraPivot = SCNNode()
             cameraPivot?.position = SCNVector3(0, 1.5, 0)
             
             cameraOrbit = SCNNode()
-            
             cameraNode = SCNNode()
             cameraNode?.camera = SCNCamera()
             cameraNode?.camera?.zFar = 100
@@ -396,7 +480,6 @@ struct Interactive3DRoomView: UIViewRepresentable {
             cameraPivot?.addChildNode(cameraOrbit!)
             cameraOrbit?.addChildNode(cameraNode!)
             
-            // First person camera setup (at center of room, eye level)
             firstPersonCamera = SCNNode()
             firstPersonCamera?.camera = SCNCamera()
             firstPersonCamera?.camera?.zFar = 100
@@ -404,26 +487,19 @@ struct Interactive3DRoomView: UIViewRepresentable {
             firstPersonCamera?.position = SCNVector3(0, 1.6, 0)
             scene.rootNode.addChildNode(firstPersonCamera!)
             
-            // Set initial camera
             updateCameraPosition()
             sceneView?.pointOfView = cameraNode
         }
         
         func switchToFirstPersonView() {
-            // Reset first person angles to look forward
             firstPersonAngleX = 0.0
             firstPersonAngleY = 0.0
-            
-            // Position first person camera at center of room at head height
             firstPersonCamera?.position = SCNVector3(0, 1.6, 0)
             firstPersonCamera?.eulerAngles = SCNVector3(0, 0, 0)
-            
-            // Switch the active camera
             sceneView?.pointOfView = firstPersonCamera
         }
         
         func switchToOrbitView() {
-            // Switch back to orbit camera
             updateCameraPosition()
             sceneView?.pointOfView = cameraNode
         }
@@ -477,54 +553,40 @@ struct Interactive3DRoomView: UIViewRepresentable {
             
             let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
             sceneView.addGestureRecognizer(pinch)
-            
-            let rotation = UIRotationGestureRecognizer(target: self, action: #selector(handleRotation(_:)))
-            sceneView.addGestureRecognizer(rotation)
-            
-            // Add scroll wheel support for macOS (zoom)
-            #if targetEnvironment(macCatalyst)
-            let scrollRecognizer = UIPanGestureRecognizer(target: self, action: #selector(handleScroll(_:)))
-            scrollRecognizer.allowedScrollTypesMask = .continuous
-            sceneView.addGestureRecognizer(scrollRecognizer)
-            #endif
         }
-        
-        #if targetEnvironment(macCatalyst)
-        @objc func handleScroll(_ gesture: UIPanGestureRecognizer) {
-            let translation = gesture.translation(in: gesture.view)
-            
-            if isFirstPersonMode {
-                // In first person, scroll zooms field of view
-                firstPersonCamera?.camera?.fieldOfView -= Double(translation.y * 0.1)
-                firstPersonCamera?.camera?.fieldOfView = max(30, min(110, firstPersonCamera?.camera?.fieldOfView ?? 70))
-            } else {
-                // In orbit, scroll zooms distance
-                cameraDistance += Float(translation.y) * 0.05
-                cameraDistance = max(5.0, min(20.0, cameraDistance))
-                updateCameraPosition()
-            }
-            
-            gesture.setTranslation(.zero, in: gesture.view)
-        }
-        #endif
         
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
             guard let sceneView = gesture.view as? SCNView else { return }
             let location = gesture.location(in: sceneView)
             let hitResults = sceneView.hitTest(location, options: [:])
             
-            // Remove previous selection highlight
             if let previousSelection = parent.selectedNode {
                 removeSelectionHighlight(from: previousSelection)
             }
             
-            if let hit = hitResults.first(where: { $0.node is FurnitureNode }) {
-                let furnitureNode = hit.node as? FurnitureNode
-                parent.selectedNode = furnitureNode
+            // FIXED: Check if hit node is a FurnitureNode or a child of one
+            if let hit = hitResults.first {
+                var currentNode = hit.node
+                var furnitureNode: FurnitureNode?
                 
-                // Add selection highlight
-                if let selected = furnitureNode {
-                    addSelectionHighlight(to: selected)
+                // Walk up the node hierarchy to find a FurnitureNode
+                while currentNode.parent != nil {
+                    if let furniture = currentNode as? FurnitureNode {
+                        furnitureNode = furniture
+                        break
+                    }
+                    if let furniture = currentNode.parent as? FurnitureNode {
+                        furnitureNode = furniture
+                        break
+                    }
+                    currentNode = currentNode.parent!
+                }
+                
+                if let furniture = furnitureNode {
+                    parent.selectedNode = furniture
+                    addSelectionHighlight(to: furniture)
+                } else {
+                    parent.selectedNode = nil
                 }
             } else {
                 parent.selectedNode = nil
@@ -532,23 +594,27 @@ struct Interactive3DRoomView: UIViewRepresentable {
         }
         
         private func addSelectionHighlight(to node: FurnitureNode) {
-            if let geometry = node.geometry {
-                let outlineMaterial = SCNMaterial()
-                outlineMaterial.diffuse.contents = UIColor.systemBlue.withAlphaComponent(0.3)
-                outlineMaterial.emission.contents = UIColor.systemBlue.withAlphaComponent(0.5)
-                
-                node.setValue(geometry.materials, forKey: "originalMaterials")
-                
-                var highlightedMaterials = geometry.materials
-                highlightedMaterials.append(outlineMaterial)
-                geometry.materials = highlightedMaterials
+            node.enumerateChildNodes { (child, _) in
+                if let geometry = child.geometry {
+                    let originalMaterials = geometry.materials
+                    child.setValue(originalMaterials, forKey: "originalMaterials")
+                    
+                    let highlightedMaterials = originalMaterials.map { material -> SCNMaterial in
+                        let newMaterial = material.copy() as! SCNMaterial
+                        newMaterial.emission.contents = UIColor.systemBlue.withAlphaComponent(0.3)
+                        return newMaterial
+                    }
+                    geometry.materials = highlightedMaterials
+                }
             }
         }
         
         private func removeSelectionHighlight(from node: FurnitureNode) {
-            if let originalMaterials = node.value(forKey: "originalMaterials") as? [SCNMaterial],
-               let geometry = node.geometry {
-                geometry.materials = originalMaterials
+            node.enumerateChildNodes { (child, _) in
+                if let originalMaterials = child.value(forKey: "originalMaterials") as? [SCNMaterial],
+                   let geometry = child.geometry {
+                    geometry.materials = originalMaterials
+                }
             }
         }
         
@@ -559,23 +625,52 @@ struct Interactive3DRoomView: UIViewRepresentable {
                 guard let selected = parent.selectedNode,
                       let scene = sceneView?.scene else { return }
 
-                let moveSpeed: Float = 0.01
-                var newPosition = SCNVector3(
-                    selected.position.x + Float(translation.x) * moveSpeed,
-                    selected.position.y,
-                    selected.position.z - Float(translation.y) * moveSpeed
-                )
-                
-                newPosition = applyCollisionDetection(position: newPosition, furniture: selected, scene: scene)
-                
-                selected.position = newPosition
-                parent.onFurnitureMoved(selected.furnitureItem, newPosition)
+                switch editMode {
+                case .move:
+                   
+                    let moveSpeed: Float = 0.003
+                    var newPosition = SCNVector3(
+                        selected.position.x + Float(translation.x) * moveSpeed,
+                        selected.position.y,
+                        selected.position.z - Float(translation.y) * moveSpeed
+                    )
+                    
+                    newPosition = applyCollisionDetection(position: newPosition, furniture: selected, scene: scene)
+                    selected.position = newPosition
+                    parent.onFurnitureMoved(selected.furnitureItem, newPosition)
+                    
+                case .rotate:
+                    let rotationSpeed: Float = 0.01
+                    let newRotation = SCNVector3(
+                        selected.eulerAngles.x,
+                        selected.eulerAngles.y - Float(translation.x) * rotationSpeed,
+                        selected.eulerAngles.z
+                    )
+                    selected.eulerAngles = newRotation
+                    parent.onFurnitureRotated(selected.furnitureItem, newRotation)
+                    
+                case .scale:
+                    let scaleSpeed: Float = 0.001
+                    let scaleDelta = 1.0 + Float(-translation.y) * scaleSpeed
+                    let newScale = SCNVector3(
+                        selected.scale.x * scaleDelta,
+                        selected.scale.y * scaleDelta,
+                        selected.scale.z * scaleDelta
+                    )
+                    let clampedScale = SCNVector3(
+                        max(0.5, min(3.0, newScale.x)),
+                        max(0.5, min(3.0, newScale.y)),
+                        max(0.5, min(3.0, newScale.z))
+                    )
+                    selected.scale = clampedScale
+                    parent.onFurnitureScaled(selected.furnitureItem, clampedScale)
+                }
                 
                 gesture.setTranslation(.zero, in: gesture.view)
+                
             } else if isFirstPersonMode {
                 firstPersonAngleY -= Float(translation.x) * 0.5
                 firstPersonAngleX -= Float(translation.y) * 0.5
-                
                 firstPersonAngleX = max(-89, min(89, firstPersonAngleX))
                 
                 firstPersonCamera?.eulerAngles = SCNVector3(
@@ -583,18 +678,18 @@ struct Interactive3DRoomView: UIViewRepresentable {
                     firstPersonAngleY * .pi / 180.0,
                     0
                 )
-                
                 gesture.setTranslation(.zero, in: gesture.view)
+                
             } else {
                 cameraAngleY -= Float(translation.x) * 0.5
                 cameraAngleX -= Float(translation.y) * 0.5
                 cameraAngleX = max(-89, min(89, cameraAngleX))
                 updateCameraPosition()
-                
                 gesture.setTranslation(.zero, in: gesture.view)
             }
         }
         
+        //Collision detection with proper Y positioning
         private func applyCollisionDetection(position: SCNVector3, furniture: FurnitureNode, scene: SCNScene) -> SCNVector3 {
             let roomWidth: Float = 8.0
             let roomLength: Float = 10.0
@@ -604,6 +699,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
             
             var clampedPosition = position
             
+            // Wall collision - keep furniture inside room
             let minX = -roomWidth / 2.0 + furnitureWidth + 0.1
             let maxX = roomWidth / 2.0 - furnitureWidth - 0.1
             clampedPosition.x = max(minX, min(maxX, position.x))
@@ -611,9 +707,10 @@ struct Interactive3DRoomView: UIViewRepresentable {
             let minZ = -roomLength / 2.0 + furnitureDepth + 0.1
             let maxZ = roomLength / 2.0 - furnitureDepth - 0.1
             clampedPosition.z = max(minZ, min(maxZ, position.z))
+
+            clampedPosition.y = 0
             
-            clampedPosition.y = Float(furniture.catalogItem?.defaultDimensions.height ?? 1.0) / 2.0
-            
+            // Furniture-to-furniture collision detection
             let allFurniture = scene.rootNode.childNodes.filter { $0 is FurnitureNode && $0 !== furniture }
             
             for otherNode in allFurniture {
@@ -632,11 +729,15 @@ struct Interactive3DRoomView: UIViewRepresentable {
                 let otherMinZ = otherNode.position.z - otherDepth
                 let otherMaxZ = otherNode.position.z + otherDepth
                 
+                // Check for overlap
                 if thisMaxX > otherMinX && thisMinX < otherMaxX &&
                    thisMaxZ > otherMinZ && thisMinZ < otherMaxZ {
+                    
+                    // Calculate overlap on each axis
                     let overlapX = min(thisMaxX - otherMinX, otherMaxX - thisMinX)
                     let overlapZ = min(thisMaxZ - otherMinZ, otherMaxZ - thisMinZ)
                     
+                    // Push away on the axis with smallest overlap
                     if overlapX < overlapZ {
                         if clampedPosition.x > otherNode.position.x {
                             clampedPosition.x = otherMaxX + furnitureWidth + 0.05
@@ -651,6 +752,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
                         }
                     }
                     
+                    // Re-clamp to room boundaries
                     clampedPosition.x = max(minX, min(maxX, clampedPosition.x))
                     clampedPosition.z = max(minZ, min(maxZ, clampedPosition.z))
                 }
@@ -668,7 +770,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
         }
         
         @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
-            if isEditing && parent.selectedNode != nil {
+            if isEditing && parent.selectedNode != nil && editMode == .scale {
                 guard let selected = parent.selectedNode else { return }
                 let scale = Float(gesture.scale)
                 let newScale = SCNVector3(
@@ -676,8 +778,13 @@ struct Interactive3DRoomView: UIViewRepresentable {
                     selected.scale.y * scale,
                     selected.scale.z * scale
                 )
-                selected.scale = newScale
-                parent.onFurnitureScaled(selected.furnitureItem, newScale)
+                let clampedScale = SCNVector3(
+                    max(0.5, min(3.0, newScale.x)),
+                    max(0.5, min(3.0, newScale.y)),
+                    max(0.5, min(3.0, newScale.z))
+                )
+                selected.scale = clampedScale
+                parent.onFurnitureScaled(selected.furnitureItem, clampedScale)
             } else if !isFirstPersonMode {
                 cameraDistance /= Float(gesture.scale)
                 cameraDistance = max(5.0, min(20.0, cameraDistance))
@@ -685,22 +792,10 @@ struct Interactive3DRoomView: UIViewRepresentable {
             }
             gesture.scale = 1.0
         }
-        
-        @objc func handleRotation(_ gesture: UIRotationGestureRecognizer) {
-            guard isEditing, let selected = parent.selectedNode else { return }
-            let newRotation = SCNVector3(
-                selected.eulerAngles.x,
-                selected.eulerAngles.y + Float(gesture.rotation),
-                selected.eulerAngles.z
-            )
-            selected.eulerAngles = newRotation
-            parent.onFurnitureRotated(selected.furnitureItem, newRotation)
-            gesture.rotation = 0
-        }
     }
 }
 
-// MARK: - Catalog Selection Sheet
+// MARK: - Supporting Views
 
 struct CatalogSelectionView: View {
     @Environment(\.dismiss) var dismiss
@@ -712,15 +807,12 @@ struct CatalogSelectionView: View {
             ScrollView {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     ForEach(catalogItems) { item in
-                        Button(action: {
-                            onSelectItem(item)
-                        }) {
+                        Button(action: { onSelectItem(item) }) {
                             VStack(spacing: 12) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 12)
                                         .fill(Color(.systemGray6))
                                         .frame(height: 120)
-                                    
                                     VStack {
                                         Image(systemName: furnitureIcon(for: item.type))
                                             .font(.system(size: 40))
@@ -730,7 +822,6 @@ struct CatalogSelectionView: View {
                                             .foregroundColor(.secondary)
                                     }
                                 }
-                                
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(item.name)
                                         .font(.headline)
@@ -756,9 +847,7 @@ struct CatalogSelectionView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
+                    Button("Cancel") { dismiss() }
                 }
             }
         }
@@ -776,8 +865,6 @@ struct CatalogSelectionView: View {
         }
     }
 }
-
-// MARK: - New Layout Dialog
 
 struct NewLayoutDialog: View {
     @Binding var layoutName: String
@@ -811,9 +898,7 @@ struct NewLayoutDialog: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        isPresented = false
-                    }
+                    Button("Cancel") { isPresented = false }
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {

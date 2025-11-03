@@ -16,10 +16,17 @@
 		796C45032EA96053004A2403 /* RoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C45022EA96053004A2403 /* RoomView.swift */; };
 		796C45062EA9605A004A2403 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 796C45042EA9605A004A2403 /* Preview Assets.xcassets */; };
 		796C45082EA960F0004A2403 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 796C45072EA960F0004A2403 /* Assets.xcassets */; };
+		796C45122EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45112EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz */; };
+		796C45142EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45132EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */; };
+		796C45162EB9699C004A2403 /* PorTable.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45152EB9699C004A2403 /* PorTable.usdz */; };
+		796C45182EB969AA004A2403 /* Office_desks_wooden.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45172EB969AA004A2403 /* Office_desks_wooden.usdz */; };
+		796C451A2EB969AF004A2403 /* Bookshelf.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45192EB969AF004A2403 /* Bookshelf.usdz */; };
+		796C451C2EB969B4004A2403 /* Cozy_Elegance.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C451B2EB969B4004A2403 /* Cozy_Elegance.usdz */; };
+		796C451E2EB969D9004A2403 /* Bed.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C451D2EB969D9004A2403 /* Bed.usdz */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		796C44E82EA958A9004A2403 /* Homi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Homi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		796C44E82EA958A9004A2403 /* Homi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Homi.app; path = "/Users/phongtang/Documents/Homi/Homi/Frontend/Homi/build/Debug-iphoneos/Homi.app"; sourceTree = "<absolute>"; };
 		796C44F62EA96019004A2403 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		796C44F82EA96029004A2403 /* CatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogView.swift; sourceTree = "<group>"; };
 		796C44FA2EA96032004A2403 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -29,6 +36,13 @@
 		796C45022EA96053004A2403 /* RoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomView.swift; sourceTree = "<group>"; };
 		796C45042EA9605A004A2403 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		796C45072EA960F0004A2403 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		796C45112EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Gameready_Gaming_Chair.usdz; sourceTree = "<group>"; };
+		796C45132EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Desktop_speaker_with_a_wooden_enclosure.usdz; sourceTree = "<group>"; };
+		796C45152EB9699C004A2403 /* PorTable.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = PorTable.usdz; sourceTree = "<group>"; };
+		796C45172EB969AA004A2403 /* Office_desks_wooden.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Office_desks_wooden.usdz; sourceTree = "<group>"; };
+		796C45192EB969AF004A2403 /* Bookshelf.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bookshelf.usdz; sourceTree = "<group>"; };
+		796C451B2EB969B4004A2403 /* Cozy_Elegance.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Cozy_Elegance.usdz; sourceTree = "<group>"; };
+		796C451D2EB969D9004A2403 /* Bed.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bed.usdz; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,16 +68,14 @@
 				796C44FA2EA96032004A2403 /* ContentView.swift */,
 				796C44F82EA96029004A2403 /* CatalogView.swift */,
 				796C44F62EA96019004A2403 /* APIService.swift */,
-				796C44E92EA958A9004A2403 /* Products */,
+				796C45112EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz */,
+				796C45132EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */,
+				796C45152EB9699C004A2403 /* PorTable.usdz */,
+				796C45172EB969AA004A2403 /* Office_desks_wooden.usdz */,
+				796C45192EB969AF004A2403 /* Bookshelf.usdz */,
+				796C451B2EB969B4004A2403 /* Cozy_Elegance.usdz */,
+				796C451D2EB969D9004A2403 /* Bed.usdz */,
 			);
-			sourceTree = "<group>";
-		};
-		796C44E92EA958A9004A2403 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				796C44E82EA958A9004A2403 /* Homi.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		796C45052EA9605A004A2403 /* Preview Content */ = {
@@ -122,7 +134,7 @@
 			mainGroup = 796C44DF2EA958A9004A2403;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 796C44E92EA958A9004A2403 /* Products */;
+			productRefGroup = 796C44DF2EA958A9004A2403;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -136,7 +148,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				796C451E2EB969D9004A2403 /* Bed.usdz in Resources */,
+				796C451A2EB969AF004A2403 /* Bookshelf.usdz in Resources */,
 				796C45082EA960F0004A2403 /* Assets.xcassets in Resources */,
+				796C45142EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */,
+				796C45182EB969AA004A2403 /* Office_desks_wooden.usdz in Resources */,
+				796C45162EB9699C004A2403 /* PorTable.usdz in Resources */,
+				796C45122EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz in Resources */,
+				796C451C2EB969B4004A2403 /* Cozy_Elegance.usdz in Resources */,
 				796C45062EA9605A004A2403 /* Preview Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -288,6 +307,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZN2X525H94;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -295,12 +315,13 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Homi;
+				PRODUCT_BUNDLE_IDENTIFIER = com.phongtang.homi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -321,6 +342,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = ZN2X525H94;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -328,12 +350,13 @@
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6.2;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Homi;
+				PRODUCT_BUNDLE_IDENTIFIER = com.phongtang.homi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

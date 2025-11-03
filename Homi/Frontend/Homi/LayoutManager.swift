@@ -20,7 +20,7 @@ class LayoutManager: ObservableObject {
     func createNewLayout(name: String) {
         let newLayout = Layout(
             id: UUID().uuidString,
-            userId: "default_user", // In a real app, this would come from authentication
+            userId: "default_user",
             name: name,
             createdAt: Date(),
             furnitureItems: []
@@ -58,10 +58,11 @@ class LayoutManager: ObservableObject {
     func addFurniture(catalogItem: CatalogItem, at position: SCNVector3) {
         guard let layout = currentLayout else { return }
         
+        //Always use Y=0 for floor level
         let newFurnitureItem = FurnitureItem(
             id: UUID().uuidString,
             furnitureId: catalogItem.id,
-            position: Position(x: Double(position.x), y: Double(position.y), z: Double(position.z)),
+            position: Position(x: Double(position.x), y: 0, z: Double(position.z)),
             rotation: Rotation(x: 0, y: 0, z: 0),
             scale: Scale(x: 1, y: 1, z: 1),
             properties: FurnitureProperties(color: "brown", material: "wood")
@@ -102,7 +103,8 @@ class LayoutManager: ObservableObject {
     func updateFurniturePosition(_ furnitureItem: FurnitureItem, position: SCNVector3) {
         guard let layout = currentLayout else { return }
         
-        let updatedPosition = Position(x: Double(position.x), y: Double(position.y), z: Double(position.z))
+        //Always keep Y=0
+        let updatedPosition = Position(x: Double(position.x), y: 0, z: Double(position.z))
         
         let updatedFurnitureItems = layout.furnitureItems.map { item in
             if item.id == furnitureItem.id {
