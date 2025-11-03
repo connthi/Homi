@@ -18,6 +18,7 @@ app.use("/api/layouts", layoutRoutes);
 app.use("/api/catalog", catalogRoutes);
 
 // Connect to MongoDB
+console.log("Connecting to Mongo:", process.env.MONGO_URI);
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));

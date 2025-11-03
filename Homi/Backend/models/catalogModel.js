@@ -8,7 +8,10 @@ const catalogSchema = new mongoose.Schema({
     height: { type: Number, required: true },
     depth: { type: Number, required: true }
   },
-  materialOptions: [{ type: String }]
+  materialOptions: [{ type: String }],
+  imageUrl: { type: String },
+  description: { type: String },
+  modelFileName: { type: String }
 });
 
 // Transform the output to match Swift expectations
