@@ -2,107 +2,276 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [main, master, develop]
-  workflow_dispatch:
+    branches: [ main, master, develop ]
+  workflow_dispatch: # Allow manual triggering
 
 jobs:
-  integration-tests:
-    name: Integration Tests (temporarily disabled)
+  # Backend Tests Job
+  backend-tests:
+    name: Backend Tests (Node.js + Jest)
     runs-on: ubuntu-latest
-    steps:
-      - name: Placeholder success
-        run: echo "Temporarily disabling integration tests to unblock CI."
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'Homi/Backend/package-lock.json'
+
+    - name: Install backend dependencies
+      working-directory: ./Homi/Backend
+      run: npm ci
+
+    - name: Wait for MongoDB
+      run: |
+        timeout 60 bash -c 'until mongosh --eval "db.adminCommand(\"ping\")" > /dev/null 2>&1; do sleep 2; done'
+
+    - name: Run backend tests
+      working-directory: ./Homi/Backend
+      env:
+        NODE_ENV: test
+        MONGO_URI: mongodb://localhost:27017/homi_test
+      run: npm test
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: backend-test-results
+        path: Homi/Backend/coverage/
+        retention-days: 7
+
+  # Frontend Tests Job
+  frontend-tests:
+    name: Frontend Tests (iOS + XCTest)
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+
+    - name: Install iOS dependencies
+      working-directory: ./Homi/Frontend
+      run: |
+        # Install any iOS dependencies if needed
+        echo "Installing iOS dependencies..."
+
+    - name: Build iOS project
+      working-directory: ./Homi/Frontend/Homi
+      run: |
+        xcodebuild -project Homi.xcodeproj \
+                   -scheme Homi \
+                   -sdk iphonesimulator \
+                   -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+                   -configuration Debug \
+                   clean build
+
+    - name: Run iOS tests
+      working-directory: ./Homi/Frontend/Homi
+      run: |
+        xcodebuild test \
+                   -project Homi.xcodeproj \
+                   -scheme Homi \
+                   -sdk iphonesimulator \
+                   -destination 'platform=iOS Simulator,name=iPhone 15 Pro' \
+                   -configuration Debug
+
+    - name: Upload iOS test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ios-test-results
+        path: Homi/Frontend/Homi/test-results/
+        retention-days: 7
+
+  # Integration Tests Job
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'Homi/Backend/package-lock.json'
+
+    - name: Install backend dependencies
+      working-directory: ./Homi/Backend
+      run: npm ci
+
+    - name: Start backend server
+      working-directory: ./Homi/Backend
+      env:
+        NODE_ENV: test
+        MONGO_URI: mongodb://localhost:27017/homi_integration_test
+        PORT: 3000
+      run: |
+        npm start &
+        sleep 10
+        curl -f http://localhost:3000/api/catalog || exit 1
+
+    - name: Run integration tests
+      working-directory: ./Homi/Backend
+      env:
+        NODE_ENV: test
+        MONGO_URI: mongodb://localhost:27017/homi_integration_test
+        API_BASE_URL: http://localhost:3000
+      run: |
+        # Add integration tests here when available
+        echo "Integration tests would run here"
+        # npm run test:integration
+
+  # Code Quality Checks
   code-quality:
     name: Code Quality Checks
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: 'Homi/Backend/package-lock.json'
-      - name: Install backend dependencies
-        working-directory: ./Homi/Backend
-        run: npm ci
-      - name: Run ESLint (placeholder)
-        working-directory: ./Homi/Backend
-        run: |
-          echo "ESLint checks would run here"
-          # npm run lint
-      - name: Check formatting (placeholder)
-        working-directory: ./Homi/Backend
-        run: |
-          echo "Formatting checks would run here"
-          # npm run format:check
 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'Homi/Backend/package-lock.json'
+
+    - name: Install backend dependencies
+      working-directory: ./Homi/Backend
+      run: npm ci
+
+    - name: Run ESLint (if configured)
+      working-directory: ./Homi/Backend
+      run: |
+        # Uncomment when ESLint is added
+        # npm run lint
+        echo "ESLint checks would run here"
+
+    - name: Check code formatting
+      working-directory: ./Homi/Backend
+      run: |
+        # Check if code follows formatting standards
+        echo "Code formatting checks would run here"
+
+  # Security Scanning
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: 'Homi/Backend/package-lock.json'
-      - name: Install backend dependencies
-        working-directory: ./Homi/Backend
-        run: npm ci
-      - name: Run npm audit
-        working-directory: ./Homi/Backend
-        run: npm audit --audit-level moderate
-      - name: Run Snyk
-        uses: snyk/actions/node@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-        continue-on-error: true
 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'Homi/Backend/package-lock.json'
+
+    - name: Install backend dependencies
+      working-directory: ./Homi/Backend
+      run: npm ci
+
+    - name: Run security audit
+      working-directory: ./Homi/Backend
+      run: npm audit --audit-level moderate
+
+    - name: Run Snyk security scan
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+      continue-on-error: true
+
+  # Build and Deploy (Optional)
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
-    needs: [integration-tests, code-quality, security-scan]
+    needs: [backend-tests, frontend-tests, integration-tests]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: 'Homi/Backend/package-lock.json'
-      - name: Install backend dependencies
-        working-directory: ./Homi/Backend
-        run: npm ci
-      - name: Build backend
-        working-directory: ./Homi/Backend
-        run: |
-          echo "Backend build completed"
-          # add build commands here
-      - name: Deploy to staging
-        run: |
-          echo "Deploy to staging"
-          # add deployment steps here
 
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'Homi/Backend/package-lock.json'
+
+    - name: Install backend dependencies
+      working-directory: ./Homi/Backend
+      run: npm ci
+
+    - name: Build backend
+      working-directory: ./Homi/Backend
+      run: |
+        echo "Backend build completed"
+        # Add build steps here if needed
+
+    - name: Deploy to staging
+      run: |
+        echo "Deploy to staging environment"
+        # Add deployment steps here
+
+  # Notification
   notify:
     name: Notify Results
     runs-on: ubuntu-latest
-    needs: [integration-tests, code-quality, security-scan]
+    needs: [backend-tests, frontend-tests, integration-tests, code-quality, security-scan]
     if: always()
+
     steps:
-      - name: Notify on success
-        if: ${{ needs.integration-tests.result == 'success' && needs.code-quality.result == 'success' && needs.security-scan.result == 'success' }}
-        run: echo "✅ All checks passed successfully!"
-      - name: Notify on failure
-        if: ${{ needs.integration-tests.result == 'failure' || needs.code-quality.result == 'failure' || needs.security-scan.result == 'failure' }}
-        run: echo "❌ Some checks failed. Check logs."
+    - name: Notify on success
+      if: ${{ needs.backend-tests.result == 'success' && needs.frontend-tests.result == 'success' }}
+      run: |
+        echo "✅ All tests passed successfully!"
+
+    - name: Notify on failure
+      if: ${{ needs.backend-tests.result == 'failure' || needs.frontend-tests.result == 'failure' }}
+      run: |
+        echo "❌ Some tests failed. Please check the logs."
