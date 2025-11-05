@@ -49,7 +49,7 @@ const add3DModelToCatalog = async () => {
       defaultDimensions: { width: 2.0, height: 0.6, depth: 2.2 },
       materialOptions: ["wood", "fabric"],
       imageUrl: "",
-      description: "Queen-sized bed with soft fabric upholstery and wooden frame",
+      description: "Simple Bed",
       modelFileName: "Bed"
     };
 
@@ -68,7 +68,7 @@ const add3DModelToCatalog = async () => {
       type: "Couch",
       defaultDimensions: { width: 2.2, height: 0.8, depth: 1.0 },
       materialOptions: ["fabric", "leather"],
-      imageUrl: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800",
+      imageUrl: "",
       description: "Modern 3-seater couch with comfortable cushions",
       modelFileName: "Cozy_Elegance"
     };
@@ -79,17 +79,17 @@ const add3DModelToCatalog = async () => {
       defaultDimensions: { width: 1.5, height: 0.75, depth: 0.7 },
       materialOptions: ["wood", "metal"],
       imageUrl: "",
-      description: "Spacious wooden desk with sleek metal frame for productivity",
+      description: "Simple Offic Desk",
       modelFileName: "Office_desks_wooden"
     };
 
     const table = {
-      name: "Dining Table",
+      name: "Table",
       type: "Table",
       defaultDimensions: { width: 1.8, height: 0.75, depth: 1.0 },
       materialOptions: ["wood", "glass"],
       imageUrl: "",
-      description: "Rectangular dining table suitable for 4–6 people",
+      description: "Simple table",
       modelFileName: "PorTable"
     };
 
