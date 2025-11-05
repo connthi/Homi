@@ -26,7 +26,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		796C44E82EA958A9004A2403 /* Homi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = Homi.app; path = "/Users/phongtang/Documents/Homi/Homi/Frontend/Homi/build/Debug-iphoneos/Homi.app"; sourceTree = "<absolute>"; };
+		3D66B4EB2EBAE4710009C6DC /* Homi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Homi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		796C44F62EA96019004A2403 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
 		796C44F82EA96029004A2403 /* CatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogView.swift; sourceTree = "<group>"; };
 		796C44FA2EA96032004A2403 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -59,7 +59,6 @@
 		796C44DF2EA958A9004A2403 = {
 			isa = PBXGroup;
 			children = (
-				796C451F2EBADE26004A2403 /* New Group */,
 				796C45072EA960F0004A2403 /* Assets.xcassets */,
 				796C45052EA9605A004A2403 /* Preview Content */,
 				796C45022EA96053004A2403 /* RoomView.swift */,
@@ -70,6 +69,7 @@
 				796C44F82EA96029004A2403 /* CatalogView.swift */,
 				796C44F62EA96019004A2403 /* APIService.swift */,
 				796C45272EBADF3A004A2403 /* 3Dmodels */,
+				3D66B4EB2EBAE4710009C6DC /* Homi.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -79,13 +79,6 @@
 				796C45042EA9605A004A2403 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
-			sourceTree = "<group>";
-		};
-		796C451F2EBADE26004A2403 /* New Group */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = "New Group";
 			sourceTree = "<group>";
 		};
 		796C45272EBADF3A004A2403 /* 3Dmodels */ = {
@@ -121,7 +114,7 @@
 			packageProductDependencies = (
 			);
 			productName = Homi;
-			productReference = 796C44E82EA958A9004A2403 /* Homi.app */;
+			productReference = 3D66B4EB2EBAE4710009C6DC /* Homi.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -323,7 +316,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZN2X525H94;
+				DEVELOPMENT_TEAM = WWQJF372VV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -337,7 +330,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.phongtang.homi;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zsabry.homi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -358,7 +351,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZN2X525H94;
+				DEVELOPMENT_TEAM = WWQJF372VV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -372,7 +365,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.phongtang.homi;
+				PRODUCT_BUNDLE_IDENTIFIER = com.zsabry.homi;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

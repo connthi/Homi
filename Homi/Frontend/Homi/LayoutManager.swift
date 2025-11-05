@@ -12,7 +12,10 @@ class LayoutManager: ObservableObject {
     private let apiService = APIService.shared
     
     init() {
-        loadCatalog()
+        Task {
+            // Use 'await' inside the Task block
+            await loadCatalog()
+        }
     }
     
     // MARK: - Layout Management
@@ -206,24 +209,33 @@ class LayoutManager: ObservableObject {
         }
     }
     
-    // MARK: - Catalog Management
-    
-    private func loadCatalog() {
-        Task {
-            do {
-                let items = try await apiService.fetchCatalog()
-                await MainActor.run {
-                    self.catalogItems = items
-                    self.isCatalogLoaded = true
-                    self.updateFurnitureNodes()
-                }
-            } catch {
-                print("Failed to load catalog: \(error)")
+    // ... inside loadCatalog()
+    @MainActor // Ensures UI updates happen safely
+    func loadCatalog() async {
+        do {
+            let items = try await APIService.shared.fetchCatalog()
+            
+            // --- CRITICAL FIX ---
+            // Store the fetched items in the @Published array
+            // This will update the CatalogView and allow RoomView to find items.
+            self.catalogItems = items
+            self.isCatalogLoaded = true
+            
+            // You can still keep the print statements for debugging
+            if let firstItem = items.first {
+                print("✅ Successfully loaded \(items.count) items from Render!")
+                print("First item name: \(firstItem.name)")
+            } else {
+                print("⚠️ Catalog loaded successfully, but it was empty.")
             }
+            
+        } catch {
+            print("❌ FAILED to connect to Render API. Error: \(error.localizedDescription)")
         }
     }
     
     func getCatalogItem(by id: String) -> CatalogItem? {
         return catalogItems.first { $0.id == id }
     }
+    
 }
