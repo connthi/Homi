@@ -67,6 +67,42 @@ Homi follows a **client-server model** optimized for modularity and performance.
   - `/layouts` – Create, read, update, delete room layouts  
   - `/catalog` – Retrieve furniture catalog data  
 - Interfaces with MongoDB for persistent storage  
+---
+
+## Operational Use Case (Prototype)
+
+As of Week 4, the following end-to-end use case is fully functional:
+
+### Use Case 1: Place and Manipulate a Furniture Item
+
+**User Action:** User taps the **"Add Furniture"** button.  
+**System Response:** The system displays the **Furniture Catalog** list fetched from the backend.
+
+**User Action:** User selects a **"Sofa"** item from the catalog.  
+**System Response:** The system instantiates a **3D model** of the sofa at the center of the room layout.
+
+**User Action:** User taps on the sofa and choose to move, rotate, or scale the sofa.  
+**System Response:** The system highlights the funiture, and provides a UI that says
+move, rotate, scale
+
+**User Action:** User taps on move and drag the sofa around the room.
+**System Response:** The system moves the sofa object around its **horizontal axis**.
+
+**User Action:** User taps on scale and performs a **two-finger enlarge gesture** on the sofa.  
+**System Response:** The system scales the sofa object on the size depending on the action.
+
+**User Action:** User taps on rotate and performs a **two-finger rotation gesture** on the sofa.  
+**System Response:** The system rotates the sofa object around its **vertical axis**.
+
+**User Action:** User taps done.  
+**System Response:** The system **deselects** the sofa, registering its final **position and rotation**.
+
+This use case demonstrates the complete integration of all major system components:
+- **Frontend (iOS/SceneKit):** Gesture handling, 3D object rendering, and camera controls  
+- **Backend (Node.js/Express):** Serves the furniture catalog via API requests  
+- **Database (MongoDB Atlas):** Stores catalog data used for spawning 3D models
+
+---
 
 ## Getting Started
 **Living Document**
@@ -77,3 +113,58 @@ Access our collaborative project planning and requirements document here:
 ```bash
 git clone https://github.com/uwproject-homi/homi.git
 cd homi
+
+## 🧱 Build Instructions
+
+Backend (Node.js + Express)
+1. The production backend is **hosted on Render**, already configured with a live MongoDB database.
+   - No `.env` setup is required to run the system using the deployed backend.
+2. To run locally (optional):
+   ```bash
+   cd Homi/Backend
+   npm install
+   npm start
+
+## If you wish to test locally, create a .env file in Homi/Backend with:
+MONGO_URI=<your own MongoDB Atlas URI>
+PORT=5001
+
+## iOS Frontend (Swift + SceneKit)
+Open the iOS project in Xcode:
+  - Open Homi/Homi/Frontend/Homi
+  - Delete the given folder leaving only the root directory
+  - Move all files in Homi/Homi/Frontend/Homi into the root xcode directory
+  - Ensure the deployment target is iOS 17.0 or later.
+  - Press Run ▶️ in Xcode to build and launch the app on an iPhone simulator or connected device.
+
+## 🧪 Test Instructions
+## Backend Tests
+1. Automated backend tests validate API endpoints, database connections, and catalog data consistency.
+From the backend directory:
+  - cd Homi/Backend
+  - npm test
+This runs all tests located in:
+  - catalogAPI.test.js
+  - layoutAPI.test.js
+  - database.test.js
+The CI/CD pipeline (.github/workflows/ci.yml) automatically runs:
+  - Code quality checks (ESLint, formatting placeholders)
+  - Security scans (npm audit, Snyk)
+  - Integration test placeholders for future builds
+Test results are printed to the console and verified automatically in GitHub Actions.
+
+## 🚀 Run Instructions
+## Running the Full System
+1. Ensure the backend is running (either locally or via Render deployment).
+2. Launch the iOS app in Xcode using Run ▶️.
+3. In the app:
+      - Tap Start new design
+      - Tap Add Furniture → Select a furniture item (e.g., Sofa).
+      - The selected model appears in the 3D room.
+      - Select the model to move, rotate, or scale the model
+      - Save the layout to store it in the cloud database.
+
+This demonstrates the fully functional end-to-end prototype, where:
+  - The frontend (iOS app) sends API requests.
+  - The backend (Express server on Render) handles CRUD operations.
+  - The database (MongoDB Atlas) persists user data and furniture metadata.
