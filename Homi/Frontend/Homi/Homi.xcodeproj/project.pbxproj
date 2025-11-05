@@ -16,13 +16,13 @@
 		796C45032EA96053004A2403 /* RoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C45022EA96053004A2403 /* RoomView.swift */; };
 		796C45062EA9605A004A2403 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 796C45042EA9605A004A2403 /* Preview Assets.xcassets */; };
 		796C45082EA960F0004A2403 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 796C45072EA960F0004A2403 /* Assets.xcassets */; };
-		796C45122EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45112EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz */; };
-		796C45142EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45132EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */; };
-		796C45162EB9699C004A2403 /* PorTable.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45152EB9699C004A2403 /* PorTable.usdz */; };
-		796C45182EB969AA004A2403 /* Office_desks_wooden.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45172EB969AA004A2403 /* Office_desks_wooden.usdz */; };
-		796C451A2EB969AF004A2403 /* Bookshelf.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45192EB969AF004A2403 /* Bookshelf.usdz */; };
-		796C451C2EB969B4004A2403 /* Cozy_Elegance.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C451B2EB969B4004A2403 /* Cozy_Elegance.usdz */; };
-		796C451E2EB969D9004A2403 /* Bed.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C451D2EB969D9004A2403 /* Bed.usdz */; };
+		796C45282EBADF3A004A2403 /* Bookshelf.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45212EBADF3A004A2403 /* Bookshelf.usdz */; };
+		796C45292EBADF3A004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45232EBADF3A004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */; };
+		796C452A2EBADF3A004A2403 /* Office_desks_wooden.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45252EBADF3A004A2403 /* Office_desks_wooden.usdz */; };
+		796C452B2EBADF3A004A2403 /* Cozy_Elegance.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45222EBADF3A004A2403 /* Cozy_Elegance.usdz */; };
+		796C452C2EBADF3A004A2403 /* Bed.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45202EBADF3A004A2403 /* Bed.usdz */; };
+		796C452D2EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45242EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz */; };
+		796C452E2EBADF3A004A2403 /* PorTable.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45262EBADF3A004A2403 /* PorTable.usdz */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,13 +36,13 @@
 		796C45022EA96053004A2403 /* RoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomView.swift; sourceTree = "<group>"; };
 		796C45042EA9605A004A2403 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		796C45072EA960F0004A2403 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		796C45112EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Gameready_Gaming_Chair.usdz; sourceTree = "<group>"; };
-		796C45132EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Desktop_speaker_with_a_wooden_enclosure.usdz; sourceTree = "<group>"; };
-		796C45152EB9699C004A2403 /* PorTable.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = PorTable.usdz; sourceTree = "<group>"; };
-		796C45172EB969AA004A2403 /* Office_desks_wooden.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Office_desks_wooden.usdz; sourceTree = "<group>"; };
-		796C45192EB969AF004A2403 /* Bookshelf.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bookshelf.usdz; sourceTree = "<group>"; };
-		796C451B2EB969B4004A2403 /* Cozy_Elegance.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Cozy_Elegance.usdz; sourceTree = "<group>"; };
-		796C451D2EB969D9004A2403 /* Bed.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bed.usdz; sourceTree = "<group>"; };
+		796C45202EBADF3A004A2403 /* Bed.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bed.usdz; sourceTree = "<group>"; };
+		796C45212EBADF3A004A2403 /* Bookshelf.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bookshelf.usdz; sourceTree = "<group>"; };
+		796C45222EBADF3A004A2403 /* Cozy_Elegance.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Cozy_Elegance.usdz; sourceTree = "<group>"; };
+		796C45232EBADF3A004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Desktop_speaker_with_a_wooden_enclosure.usdz; sourceTree = "<group>"; };
+		796C45242EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Gameready_Gaming_Chair.usdz; sourceTree = "<group>"; };
+		796C45252EBADF3A004A2403 /* Office_desks_wooden.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Office_desks_wooden.usdz; sourceTree = "<group>"; };
+		796C45262EBADF3A004A2403 /* PorTable.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = PorTable.usdz; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +59,7 @@
 		796C44DF2EA958A9004A2403 = {
 			isa = PBXGroup;
 			children = (
+				796C451F2EBADE26004A2403 /* New Group */,
 				796C45072EA960F0004A2403 /* Assets.xcassets */,
 				796C45052EA9605A004A2403 /* Preview Content */,
 				796C45022EA96053004A2403 /* RoomView.swift */,
@@ -68,13 +69,7 @@
 				796C44FA2EA96032004A2403 /* ContentView.swift */,
 				796C44F82EA96029004A2403 /* CatalogView.swift */,
 				796C44F62EA96019004A2403 /* APIService.swift */,
-				796C45112EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz */,
-				796C45132EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */,
-				796C45152EB9699C004A2403 /* PorTable.usdz */,
-				796C45172EB969AA004A2403 /* Office_desks_wooden.usdz */,
-				796C45192EB969AF004A2403 /* Bookshelf.usdz */,
-				796C451B2EB969B4004A2403 /* Cozy_Elegance.usdz */,
-				796C451D2EB969D9004A2403 /* Bed.usdz */,
+				796C45272EBADF3A004A2403 /* 3Dmodels */,
 			);
 			sourceTree = "<group>";
 		};
@@ -84,6 +79,27 @@
 				796C45042EA9605A004A2403 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		796C451F2EBADE26004A2403 /* New Group */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = "New Group";
+			sourceTree = "<group>";
+		};
+		796C45272EBADF3A004A2403 /* 3Dmodels */ = {
+			isa = PBXGroup;
+			children = (
+				796C45202EBADF3A004A2403 /* Bed.usdz */,
+				796C45212EBADF3A004A2403 /* Bookshelf.usdz */,
+				796C45222EBADF3A004A2403 /* Cozy_Elegance.usdz */,
+				796C45232EBADF3A004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz */,
+				796C45242EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz */,
+				796C45252EBADF3A004A2403 /* Office_desks_wooden.usdz */,
+				796C45262EBADF3A004A2403 /* PorTable.usdz */,
+			);
+			path = 3Dmodels;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -148,15 +164,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				796C451E2EB969D9004A2403 /* Bed.usdz in Resources */,
-				796C451A2EB969AF004A2403 /* Bookshelf.usdz in Resources */,
 				796C45082EA960F0004A2403 /* Assets.xcassets in Resources */,
-				796C45142EB95649004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */,
-				796C45182EB969AA004A2403 /* Office_desks_wooden.usdz in Resources */,
-				796C45162EB9699C004A2403 /* PorTable.usdz in Resources */,
-				796C45122EB94FB2004A2403 /* Gameready_Gaming_Chair.usdz in Resources */,
-				796C451C2EB969B4004A2403 /* Cozy_Elegance.usdz in Resources */,
 				796C45062EA9605A004A2403 /* Preview Assets.xcassets in Resources */,
+				796C45282EBADF3A004A2403 /* Bookshelf.usdz in Resources */,
+				796C45292EBADF3A004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */,
+				796C452A2EBADF3A004A2403 /* Office_desks_wooden.usdz in Resources */,
+				796C452B2EBADF3A004A2403 /* Cozy_Elegance.usdz in Resources */,
+				796C452C2EBADF3A004A2403 /* Bed.usdz in Resources */,
+				796C452D2EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz in Resources */,
+				796C452E2EBADF3A004A2403 /* PorTable.usdz in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
