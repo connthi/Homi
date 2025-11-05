@@ -3,7 +3,7 @@ import Foundation
 class APIService {
     static let shared = APIService()
     
-    private let baseURL = "http://127.0.0.1:5001/api"
+    private let baseURL = "https://homi-sfhr.onrender.com/api"
     private let session = URLSession.shared
     
     private init() {}
