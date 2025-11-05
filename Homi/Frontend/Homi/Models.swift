@@ -4,7 +4,7 @@ import SceneKit
 // MARK: - Data Models matching backend API
 
 struct Layout: Codable, Identifiable {
-    let id: String
+    var id: String?
     let userId: String
     let name: String
     let createdAt: Date
@@ -15,7 +15,7 @@ struct Layout: Codable, Identifiable {
         case userId, name, createdAt, furnitureItems
     }
     
-    init(id: String, userId: String, name: String, createdAt: Date, furnitureItems: [FurnitureItem]) {
+    init(id: String? = nil, userId: String, name: String, createdAt: Date, furnitureItems: [FurnitureItem]) {
         self.id = id
         self.userId = userId
         self.name = name
@@ -25,7 +25,7 @@ struct Layout: Codable, Identifiable {
 }
 
 struct FurnitureItem: Codable, Identifiable {
-    let id: String
+    var id: String?
     let furnitureId: String
     let position: Position
     let rotation: Rotation

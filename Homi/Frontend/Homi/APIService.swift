@@ -163,7 +163,12 @@ class APIService {
     }
     
     func updateLayout(_ layout: Layout) async throws -> Layout {
-        guard let url = URL(string: "\(baseURL)/layouts/\(layout.id)") else {
+        // Safely unwrap the optional ID
+        guard let id = layout.id, !id.isEmpty else {
+            throw APIError.invalidURL
+        }
+
+        guard let url = URL(string: "\(baseURL)/layouts/\(id)") else {
             throw APIError.invalidURL
         }
         
@@ -197,6 +202,7 @@ class APIService {
             throw APIError.decodingError(error)
         }
     }
+
     
     func deleteLayout(id: String) async throws {
         guard let url = URL(string: "\(baseURL)/layouts/\(id)") else {
