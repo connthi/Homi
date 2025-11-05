@@ -246,8 +246,14 @@ struct LayoutRowView: View {
     private func deleteLayout() {
         isDeleting = true
         Task {
+            guard let id = layout.id else {
+                print("❌ No layout ID found — cannot delete unsaved layout.")
+                isDeleting = false
+                return
+            }
+
             do {
-                try await APIService.shared.deleteLayout(id: layout.id)
+                try await APIService.shared.deleteLayout(id: id)
                 await MainActor.run {
                     onRefresh()
                 }
@@ -259,6 +265,7 @@ struct LayoutRowView: View {
             }
         }
     }
+
 }
 
 #Preview {

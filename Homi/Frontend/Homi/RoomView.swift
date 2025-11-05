@@ -252,7 +252,6 @@ struct RoomView: View {
             CatalogSelectionView(
                 catalogItems: layoutManager.catalogItems,
                 onSelectItem: { item in
-                    
                     layoutManager.addFurniture(catalogItem: item, at: SCNVector3(0, 0, 0))
                     showingCatalogSheet = false
                 }
@@ -413,9 +412,11 @@ struct Interactive3DRoomView: UIViewRepresentable {
         private var firstPersonAngleX: Float = 0.0
         private var firstPersonAngleY: Float = 0.0
         
-        // IMPROVED: Smoother movement with damping
-        private var lastPanTranslation: CGPoint = .zero
-        private var panVelocity: CGPoint = .zero
+        // Smooth movement with interpolation
+        private var targetPosition: SCNVector3?
+        private var currentVelocity: SCNVector3 = SCNVector3(0, 0, 0)
+        private var displayLink: CADisplayLink?
+        private var lastUpdateTime: TimeInterval = 0
         
         init(_ parent: Interactive3DRoomView) {
             self.parent = parent
@@ -627,18 +628,34 @@ struct Interactive3DRoomView: UIViewRepresentable {
 
                 switch editMode {
                 case .move:
-                   
-                    let moveSpeed: Float = 0.003
+                    let moveSpeed: Float = 0.01
                     var newPosition = SCNVector3(
                         selected.position.x + Float(translation.x) * moveSpeed,
                         selected.position.y,
                         selected.position.z - Float(translation.y) * moveSpeed
                     )
-                    
+
+                    // Clamp + collision
                     newPosition = applyCollisionDetection(position: newPosition, furniture: selected, scene: scene)
-                    selected.position = newPosition
-                    parent.onFurnitureMoved(selected.furnitureItem, newPosition)
-                    
+
+                    // Smooth movement: set target instead of instant move
+                    targetPosition = newPosition
+                    if displayLink == nil {
+                        displayLink = CADisplayLink(target: self, selector: #selector(updateSmoothMovement))
+                        displayLink?.add(to: .main, forMode: .common)
+                    }
+
+                    // End of gesture: save + cleanup
+                    if gesture.state == .ended {
+                        parent.onFurnitureMoved(selected.furnitureItem, newPosition)
+
+                        // Stop smooth animation loop
+                        displayLink?.invalidate()
+                        displayLink = nil
+                        targetPosition = nil
+                    }
+
+                    gesture.setTranslation(.zero, in: gesture.view) 
                 case .rotate:
                     let rotationSpeed: Float = 0.01
                     let newRotation = SCNVector3(
@@ -688,8 +705,20 @@ struct Interactive3DRoomView: UIViewRepresentable {
                 gesture.setTranslation(.zero, in: gesture.view)
             }
         }
+
+        @objc func updateSmoothMovement() {
+            guard let selected = parent.selectedNode, let target = targetPosition else { return }
+
+            // Linear interpolation for smooth movement
+            let smoothing: Float = 0.7
+            let newPos = SCNVector3(
+                selected.position.x + (target.x - selected.position.x) * smoothing,
+                0,
+                selected.position.z + (target.z - selected.position.z) * smoothing
+            )
+            selected.position = newPos
+        }
         
-        //Collision detection with proper Y positioning
         private func applyCollisionDetection(position: SCNVector3, furniture: FurnitureNode, scene: SCNScene) -> SCNVector3 {
             let roomWidth: Float = 8.0
             let roomLength: Float = 10.0
@@ -707,7 +736,6 @@ struct Interactive3DRoomView: UIViewRepresentable {
             let minZ = -roomLength / 2.0 + furnitureDepth + 0.1
             let maxZ = roomLength / 2.0 - furnitureDepth - 0.1
             clampedPosition.z = max(minZ, min(maxZ, position.z))
-
             clampedPosition.y = 0
             
             // Furniture-to-furniture collision detection
