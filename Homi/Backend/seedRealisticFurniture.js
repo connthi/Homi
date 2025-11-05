@@ -24,7 +24,7 @@ const add3DModelToCatalog = async () => {
         depth: 0.65          
       },
       materialOptions: ["leather"],
-      imageUrl: "https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400",
+      imageUrl: "",
       description: "Comfortable modern gaming chair",
       modelFileName: "Gameready_Gaming_Chair"
     };
@@ -38,7 +38,7 @@ const add3DModelToCatalog = async () => {
         depth: 0.25          
       },
       materialOptions: ["wood"],
-      imageUrl: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400",
+      imageUrl: "",
       description: "Wooden desktop speaker",
       modelFileName: "Desktop_speaker_with_a_wooden_enclosure"
     };
@@ -48,7 +48,7 @@ const add3DModelToCatalog = async () => {
       type: "Bed",
       defaultDimensions: { width: 2.0, height: 0.6, depth: 2.2 },
       materialOptions: ["wood", "fabric"],
-      imageUrl: "https://images.unsplash.com/photo-1600607687920-4e1b52b2c0d4?w=800",
+      imageUrl: "",
       description: "Queen-sized bed with soft fabric upholstery and wooden frame",
       modelFileName: "Bed"
     };
@@ -58,7 +58,7 @@ const add3DModelToCatalog = async () => {
       type: "Bookshelf",
       defaultDimensions: { width: 1.0, height: 2.0, depth: 0.4 },
       materialOptions: ["wood"],
-      imageUrl: "https://images.unsplash.com/photo-1589829085413-56d43f1b27b9?w=800",
+      imageUrl: "",
       description: "Tall wooden bookshelf with multiple compartments",
       modelFileName: "Bookshelf"
     };
@@ -78,7 +78,7 @@ const add3DModelToCatalog = async () => {
       type: "Desk",
       defaultDimensions: { width: 1.5, height: 0.75, depth: 0.7 },
       materialOptions: ["wood", "metal"],
-      imageUrl: "https://images.unsplash.com/photo-1616627562198-438cc1f6dd55?w=800",
+      imageUrl: "",
       description: "Spacious wooden desk with sleek metal frame for productivity",
       modelFileName: "Office_desks_wooden"
     };
@@ -88,7 +88,7 @@ const add3DModelToCatalog = async () => {
       type: "Table",
       defaultDimensions: { width: 1.8, height: 0.75, depth: 1.0 },
       materialOptions: ["wood", "glass"],
-      imageUrl: "https://images.unsplash.com/photo-1628744878513-f8afc4c0b742?w=800",
+      imageUrl: "",
       description: "Rectangular dining table suitable for 4–6 people",
       modelFileName: "PorTable"
     };
