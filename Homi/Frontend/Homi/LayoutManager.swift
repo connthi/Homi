@@ -58,7 +58,7 @@ class LayoutManager: ObservableObject {
         guard let layout = currentLayout else { return }
 
         let newFurnitureItem = FurnitureItem(
-            id: nil,
+            id: catalogItem.id,
             furnitureId: catalogItem.id,
             position: Position(x: Double(position.x), y: 0, z: Double(position.z)),
             rotation: Rotation(x: 0, y: 0, z: 0),

@@ -25,7 +25,7 @@ struct Layout: Codable, Identifiable {
 }
 
 struct FurnitureItem: Codable, Identifiable {
-    var id: String?
+    var id: String
     let furnitureId: String
     let position: Position
     let rotation: Rotation
@@ -35,6 +35,22 @@ struct FurnitureItem: Codable, Identifiable {
     enum CodingKeys: String, CodingKey {
         case id = "_id"
         case furnitureId, position, rotation, scale, properties
+    }
+
+    init(
+        id: String = UUID().uuidString,
+        furnitureId: String,
+        position: Position,
+        rotation: Rotation,
+        scale: Scale,
+        properties: FurnitureProperties
+    ) {
+        self.id = id
+        self.furnitureId = furnitureId
+        self.position = position
+        self.rotation = rotation
+        self.scale = scale
+        self.properties = properties
     }
 }
 
