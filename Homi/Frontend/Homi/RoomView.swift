@@ -412,12 +412,6 @@ struct Interactive3DRoomView: UIViewRepresentable {
         private var firstPersonAngleX: Float = 0.0
         private var firstPersonAngleY: Float = 0.0
         
-        // Smooth movement with interpolation
-        private var targetPosition: SCNVector3?
-        private var currentVelocity: SCNVector3 = SCNVector3(0, 0, 0)
-        private var displayLink: CADisplayLink?
-        private var lastUpdateTime: TimeInterval = 0
-        
         init(_ parent: Interactive3DRoomView) {
             self.parent = parent
         }
@@ -535,10 +529,19 @@ struct Interactive3DRoomView: UIViewRepresentable {
         }
         
         func updateFurnitureNodes(scene: SCNScene, nodes: [FurnitureNode]) {
-            scene.rootNode.childNodes.filter { $0 is FurnitureNode }.forEach { $0.removeFromParentNode() }
-            nodes.forEach { scene.rootNode.addChildNode($0) }
+            let existingFurniture = scene.rootNode.childNodes.compactMap { $0 as? FurnitureNode }
+            
+            // Add only new nodes that don't exist yet
+            for node in nodes where !existingFurniture.contains(where: { $0.furnitureItem.id == node.furnitureItem.id }) {
+                scene.rootNode.addChildNode(node)
+            }
+            
+            // Remove deleted ones
+            for old in existingFurniture where !nodes.contains(where: { $0.furnitureItem.id == old.furnitureItem.id }) {
+                old.removeFromParentNode()
+            }
         }
-        
+
         func setupGestures(sceneView: SCNView) {
             let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
             sceneView.addGestureRecognizer(tap)
@@ -565,7 +568,6 @@ struct Interactive3DRoomView: UIViewRepresentable {
                 removeSelectionHighlight(from: previousSelection)
             }
             
-            // FIXED: Check if hit node is a FurnitureNode or a child of one
             if let hit = hitResults.first {
                 var currentNode = hit.node
                 var furnitureNode: FurnitureNode?
@@ -628,34 +630,28 @@ struct Interactive3DRoomView: UIViewRepresentable {
 
                 switch editMode {
                 case .move:
-                    let moveSpeed: Float = 0.01
-                    var newPosition = SCNVector3(
-                        selected.position.x + Float(translation.x) * moveSpeed,
+                    guard let selected = parent.selectedNode else { return }
+
+                    let moveSpeed: Float = 0.05
+                    let translationX = Float(translation.x) * moveSpeed
+                    let translationZ = -Float(translation.y) * moveSpeed
+
+                    // Compute desired target
+                    let target = SCNVector3(
+                        selected.position.x + translationX,
                         selected.position.y,
-                        selected.position.z - Float(translation.y) * moveSpeed
+                        selected.position.z + translationZ
                     )
 
-                    // Clamp + collision
-                    newPosition = applyCollisionDetection(position: newPosition, furniture: selected, scene: scene)
+                    // Apply wall/furniture collision
+                    let clampedTarget = applyCollisionDetection(position: target, furniture: selected, scene: scene)
 
-                    // Smooth movement: set target instead of instant move
-                    targetPosition = newPosition
-                    if displayLink == nil {
-                        displayLink = CADisplayLink(target: self, selector: #selector(updateSmoothMovement))
-                        displayLink?.add(to: .main, forMode: .common)
-                    }
+                    // Smooth interpolation only for this node
+                    let smoothing: Float = 0.5
+                    selected.position.x += (clampedTarget.x - selected.position.x) * smoothing
+                    selected.position.z += (clampedTarget.z - selected.position.z) * smoothing
 
-                    // End of gesture: save + cleanup
-                    if gesture.state == .ended {
-                        parent.onFurnitureMoved(selected.furnitureItem, newPosition)
-
-                        // Stop smooth animation loop
-                        displayLink?.invalidate()
-                        displayLink = nil
-                        targetPosition = nil
-                    }
-
-                    gesture.setTranslation(.zero, in: gesture.view) 
+                    parent.onFurnitureMoved(selected.furnitureItem, selected.position)
                 case .rotate:
                     let rotationSpeed: Float = 0.01
                     let newRotation = SCNVector3(
@@ -667,7 +663,7 @@ struct Interactive3DRoomView: UIViewRepresentable {
                     parent.onFurnitureRotated(selected.furnitureItem, newRotation)
                     
                 case .scale:
-                    let scaleSpeed: Float = 0.001
+                    let scaleSpeed: Float = 0.01
                     let scaleDelta = 1.0 + Float(-translation.y) * scaleSpeed
                     let newScale = SCNVector3(
                         selected.scale.x * scaleDelta,
@@ -704,19 +700,6 @@ struct Interactive3DRoomView: UIViewRepresentable {
                 updateCameraPosition()
                 gesture.setTranslation(.zero, in: gesture.view)
             }
-        }
-
-        @objc func updateSmoothMovement() {
-            guard let selected = parent.selectedNode, let target = targetPosition else { return }
-
-            // Linear interpolation for smooth movement
-            let smoothing: Float = 0.7
-            let newPos = SCNVector3(
-                selected.position.x + (target.x - selected.position.x) * smoothing,
-                0,
-                selected.position.z + (target.z - selected.position.z) * smoothing
-            )
-            selected.position = newPos
         }
         
         private func applyCollisionDetection(position: SCNVector3, furniture: FurnitureNode, scene: SCNScene) -> SCNVector3 {
