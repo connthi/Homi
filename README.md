@@ -6,9 +6,9 @@
 
 ## Team Members
 - **Connor Thibault** – Project Manager  
-- **Phong Tang** – Full Stack Engineer (Frontend/UI)  
-- **Zubair Sabry** – Full Stack Engineer (3D Rendering & Interaction)  
-- **Ebrahim Elmi** – Full Stack Engineer / DevOps  
+- **Phong Tang** – Full Stack Engineer (3D Rendering & Interaction)  
+- **Zubair Sabry** – Full Stack Engineer (Frontend/UI)  
+- **Ebrahim Elmi** – Full Stack Engineer (DevOps)
 - **Hussein Abdi** – Full Stack Engineer (Backend & Database)
 
 ---
@@ -109,62 +109,3 @@ This use case demonstrates the complete integration of all major system componen
 
 Access our collaborative project planning and requirements document here:
 **https://docs.google.com/document/d/1E2BtWbL34D-I5gje0G1xclRfbXhPhTDIb9RfgBJMiEo/edit?usp=sharing**
-## Clone the Repository
-```bash
-git clone https://github.com/uwproject-homi/homi.git
-cd homi
-
-## 🧱 Build Instructions
-
-Backend (Node.js + Express)
-1. The production backend is **hosted on Render**, already configured with a live MongoDB database.
-   - No `.env` setup is required to run the system using the deployed backend.
-2. To run locally (optional):
-   ```bash
-   cd Homi/Backend
-   npm install
-   npm start
-
-## If you wish to test locally, create a .env file in Homi/Backend with:
-MONGO_URI=<your own MongoDB Atlas URI>
-PORT=5001
-
-## iOS Frontend (Swift + SceneKit)
-Open the iOS project in Xcode:
-  - Open Homi/Homi/Frontend/Homi
-  - Delete the given folder leaving only the root directory
-  - Move all files in Homi/Homi/Frontend/Homi into the root xcode directory
-  - Ensure the deployment target is iOS 17.0 or later.
-  - Press Run ▶️ in Xcode to build and launch the app on an iPhone simulator or connected device.
-
-## 🧪 Test Instructions
-## Backend Tests
-1. Automated backend tests validate API endpoints, database connections, and catalog data consistency.
-From the backend directory:
-  - cd Homi/Backend
-  - npm test
-This runs all tests located in:
-  - catalogAPI.test.js
-  - layoutAPI.test.js
-  - database.test.js
-The CI/CD pipeline (.github/workflows/ci.yml) automatically runs:
-  - Code quality checks (ESLint, formatting placeholders)
-  - Security scans (npm audit, Snyk)
-  - Integration test placeholders for future builds
-Test results are printed to the console and verified automatically in GitHub Actions.
-
-## 🚀 Run Instructions
-## Running the Full System
-1. Ensure the backend is running (either locally or via Render deployment).
-2. Launch the iOS app in Xcode using Run ▶️.
-3. In the app:
-      - Tap Start new design
-      - Tap Add Furniture → Select a furniture item (e.g., Sofa).
-      - The selected model appears in the 3D room.
-      - Select the model to move, rotate, or scale the model
-      - Save the layout to store it in the cloud database.
-
-This demonstrates the fully functional end-to-end prototype, where:
-  - The frontend (iOS app) sends API requests.
-  - The backend (Express server on Render) handles CRUD operations.
-  - The database (MongoDB Atlas) persists user data and furniture metadata.
