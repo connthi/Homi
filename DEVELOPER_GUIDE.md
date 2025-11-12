@@ -86,6 +86,7 @@ Test results are printed to the console and verified automatically in GitHub Act
 │   │       ├── HomiApp.swift # App entry point. Launches the main SwiftUI window and logs bundle contents to verify that 3D .usdz model files are properly included.
 │   │       ├── LayoutManager.swift # Central state manager for layouts and furniture. Handles loading catalog data, creating, saving, and updating room layouts, and syncing 3D scene furniture nodes.
 │   │       ├── Models.swift # Defines layout, furniture, and catalog data models, plus FurnitureNode for rendering and scaling 3D models in SceneKit.
+│   │       ├── NewLayoutDialog.swift # Layout dialog for users when creating a new Layout
 │   │       ├── RoomView.swift # Main 3D design interface. Lets users view, add, edit, move, rotate, and scale furniture in a virtual room using SceneKit with interactive SwiftUI controls.
 │   │       └── tests # Frontend tests
 │   └── LICENSE

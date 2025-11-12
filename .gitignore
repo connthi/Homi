@@ -1,0 +1,32 @@
+# --- Global ignores ---
+.DS_Store
+*.log
+*.tmp
+.env
+
+# --- Node ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# --- Build & coverage ---
+dist/
+build/
+coverage/
+.cache/
+*.tgz
+
+# --- Mac/VSCode ---
+.vscode/
+.idea/
+
+# --- iOS / Xcode ---
+*.xcuserdata
+DerivedData/
+*.xcworkspace
+
+# --- Backend specific ---
+Homi/Backend/.env
+

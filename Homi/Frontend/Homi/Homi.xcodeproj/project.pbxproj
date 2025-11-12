@@ -23,6 +23,7 @@
 		796C452C2EBADF3A004A2403 /* Bed.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45202EBADF3A004A2403 /* Bed.usdz */; };
 		796C452D2EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45242EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz */; };
 		796C452E2EBADF3A004A2403 /* PorTable.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45262EBADF3A004A2403 /* PorTable.usdz */; };
+		796C45332EC18227004A2403 /* NewLayoutDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C45322EC18227004A2403 /* NewLayoutDialog.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		796C45242EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Gameready_Gaming_Chair.usdz; sourceTree = "<group>"; };
 		796C45252EBADF3A004A2403 /* Office_desks_wooden.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Office_desks_wooden.usdz; sourceTree = "<group>"; };
 		796C45262EBADF3A004A2403 /* PorTable.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = PorTable.usdz; sourceTree = "<group>"; };
+		796C45322EC18227004A2403 /* NewLayoutDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewLayoutDialog.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +70,7 @@
 				796C44FA2EA96032004A2403 /* ContentView.swift */,
 				796C44F82EA96029004A2403 /* CatalogView.swift */,
 				796C44F62EA96019004A2403 /* APIService.swift */,
+				796C45322EC18227004A2403 /* NewLayoutDialog.swift */,
 				796C45272EBADF3A004A2403 /* 3Dmodels */,
 				3D66B4EB2EBAE4710009C6DC /* Homi.app */,
 			);
@@ -176,6 +179,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				796C45332EC18227004A2403 /* NewLayoutDialog.swift in Sources */,
 				796C44FF2EA96043004A2403 /* LayoutManager.swift in Sources */,
 				796C44F92EA96029004A2403 /* CatalogView.swift in Sources */,
 				796C44F72EA96019004A2403 /* APIService.swift in Sources */,
