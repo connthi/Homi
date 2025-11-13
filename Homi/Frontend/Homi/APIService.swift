@@ -1,45 +1,219 @@
 import Foundation
 
+private struct APIMessageResponse: Codable {
+    let message: String
+}
+
+private struct AuthCredentials: Codable {
+    let email: String
+    let password: String
+}
+
+private struct RegisterPayload: Codable {
+    let email: String
+    let password: String
+    let firstName: String?
+    let lastName: String?
+}
+
+private struct RefreshTokenPayload: Codable {
+    let refreshToken: String
+}
+
 class APIService {
     static let shared = APIService()
     
-    private let baseURL = "https://homi-sfhr.onrender.com/api"
-    private let session = URLSession.shared
+    private let baseURL = "http://192.168.0.183:5001/api"
+    private let session: URLSession
+    private let authService = AuthService.shared
     
-    private init() {}
+    private init(session: URLSession = .shared) {
+        self.session = session
+    }
     
-    // MARK: - Decoder Configuration
+    // MARK: - Layout API Methods
+    
+    func fetchLayouts() async throws -> [Layout] {
+        let request = try makeRequest(path: "/layouts", requiresAuth: true)
+        let data = try await send(request)
+        return try decodeResponse([Layout].self, from: data)
+    }
+    
+    func fetchLayout(id: String) async throws -> Layout {
+        let request = try makeRequest(path: "/layouts/\(id)", requiresAuth: true)
+        let data = try await send(request)
+        return try decodeResponse(Layout.self, from: data)
+    }
+    
+    func saveLayout(_ layout: Layout) async throws -> Layout {
+        let body = try encodeBody(layout)
+        let request = try makeRequest(path: "/layouts", method: "POST", body: body, requiresAuth: true)
+        let data = try await send(request, expectedStatus: 201)
+        return try decodeResponse(Layout.self, from: data)
+    }
+    
+    func updateLayout(_ layout: Layout) async throws -> Layout {
+        guard let id = layout.id, !id.isEmpty else {
+            throw APIError.invalidURL
+        }
+        
+        let body = try encodeBody(layout)
+        let request = try makeRequest(path: "/layouts/\(id)", method: "PUT", body: body, requiresAuth: true)
+        let data = try await send(request)
+        return try decodeResponse(Layout.self, from: data)
+    }
+    
+    func deleteLayout(id: String) async throws {
+        let request = try makeRequest(path: "/layouts/\(id)", method: "DELETE", requiresAuth: true)
+        _ = try await send(request)
+    }
+    
+    // MARK: - Catalog API Methods
+    
+    func fetchCatalog() async throws -> [CatalogItem] {
+        let request = try makeRequest(path: "/catalog", requiresAuth: true)
+        let data = try await send(request)
+        return try decodeResponse([CatalogItem].self, from: data)
+    }
+    
+    // MARK: - Authentication API Methods
+    
+    func login(email: String, password: String) async throws -> AuthResponse {
+        let payload = AuthCredentials(email: email, password: password)
+        let body = try encodeBody(payload)
+        let request = try makeRequest(path: "/auth/login", method: "POST", body: body)
+        let data = try await send(request)
+        return try decodeResponse(AuthResponse.self, from: data)
+    }
+    
+    func register(email: String, password: String, firstName: String?, lastName: String?) async throws -> AuthResponse {
+        let payload = RegisterPayload(email: email, password: password, firstName: firstName, lastName: lastName)
+        let body = try encodeBody(payload)
+        let request = try makeRequest(path: "/auth/register", method: "POST", body: body)
+        let data = try await send(request, expectedStatus: 201)
+        return try decodeResponse(AuthResponse.self, from: data)
+    }
+    
+    func getCurrentUser() async throws -> User {
+        let request = try makeRequest(path: "/auth/me", requiresAuth: true)
+        let data = try await send(request)
+        let response = try decodeResponse(UserEnvelope.self, from: data)
+        return response.user
+    }
+    
+    func refreshToken(refreshToken: String) async throws -> AuthResponse {
+        let payload = RefreshTokenPayload(refreshToken: refreshToken)
+        let body = try encodeBody(payload)
+        let request = try makeRequest(path: "/auth/refresh", method: "POST", body: body)
+        let data = try await send(request)
+        return try decodeResponse(AuthResponse.self, from: data)
+    }
+    
+    func logout(refreshToken: String) async throws {
+        let payload = RefreshTokenPayload(refreshToken: refreshToken)
+        let body = try encodeBody(payload)
+        let request = try makeRequest(path: "/auth/logout", method: "POST", body: body, requiresAuth: true)
+        _ = try await send(request)
+    }
+    
+    // MARK: - Request Helpers
+    
+    private func makeRequest(path: String,
+                             method: String = "GET",
+                             body: Data? = nil,
+                             requiresAuth: Bool = false) throws -> URLRequest {
+        guard let url = URL(string: "\(baseURL)\(path)") else {
+            throw APIError.invalidURL
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = method
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        if let body = body {
+            request.httpBody = body
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+        
+        if requiresAuth {
+            guard let accessToken = authService.getAccessToken() else {
+                throw APIError.unauthorized
+            }
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        }
+        
+        return request
+    }
+    
+    private func send(_ request: URLRequest, expectedStatus: Int? = nil) async throws -> Data {
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.invalidResponse
+            }
+            
+            let successRange = 200..<300
+            if let expectedStatus = expectedStatus, httpResponse.statusCode != expectedStatus {
+                try handleServerError(statusCode: httpResponse.statusCode, data: data)
+            } else if !successRange.contains(httpResponse.statusCode) {
+                try handleServerError(statusCode: httpResponse.statusCode, data: data)
+            }
+            
+            return data
+        } catch let error as APIError {
+            throw error
+        } catch {
+            throw APIError.networkError(error)
+        }
+    }
+    
+    private func handleServerError(statusCode: Int, data: Data) throws {
+        if statusCode == 401 {
+            throw APIError.unauthorized
+        }
+        
+        let message = try? decoder.decode(APIMessageResponse.self, from: data).message
+        throw APIError.serverError(statusCode: statusCode, message: message)
+    }
+    
+    private func encodeBody<T: Encodable>(_ body: T) throws -> Data {
+        do {
+            return try encoder.encode(body)
+        } catch {
+            throw APIError.encodingError(error)
+        }
+    }
+    
+    private func decodeResponse<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw APIError.decodingError(error)
+        }
+    }
+    
+    // MARK: - JSON Helpers
     
     private var decoder: JSONDecoder {
         let decoder = JSONDecoder()
-        
-        // Custom date decoder to handle various ISO8601 formats
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let dateString = try container.decode(String.self)
             
-            // Try multiple ISO8601 formats
             let formatters: [(ISO8601DateFormatter) -> Void] = [
-                { formatter in
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                },
-                { formatter in
-                    formatter.formatOptions = [.withInternetDateTime]
-                },
-                { formatter in
-                    formatter.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime]
-                }
+                { $0.formatOptions = [.withInternetDateTime, .withFractionalSeconds] },
+                { $0.formatOptions = [.withInternetDateTime] },
+                { $0.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime] }
             ]
             
-            for configureFormatter in formatters {
+            for configure in formatters {
                 let formatter = ISO8601DateFormatter()
-                configureFormatter(formatter)
+                configure(formatter)
                 if let date = formatter.date(from: dateString) {
                     return date
                 }
             }
             
-            // Fallback to a simple date formatter
             let fallbackFormatter = DateFormatter()
             fallbackFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
             fallbackFormatter.locale = Locale(identifier: "en_US_POSIX")
@@ -49,203 +223,16 @@ class APIService {
                 return date
             }
             
-            throw DecodingError.dataCorruptedError(
-                in: container,
-                debugDescription: "Cannot decode date string: \(dateString)"
-            )
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date string: \(dateString)")
         }
         
         return decoder
     }
     
-    // MARK: - Layout API Methods
-    
-    func fetchLayouts() async throws -> [Layout] {
-        guard let url = URL(string: "\(baseURL)/layouts") else {
-            throw APIError.invalidURL
-        }
-        
-        let (data, response) = try await session.data(from: url)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-        
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
-        
-        do {
-            // Debug: Print raw JSON
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("📥 Raw JSON from API:")
-                print(jsonString)
-            }
-            
-            return try decoder.decode([Layout].self, from: data)
-        } catch {
-            print("❌ Decoding error: \(error)")
-            if let decodingError = error as? DecodingError {
-                switch decodingError {
-                case .keyNotFound(let key, let context):
-                    print("Key '\(key.stringValue)' not found: \(context.debugDescription)")
-                case .typeMismatch(let type, let context):
-                    print("Type '\(type)' mismatch: \(context.debugDescription)")
-                case .valueNotFound(let type, let context):
-                    print("Value '\(type)' not found: \(context.debugDescription)")
-                case .dataCorrupted(let context):
-                    print("Data corrupted: \(context.debugDescription)")
-                @unknown default:
-                    print("Unknown decoding error")
-                }
-            }
-            throw APIError.decodingError(error)
-        }
-    }
-    
-    func fetchLayout(id: String) async throws -> Layout {
-        guard let url = URL(string: "\(baseURL)/layouts/\(id)") else {
-            throw APIError.invalidURL
-        }
-        
-        let (data, response) = try await session.data(from: url)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-        
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
-        
-        do {
-            return try decoder.decode(Layout.self, from: data)
-        } catch {
-            print("Decoding error: \(error)")
-            throw APIError.decodingError(error)
-        }
-    }
-    
-    func saveLayout(_ layout: Layout) async throws -> Layout {
-        guard let url = URL(string: "\(baseURL)/layouts") else {
-            throw APIError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+    private var encoder: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
-        
-        do {
-            request.httpBody = try encoder.encode(layout)
-        } catch {
-            throw APIError.encodingError(error)
-        }
-        
-        let (data, response) = try await session.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-        
-        guard httpResponse.statusCode == 201 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
-        
-        do {
-            return try decoder.decode(Layout.self, from: data)
-        } catch {
-            print("Decoding error: \(error)")
-            throw APIError.decodingError(error)
-        }
-    }
-    
-    func updateLayout(_ layout: Layout) async throws -> Layout {
-        // Safely unwrap the optional ID
-        guard let id = layout.id, !id.isEmpty else {
-            throw APIError.invalidURL
-        }
-
-        guard let url = URL(string: "\(baseURL)/layouts/\(id)") else {
-            throw APIError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "PUT"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
-        
-        do {
-            request.httpBody = try encoder.encode(layout)
-        } catch {
-            throw APIError.encodingError(error)
-        }
-        
-        let (data, response) = try await session.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-        
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
-        
-        do {
-            return try decoder.decode(Layout.self, from: data)
-        } catch {
-            print("Decoding error: \(error)")
-            throw APIError.decodingError(error)
-        }
-    }
-
-    
-    func deleteLayout(id: String) async throws {
-        guard let url = URL(string: "\(baseURL)/layouts/\(id)") else {
-            throw APIError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "DELETE"
-        
-        let (_, response) = try await session.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-        
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
-    }
-    
-    // MARK: - Catalog API Methods
-    
-    func fetchCatalog() async throws -> [CatalogItem] {
-        guard let url = URL(string: "\(baseURL)/catalog") else {
-            throw APIError.invalidURL
-        }
-        
-        let (data, response) = try await session.data(from: url)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw APIError.invalidResponse
-        }
-        
-        guard httpResponse.statusCode == 200 else {
-            throw APIError.serverError(statusCode: httpResponse.statusCode)
-        }
-        
-        do {
-            return try decoder.decode([CatalogItem].self, from: data)
-        } catch {
-            print("Decoding error: \(error)")
-            throw APIError.decodingError(error)
-        }
+        return encoder
     }
 }
 
@@ -254,7 +241,8 @@ class APIService {
 enum APIError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
-    case serverError(statusCode: Int)
+    case unauthorized
+    case serverError(statusCode: Int, message: String?)
     case decodingError(Error)
     case encodingError(Error)
     case networkError(Error)
@@ -265,7 +253,12 @@ enum APIError: Error, LocalizedError {
             return "Invalid URL"
         case .invalidResponse:
             return "Invalid response from server"
-        case .serverError(let statusCode):
+        case .unauthorized:
+            return "You need to log in again."
+        case .serverError(let statusCode, let message):
+            if let message = message, !message.isEmpty {
+                return message
+            }
             return "Server error: \(statusCode)"
         case .decodingError(let error):
             return "Failed to decode response: \(error.localizedDescription)"
