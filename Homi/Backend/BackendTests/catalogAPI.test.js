@@ -1,19 +1,22 @@
 import request from "supertest";
 import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
 import app from "../server.js";
-import dotenv from "dotenv";
 
-// Load environment variables (like MONGO_URI) before tests run
-dotenv.config();
+let mongoServer;
 
-// Before any tests run, connect to MongoDB using the URI from our .env file
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGO_URI);
+  mongoServer = await MongoMemoryServer.create();
+  await mongoose.connect(mongoServer.getUri());
 });
 
-// After all tests finish, close the MongoDB connection to prevent hanging processes
+afterEach(async () => {
+  await mongoose.connection.db.dropDatabase();
+});
+
 afterAll(async () => {
   await mongoose.connection.close();
+  await mongoServer.stop();
 });
 
 // The main test suite for the Catalog API

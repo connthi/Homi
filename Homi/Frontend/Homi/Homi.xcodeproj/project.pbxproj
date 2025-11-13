@@ -24,6 +24,11 @@
 		796C452D2EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45242EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz */; };
 		796C452E2EBADF3A004A2403 /* PorTable.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45262EBADF3A004A2403 /* PorTable.usdz */; };
 		796C45332EC18227004A2403 /* NewLayoutDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C45322EC18227004A2403 /* NewLayoutDialog.swift */; };
+		A1A0F0F12F15E5C500F9D3A8 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A0F0F02F15E5C500F9D3A8 /* AuthManager.swift */; };
+		A1A0F0F32F15E91100F9D3A8 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A0F0F22F15E91100F9D3A8 /* AuthService.swift */; };
+		A1A0F0F52F15EB8B00F9D3A8 /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A0F0F42F15EB8B00F9D3A8 /* AuthenticationView.swift */; };
+		A1A0F0F72F15EE1900F9D3A8 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A0F0F62F15EE1900F9D3A8 /* LoginView.swift */; };
+		A1A0F0F92F15F04100F9D3A8 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A0F0F82F15F04100F9D3A8 /* RegisterView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +50,11 @@
 		796C45252EBADF3A004A2403 /* Office_desks_wooden.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Office_desks_wooden.usdz; sourceTree = "<group>"; };
 		796C45262EBADF3A004A2403 /* PorTable.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = PorTable.usdz; sourceTree = "<group>"; };
 		796C45322EC18227004A2403 /* NewLayoutDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewLayoutDialog.swift; sourceTree = "<group>"; };
+		A1A0F0F02F15E5C500F9D3A8 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		A1A0F0F22F15E91100F9D3A8 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		A1A0F0F42F15EB8B00F9D3A8 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
+		A1A0F0F62F15EE1900F9D3A8 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		A1A0F0F82F15F04100F9D3A8 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RegisterView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +80,11 @@
 				796C44FA2EA96032004A2403 /* ContentView.swift */,
 				796C44F82EA96029004A2403 /* CatalogView.swift */,
 				796C44F62EA96019004A2403 /* APIService.swift */,
+				A1A0F0F02F15E5C500F9D3A8 /* AuthManager.swift */,
+				A1A0F0F22F15E91100F9D3A8 /* AuthService.swift */,
+				A1A0F0F42F15EB8B00F9D3A8 /* AuthenticationView.swift */,
+				A1A0F0F62F15EE1900F9D3A8 /* LoginView.swift */,
+				A1A0F0F82F15F04100F9D3A8 /* RegisterView.swift */,
 				796C45322EC18227004A2403 /* NewLayoutDialog.swift */,
 				796C45272EBADF3A004A2403 /* 3Dmodels */,
 				3D66B4EB2EBAE4710009C6DC /* Homi.app */,
@@ -179,12 +194,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1A0F0F12F15E5C500F9D3A8 /* AuthManager.swift in Sources */,
+				A1A0F0F32F15E91100F9D3A8 /* AuthService.swift in Sources */,
 				796C45332EC18227004A2403 /* NewLayoutDialog.swift in Sources */,
 				796C44FF2EA96043004A2403 /* LayoutManager.swift in Sources */,
 				796C44F92EA96029004A2403 /* CatalogView.swift in Sources */,
+				A1A0F0F52F15EB8B00F9D3A8 /* AuthenticationView.swift in Sources */,
 				796C44F72EA96019004A2403 /* APIService.swift in Sources */,
 				796C45032EA96053004A2403 /* RoomView.swift in Sources */,
 				796C45012EA9604A004A2403 /* Models.swift in Sources */,
+				A1A0F0F72F15EE1900F9D3A8 /* LoginView.swift in Sources */,
+				A1A0F0F92F15F04100F9D3A8 /* RegisterView.swift in Sources */,
 				796C44FD2EA9603B004A2403 /* HomiApp.swift in Sources */,
 				796C44FB2EA96032004A2403 /* ContentView.swift in Sources */,
 			);
@@ -320,7 +340,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZN2X525H94;
+				DEVELOPMENT_TEAM = 8QPTUJX4Z4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -355,7 +375,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = ZN2X525H94;
+				DEVELOPMENT_TEAM = 8QPTUJX4Z4;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

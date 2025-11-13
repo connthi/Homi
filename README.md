@@ -66,7 +66,22 @@ Homi follows a **client-server model** optimized for modularity and performance.
 - Provides RESTful endpoints for:
   - `/layouts` – Create, read, update, delete room layouts  
   - `/catalog` – Retrieve furniture catalog data  
+  - `/auth` – User registration, login, logout, refresh, and profile lookups  
 - Interfaces with MongoDB for persistent storage  
+  
+### Authentication API & Environment Variables
+
+The backend now exposes `/api/auth` with the following core endpoints:
+- `POST /auth/register` – Create a new user and receive access/refresh tokens.
+- `POST /auth/login` – Exchange credentials for a fresh token pair.
+- `POST /auth/refresh` – Rotate refresh tokens and obtain a new access token.
+- `POST /auth/logout` – Revoke the supplied refresh token.
+- `GET /auth/me` – Return the authenticated user's profile (requires `Authorization: Bearer <token>`).
+
+Set these environment variables for secure deployments (defaults exist for local dev but **must** be overridden in production):
+- `ACCESS_TOKEN_SECRET` – HMAC secret for signing short-lived access tokens.
+- `REFRESH_TOKEN_SECRET` – HMAC secret for refresh tokens (should differ from the access secret).
+- Optional hardening knobs: `ACCESS_TOKEN_TTL`, `REFRESH_TOKEN_TTL`, `AUTH_PBKDF2_ITERATIONS`, `AUTH_PBKDF2_KEY_LENGTH`, `AUTH_PBKDF2_DIGEST`, `MAX_REFRESH_TOKENS`.
 ---
 
 ## Operational Use Case (Prototype)
