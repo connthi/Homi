@@ -8,6 +8,7 @@ class LayoutManager: ObservableObject {
     @Published var furnitureNodes: [FurnitureNode] = []
     @Published var catalogItems: [CatalogItem] = []
     @Published var isCatalogLoaded = false
+    @Published var wallColor: UIColor = UIColor(white: 0.95, alpha: 1.0) // Default white
 
     private let apiService = APIService.shared
 
@@ -27,6 +28,7 @@ class LayoutManager: ObservableObject {
         )
         currentLayout = newLayout
         furnitureNodes = []
+        wallColor = UIColor(white: 0.95, alpha: 1.0) // Reset to default white
     }
 
     func loadLayout(_ layout: Layout) {
