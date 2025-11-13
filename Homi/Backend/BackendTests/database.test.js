@@ -1,7 +1,22 @@
 import request from "supertest";
+import mongoose from "mongoose";
 import app from "../server.js";
 import Catalog from "../models/catalogModel.js";
 import Layout from "../models/layoutModel.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+// Default MongoDB URI for testing (fallback if .env file doesn't exist)
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://Homi_db_user:Z3ruSgh5GxvBU5bz@homi.0xgveje.mongodb.net/?retryWrites=true&w=majority&appName=Homi";
+
+beforeAll(async () => {
+  await mongoose.connect(MONGO_URI);
+});
+
+afterAll(async () => {
+  await mongoose.connection.close();
+});
 
 describe("Database Models JSON Transformation", () => {
   beforeEach(async () => {
