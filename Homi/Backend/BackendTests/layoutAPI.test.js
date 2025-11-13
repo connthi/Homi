@@ -1,19 +1,22 @@
 import request from "supertest";
 import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
 import app from "../server.js";
-import dotenv from "dotenv";
 
-// Load environment variables before running any tests
-dotenv.config();
+let mongoServer;
 
-// Before any test runs, establish a connection to the MongoDB test database
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGO_URI);
+  mongoServer = await MongoMemoryServer.create();
+  await mongoose.connect(mongoServer.getUri());
 });
 
-// After all tests complete, close the MongoDB connection to free resources
+afterEach(async () => {
+  await mongoose.connection.db.dropDatabase();
+});
+
 afterAll(async () => {
   await mongoose.connection.close();
+  await mongoServer.stop();
 });
 
 // Test suite for the Layout API routes

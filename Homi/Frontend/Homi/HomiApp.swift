@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct HomiApp: App {
+    @StateObject private var authManager = AuthManager()
     
     init() {
         // Force debug output on app launch
@@ -10,7 +11,23 @@ struct HomiApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environmentObject(authManager)
+        }
+    }
+    
+    private struct RootView: View {
+        @EnvironmentObject var authManager: AuthManager
+        
+        var body: some View {
+            Group {
+                if authManager.isAuthenticated {
+                    ContentView()
+                } else {
+                    AuthenticationView()
+                }
+            }
+            .animation(.easeInOut, value: authManager.isAuthenticated)
         }
     }
     
