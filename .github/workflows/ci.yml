@@ -149,7 +149,7 @@ jobs:
     name: Build and Deploy
     runs-on: ubuntu-latest
     needs: [backend-tests, frontend-tests, integration-tests, code-quality, security-scan]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
