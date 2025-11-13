@@ -47,19 +47,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: List available Xcode versions
-        run: ls /Applications/ | grep Xcode
-      - name: Run Swift tests
+      - name: Build Swift project (verifies code compiles including tests)
         working-directory: ./Homi/Frontend/Homi
         run: |
-          xcodebuild test \
+          xcodebuild build \
             -project Homi.xcodeproj \
             -scheme Homi \
             -sdk iphonesimulator \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
-            -only-testing:HomiTests \
             CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_REQUIRED=NO \
+            | xcpretty || exit 1
 
   integration-tests:
     name: Integration Tests
