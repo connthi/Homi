@@ -1,0 +1,4 @@
+test-ci.txt
+.env
+node_modules/
+*/node_modules/ 

@@ -10,104 +10,47 @@ struct RegisterView: View {
     @State private var isPasswordVisible = false
     @State private var isConfirmPasswordVisible = false
     @State private var errorMessage: String?
-    @Binding var showLogin: Bool
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 32) {
-                // App Title
-                VStack(spacing: 8) {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 24) {
+                VStack(spacing: 6) {
                     Text("Create Account")
-                        .font(.largeTitle)
+                        .font(.title2)
                         .fontWeight(.bold)
-
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    
                     Text("Join Homi to start designing")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
-                .padding(.top, 40)
-
-                // Input Fields
-                VStack(spacing: 20) {
-                    // First Name
-                    TextField("First Name (Optional)", text: $firstName)
-                        .autocapitalization(.words)
-                        .textContentType(.givenName)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
-
-                    // Last Name
-                    TextField("Last Name (Optional)", text: $lastName)
-                        .autocapitalization(.words)
-                        .textContentType(.familyName)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
-
-                    // Email
-                    TextField("Email", text: $email)
-                        .autocapitalization(.none)
-                        .keyboardType(.emailAddress)
-                        .textContentType(.emailAddress)
-                        .padding()
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
-
-                    // Password
-                    HStack {
-                        if isPasswordVisible {
-                            TextField("Password", text: $password)
-                                .textContentType(.newPassword)
-                        } else {
-                            SecureField("Password", text: $password)
-                                .textContentType(.newPassword)
-                        }
-
-                        Button(action: {
-                            isPasswordVisible.toggle()
-                        }) {
-                            Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(10)
-
-                    // Confirm Password
-                    HStack {
-                        if isConfirmPasswordVisible {
-                            TextField("Confirm Password", text: $confirmPassword)
-                                .textContentType(.newPassword)
-                        } else {
-                            SecureField("Confirm Password", text: $confirmPassword)
-                                .textContentType(.newPassword)
-                        }
-
-                        Button(action: {
-                            isConfirmPasswordVisible.toggle()
-                        }) {
-                            Image(systemName: isConfirmPasswordVisible ? "eye.slash" : "eye")
-                                .foregroundColor(.gray)
-                        }
-                    }
-                    .padding()
-                    .background(Color(.secondarySystemBackground))
-                    .cornerRadius(10)
+                
+                VStack(spacing: 16) {
+                    modernField(title: "First Name (Optional)", icon: "person", text: $firstName, contentType: .givenName, autocapitalization: .words)
+                    
+                    modernField(title: "Last Name (Optional)", icon: "person", text: $lastName, contentType: .familyName, autocapitalization: .words)
+                    
+                    modernField(title: "Email Address", icon: "envelope", text: $email, contentType: .emailAddress, keyboard: .emailAddress, autocapitalization: .never)
+                    
+                    secureField(title: "Password", text: $password, isVisible: $isPasswordVisible)
+                    
+                    secureField(title: "Confirm Password", text: $confirmPassword, isVisible: $isConfirmPasswordVisible)
                 }
-                .padding(.horizontal)
-
-                // Error Message
+                
                 if let error = errorMessage {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.callout)
-                        .padding(.horizontal)
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.red)
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.callout)
+                    }
+                    .transition(.opacity)
                 }
-
-                // Register Button
+                
                 Button(action: handleRegister) {
                     HStack {
+                        Spacer()
                         if authManager.isLoading {
                             ProgressView()
                                 .tint(.white)
@@ -115,62 +58,98 @@ struct RegisterView: View {
                             Text("Create Account")
                                 .fontWeight(.semibold)
                         }
+                        Spacer()
                     }
-                    .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(Color(red: 0.24, green: 0.52, blue: 0.96))
+                    .cornerRadius(18)
                     .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .shadow(color: Color(red: 0.24, green: 0.52, blue: 0.96).opacity(0.35), radius: 10, x: 0, y: 8)
                 }
-                .padding(.horizontal)
-                .disabled(authManager.isLoading || !isFormValid)
-
-                // Login Link
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        showLogin = true
-                    }
-                }) {
-                    Text("Already have an account? Login")
-                        .foregroundColor(.blue)
-                }
-                .padding(.bottom, 40)
+                .disabled(!isFormValid || authManager.isLoading)
             }
+            .padding(.horizontal, 4)
         }
-        .scrollIndicators(.never)
+        .padding(.horizontal, 8)
     }
-
+    
     private var isFormValid: Bool {
         !email.isEmpty &&
         !password.isEmpty &&
         password == confirmPassword &&
         password.count >= 8
     }
-
-    func handleRegister() {
+    
+    private func modernField(title: String,
+                             icon: String,
+                             text: Binding<String>,
+                             contentType: UITextContentType? = nil,
+                             keyboard: UIKeyboardType = .default,
+                             autocapitalization: TextInputAutocapitalization = .sentences) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .foregroundColor(.secondary)
+                TextField(title, text: text)
+                    .keyboardType(keyboard)
+                    .textInputAutocapitalization(autocapitalization)
+                    .textContentType(contentType)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Color(.systemGray4))
+            )
+        }
+    }
+    
+    private func secureField(title: String, text: Binding<String>, isVisible: Binding<Bool>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            HStack(spacing: 12) {
+                Image(systemName: "lock")
+                    .foregroundColor(.secondary)
+                
+                Group {
+                    if isVisible.wrappedValue {
+                        TextField(title, text: text)
+                            .textContentType(.newPassword)
+                    } else {
+                        SecureField(title, text: text)
+                            .textContentType(.newPassword)
+                    }
+                }
+                
+                Button {
+                    isVisible.wrappedValue.toggle()
+                } label: {
+                    Image(systemName: isVisible.wrappedValue ? "eye.slash" : "eye")
+                        .foregroundColor(.secondary)
+                }
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Color(.systemGray4))
+            )
+        }
+    }
+    
+    private func handleRegister() {
         errorMessage = nil
-
-        // Validation
-        guard !email.isEmpty else {
-            errorMessage = "Email is required"
+        
+        guard isFormValid else {
+            errorMessage = "Please make sure all fields are valid and passwords match."
             return
         }
-
-        guard !password.isEmpty else {
-            errorMessage = "Password is required"
-            return
-        }
-
-        guard password.count >= 8 else {
-            errorMessage = "Password must be at least 8 characters long"
-            return
-        }
-
-        guard password == confirmPassword else {
-            errorMessage = "Passwords do not match"
-            return
-        }
-
+        
         Task {
             do {
                 try await authManager.register(
@@ -194,7 +173,7 @@ struct RegisterView: View {
 
 struct RegisterView_Previews: PreviewProvider {
     static var previews: some View {
-        RegisterView(showLogin: .constant(false))
+        RegisterView()
             .environmentObject(AuthManager())
     }
 }

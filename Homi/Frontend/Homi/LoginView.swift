@@ -6,37 +6,37 @@ struct LoginView: View {
     @State private var password = ""
     @State private var isPasswordVisible = false
     @State private var errorMessage: String?
-    @Binding var showRegister: Bool
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Sign in")
-                        .font(.title)
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 26) {
+                VStack(spacing: 6) {
+                    Text("Welcome Back")
+                        .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.primary)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     
-                    Text("Access your personalized layouts and catalog.")
+                    Text("Sign in to your account")
                         .foregroundColor(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
                 }
                 
                 VStack(spacing: 18) {
-                    labeledField(title: "Email") {
+                    floatingField(title: "Email Address", icon: "envelope") {
                         TextField("you@homi.app", text: $email)
                             .keyboardType(.emailAddress)
                             .textContentType(.emailAddress)
                             .autocapitalization(.none)
                     }
                     
-                    labeledField(title: "Password") {
+                    floatingField(title: "Password", icon: "lock") {
                         HStack {
                             Group {
                                 if isPasswordVisible {
-                                    TextField("••••••••", text: $password)
+                                    TextField("Password", text: $password)
                                         .textContentType(.password)
                                 } else {
-                                    SecureField("••••••••", text: $password)
+                                    SecureField("Password", text: $password)
                                         .textContentType(.password)
                                 }
                             }
@@ -44,13 +44,19 @@ struct LoginView: View {
                             Button {
                                 isPasswordVisible.toggle()
                             } label: {
-                                Image(systemName: isPasswordVisible ? "eye.slash.fill" : "eye.fill")
+                                Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
                                     .foregroundColor(.secondary)
                             }
                             .accessibilityLabel(isPasswordVisible ? "Hide password" : "Show password")
                         }
                     }
                 }
+                
+                Button("Forgot password?") {
+                    // hook in later
+                }
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(Color(red: 0.35, green: 0.36, blue: 0.90))
                 
                 if let error = errorMessage {
                     HStack(spacing: 8) {
@@ -70,57 +76,75 @@ struct LoginView: View {
                             ProgressView()
                                 .tint(.white)
                         } else {
-                            Text("Continue")
+                            Text("Sign in")
                                 .fontWeight(.semibold)
                         }
                         Spacer()
                     }
                     .padding()
-                    .background(disabled ? Color.gray.opacity(0.4) : Color.blue)
+                    .background(LinearGradient(
+                        colors: [
+                            Color(red: 0.40, green: 0.52, blue: 0.97),
+                            Color(red: 0.78, green: 0.49, blue: 0.97)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
+                    .cornerRadius(18)
                     .foregroundColor(.white)
-                    .cornerRadius(14)
-                    .shadow(color: Color.blue.opacity(0.3), radius: 12, x: 0, y: 8)
+                    .shadow(color: Color(red: 0.40, green: 0.52, blue: 0.97).opacity(0.4), radius: 10, x: 0, y: 8)
                 }
                 .disabled(disabled)
                 
-                Divider()
-                    .padding(.vertical, 4)
-                
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        showRegister = true
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Text("New here?")
+                VStack(spacing: 16) {
+                    HStack {
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(Color(.systemGray4))
+                        Text("Or sign in with")
+                            .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("Create an account")
-                            .fontWeight(.semibold)
+                        Rectangle()
+                            .frame(height: 1)
+                            .foregroundColor(Color(.systemGray4))
                     }
-                    .frame(maxWidth: .infinity)
+                    
+                    HStack(spacing: 16) {
+                        SocialLoginButton(style: .apple) {
+                            // Hook up Sign in with Apple later
+                        }
+                        SocialLoginButton(style: .google) {
+                            // Hook up Google later
+                        }
+                    }
                 }
-                .buttonStyle(.plain)
+                
             }
-            .padding(24)
+            .padding(.horizontal, 4)
         }
-        .scrollIndicators(.never)
+        .padding(.horizontal, 8)
     }
     
     private var disabled: Bool {
         authManager.isLoading || email.isEmpty || password.isEmpty
     }
     
-    private func labeledField<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
+    private func floatingField<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
                 .font(.caption)
-                .fontWeight(.semibold)
                 .foregroundColor(.secondary)
             
-            content()
-                .padding()
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(14)
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .foregroundColor(.secondary)
+                content()
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .strokeBorder(Color(.systemGray4))
+            )
         }
     }
     
@@ -143,9 +167,82 @@ struct LoginView: View {
     }
 }
 
+private struct SocialLoginButton: View {
+    enum Style {
+        case apple
+        case google
+    }
+    
+    let style: Style
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                icon
+                Text(styleText)
+                    .fontWeight(.semibold)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(styleBackground)
+            .foregroundColor(styleForeground)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color(.systemGray5))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var styleText: String {
+        switch style {
+        case .apple: return "Apple"
+        case .google: return "Google"
+        }
+    }
+    
+    private var icon: some View {
+        Group {
+            switch style {
+            case .apple:
+                Image(systemName: "applelogo")
+            case .google:
+                ZStack {
+                    Circle()
+                        .stroke(Color(red: 0.25, green: 0.45, blue: 0.85), lineWidth: 1.5)
+                        .frame(width: 18, height: 18)
+                    Text("G")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(Color(red: 0.25, green: 0.45, blue: 0.85))
+                }
+            }
+        }
+    }
+    
+    private var styleBackground: Color {
+        switch style {
+        case .apple:
+            return Color.black
+        case .google:
+            return Color.white
+        }
+    }
+    
+    private var styleForeground: Color {
+        switch style {
+        case .apple:
+            return .white
+        case .google:
+            return .black
+        }
+    }
+}
+
 struct LoginView_Previews: PreviewProvider {
     static var previews: some View {
-        LoginView(showRegister: .constant(false))
+        LoginView()
             .environmentObject(AuthManager())
     }
 }
