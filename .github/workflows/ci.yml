@@ -8,12 +8,90 @@ on:
   workflow_dispatch:
 
 jobs:
-  integration-tests:
-    name: Integration Tests (temporarily disabled)
+  backend-tests:
+    name: Backend Tests
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://localhost:27017/homi_test
+      PORT: 5000
     steps:
-      - name: Placeholder success
-        run: echo "Temporarily disabling integration tests to unblock CI."
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'Homi/Backend/package-lock.json'
+      - name: Install backend dependencies
+        working-directory: ./Homi/Backend
+        run: npm ci
+      - name: Run backend tests
+        working-directory: ./Homi/Backend
+        run: npm test
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build Swift project (verifies code compiles including tests)
+        working-directory: ./Homi/Frontend/Homi
+        run: |
+          xcodebuild build \
+            -project Homi.xcodeproj \
+            -scheme Homi \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            | xcpretty || exit 1
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests]
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://localhost:27017/homi_test
+      PORT: 5000
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'Homi/Backend/package-lock.json'
+      - name: Install backend dependencies
+        working-directory: ./Homi/Backend
+        run: npm ci
+      - name: Run integration tests
+        working-directory: ./Homi/Backend
+        run: npm test
 
   code-quality:
     name: Code Quality Checks
@@ -70,8 +148,8 @@ jobs:
   build-and-deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
-    needs: [integration-tests, code-quality, security-scan]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    needs: [backend-tests, frontend-tests, integration-tests, code-quality, security-scan]
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -97,12 +175,12 @@ jobs:
   notify:
     name: Notify Results
     runs-on: ubuntu-latest
-    needs: [integration-tests, code-quality, security-scan]
+    needs: [backend-tests, frontend-tests, integration-tests, code-quality, security-scan]
     if: always()
     steps:
       - name: Notify on success
-        if: ${{ needs.integration-tests.result == 'success' && needs.code-quality.result == 'success' && needs.security-scan.result == 'success' }}
+        if: ${{ needs.backend-tests.result == 'success' && needs.frontend-tests.result == 'success' && needs.integration-tests.result == 'success' && needs.code-quality.result == 'success' && needs.security-scan.result == 'success' }}
         run: echo "✅ All checks passed successfully!"
       - name: Notify on failure
-        if: ${{ needs.integration-tests.result == 'failure' || needs.code-quality.result == 'failure' || needs.security-scan.result == 'failure' }}
+        if: ${{ needs.backend-tests.result == 'failure' || needs.frontend-tests.result == 'failure' || needs.integration-tests.result == 'failure' || needs.code-quality.result == 'failure' || needs.security-scan.result == 'failure' }}
         run: echo "❌ Some checks failed. Check logs."
