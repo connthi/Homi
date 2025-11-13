@@ -52,6 +52,24 @@ struct FurnitureItem: Codable, Identifiable {
         self.scale = scale
         self.properties = properties
     }
+    
+    // Custom encoding to handle MongoDB _id field properly
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        // Only encode _id if it looks like a MongoDB ObjectId (24 hex characters)
+        // Don't encode UUID strings as _id
+        if id.count == 24 && id.allSatisfy({ $0.isHexDigit }) {
+            try container.encode(id, forKey: .id)
+        }
+        // If _id is not a MongoDB ID, let the server generate it
+        
+        try container.encode(furnitureId, forKey: .furnitureId)
+        try container.encode(position, forKey: .position)
+        try container.encode(rotation, forKey: .rotation)
+        try container.encode(scale, forKey: .scale)
+        try container.encode(properties, forKey: .properties)
+    }
 }
 
 struct Position: Codable {
@@ -104,19 +122,20 @@ struct Dimensions: Codable {
 class FurnitureNode: SCNNode {
     let furnitureItem: FurnitureItem
     let catalogItem: CatalogItem?
+    private static var hasDebugPrinted = false
     
     init(furnitureItem: FurnitureItem, catalogItem: CatalogItem? = nil) {
         self.furnitureItem = furnitureItem
         self.catalogItem = catalogItem
         super.init()
         
-        // Print all available bundle resources on first init
-        var printedResources = false
-        if !printedResources {
+        // Print bundle resources only once (for debugging)
+        if !FurnitureNode.hasDebugPrinted {
             printBundleResources()
-            printedResources = true
+            FurnitureNode.hasDebugPrinted = true
         }
         
+        // IMPORTANT: Setup geometry immediately during init
         setupGeometry()
         updateTransform()
     }
@@ -126,7 +145,7 @@ class FurnitureNode: SCNNode {
     }
     
     private func printBundleResources() {
-        print("\n🔍 === BUNDLE RESOURCES DEBUG ===")
+        print("\n📁 === BUNDLE RESOURCES DEBUG ===")
         if let resourcePath = Bundle.main.resourcePath {
             do {
                 let contents = try FileManager.default.contentsOfDirectory(atPath: resourcePath)
@@ -137,7 +156,7 @@ class FurnitureNode: SCNNode {
                 }
                 if usdzFiles.isEmpty {
                     print("   ⚠️ NO USDZ FILES FOUND IN BUNDLE!")
-                    print("   📁 Bundle path: \(resourcePath)")
+                    print("   📂 Bundle path: \(resourcePath)")
                 }
             } catch {
                 print("   ❌ Error reading bundle: \(error)")
@@ -312,6 +331,14 @@ class FurnitureNode: SCNNode {
             furnitureItem.scale.y,
             furnitureItem.scale.z
         )
+    }
+    
+    func setupGeometryIfNeeded() {
+        // Force geometry setup if not already done
+        if self.geometry == nil && self.childNodes.isEmpty {
+            setupGeometry()
+            updateTransform()
+        }
     }
 }
 

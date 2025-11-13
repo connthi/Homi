@@ -57,9 +57,10 @@ class LayoutManager: ObservableObject {
     func addFurniture(catalogItem: CatalogItem, at position: SCNVector3) {
         guard let layout = currentLayout else { return }
 
+        // IMPORTANT: Generate a UNIQUE ID for each furniture item instance
         let newFurnitureItem = FurnitureItem(
-            id: catalogItem.id,
-            furnitureId: catalogItem.id,
+            id: UUID().uuidString,  // ✅ Always generate new UUID, never reuse catalogItem.id
+            furnitureId: catalogItem.id,  // This references the catalog
             position: Position(x: Double(position.x), y: 0, z: Double(position.z)),
             rotation: Rotation(x: 0, y: 0, z: 0),
             scale: Scale(x: 1, y: 1, z: 1),
@@ -79,6 +80,9 @@ class LayoutManager: ObservableObject {
 
         currentLayout = updatedLayout
         updateFurnitureNodes()
+        
+        // Force UI update
+        objectWillChange.send()
     }
 
     func removeFurniture(furnitureItem: FurnitureItem) {
