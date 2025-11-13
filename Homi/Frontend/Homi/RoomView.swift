@@ -46,6 +46,7 @@ struct RoomView: View {
                 isFirstPersonMode: $isFirstPersonMode,
                 isEditingRoom: $isEditingRoom,
                 roomConfig: $roomConfig,
+                wallColor: layoutManager.wallColor,
                 onFurnitureMoved: { furnitureItem, position in
                     layoutManager.updateFurniturePosition(furnitureItem, position: position)
                 },
@@ -633,6 +634,7 @@ struct RoomSceneView: UIViewRepresentable {
     @Binding var isFirstPersonMode: Bool
     @Binding var isEditingRoom: Bool
     @Binding var roomConfig: EditableRoom
+    let wallColor: UIColor
     let onFurnitureMoved: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureRotated: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureScaled: (FurnitureItem, SCNVector3) -> Void
@@ -648,7 +650,7 @@ struct RoomSceneView: UIViewRepresentable {
         sceneView.scene = scene
         
         context.coordinator.sceneView = sceneView
-        context.coordinator.setupRoom(scene: scene)
+        context.coordinator.setupRoom(scene: scene, wallColor: parent.wallColor)
         context.coordinator.setupCamera(scene: scene)
         context.coordinator.setupLighting(scene: scene)
         context.coordinator.setupGestures(sceneView: sceneView)
@@ -661,6 +663,7 @@ struct RoomSceneView: UIViewRepresentable {
         context.coordinator.isEditing = isEditing
         context.coordinator.editMode = editMode
         context.coordinator.updateRoomSize(scene: uiView.scene!, config: roomConfig)
+        context.coordinator.updateWallColor(scene: uiView.scene!, color: wallColor)
         context.coordinator.updateWallTransparency(scene: uiView.scene!)
         
         if isFirstPersonMode != context.coordinator.isFirstPersonMode {
@@ -704,13 +707,13 @@ struct RoomSceneView: UIViewRepresentable {
             self.parent = parent
         }
         
-        func setupRoom(scene: SCNScene) {
-            createRoomGeometry(scene: scene, config: parent.roomConfig)
+        func setupRoom(scene: SCNScene, wallColor: UIColor) {
+            createRoomGeometry(scene: scene, config: parent.roomConfig, wallColor: wallColor)
         }
         
-        private func makeWallMaterial() -> SCNMaterial {
+        private func makeWallMaterial(color: UIColor) -> SCNMaterial {
             let m = SCNMaterial()
-            m.diffuse.contents = UIColor(white: 0.95, alpha: 1.0)
+            m.diffuse.contents = color
             m.lightingModel = .phong
             m.transparency = 1.0
             m.transparencyMode = .aOne
@@ -721,6 +724,10 @@ struct RoomSceneView: UIViewRepresentable {
         }
 
         func createRoomGeometry(scene: SCNScene, config: EditableRoom) {
+            createRoomGeometry(scene: scene, config: config, wallColor: parent.wallColor)
+        }
+        
+        func createRoomGeometry(scene: SCNScene, config: EditableRoom, wallColor: UIColor) {
             floorNode?.removeFromParentNode()
             frontWallNode?.removeFromParentNode()
             backWallNode?.removeFromParentNode()
@@ -744,9 +751,9 @@ struct RoomSceneView: UIViewRepresentable {
             floorNode?.name = "floor"
             scene.rootNode.addChildNode(floorNode!)
             
-            // Wall material
+            // Wall material with custom color
             let wallMaterial = SCNMaterial()
-            wallMaterial.diffuse.contents = UIColor(white: 0.95, alpha: 1.0)
+            wallMaterial.diffuse.contents = wallColor
             wallMaterial.lightingModel = .physicallyBased
             wallMaterial.roughness.contents = 0.9
             wallMaterial.transparency = 1.0
@@ -823,6 +830,24 @@ struct RoomSceneView: UIViewRepresentable {
                 geometry.height = roomHeight
                 geometry.length = roomLength
                 rightWall.position = SCNVector3(roomWidth/2, roomHeight/2, 0)
+            }
+            
+            SCNTransaction.commit()
+        }
+        
+        func updateWallColor(scene: SCNScene, color: UIColor) {
+            SCNTransaction.begin()
+            SCNTransaction.animationDuration = 0.3
+            
+            let walls: [SCNNode?] = [frontWallNode, backWallNode, leftWallNode, rightWallNode]
+            
+            for wall in walls {
+                guard let wall = wall, let geometry = wall.geometry else { continue }
+                
+                // Update all materials on this wall
+                for material in geometry.materials {
+                    material.diffuse.contents = color
+                }
             }
             
             SCNTransaction.commit()
