@@ -650,7 +650,7 @@ struct RoomSceneView: UIViewRepresentable {
         sceneView.scene = scene
         
         context.coordinator.sceneView = sceneView
-        context.coordinator.setupRoom(scene: scene, wallColor: parent.wallColor)
+        context.coordinator.setupRoom(scene: scene, wallColor: wallColor)
         context.coordinator.setupCamera(scene: scene)
         context.coordinator.setupLighting(scene: scene)
         context.coordinator.setupGestures(sceneView: sceneView)

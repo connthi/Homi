@@ -23,12 +23,13 @@ private struct RefreshTokenPayload: Codable {
 class APIService {
     static let shared = APIService()
     
-    private let baseURL = "http://192.168.0.183:5001/api"
+    private let baseURL: String
     private let session: URLSession
     private let authService = AuthService.shared
     
     private init(session: URLSession = .shared) {
         self.session = session
+        self.baseURL = APIService.resolveBaseURL()
     }
     
     // MARK: - Layout API Methods
@@ -122,10 +123,7 @@ class APIService {
                              method: String = "GET",
                              body: Data? = nil,
                              requiresAuth: Bool = false) throws -> URLRequest {
-        guard let url = URL(string: "\(baseURL)\(path)") else {
-            throw APIError.invalidURL
-        }
-        
+        let url = try buildURL(path: path)
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -190,6 +188,31 @@ class APIService {
         } catch {
             throw APIError.decodingError(error)
         }
+    }
+    
+    private func buildURL(path: String) throws -> URL {
+        let trimmedBase = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
+        let trimmedPath = path.hasPrefix("/") ? String(path.dropFirst()) : path
+        let fullURL = trimmedPath.isEmpty ? trimmedBase : "\(trimmedBase)/\(trimmedPath)"
+        guard let url = URL(string: fullURL) else {
+            throw APIError.invalidURL
+        }
+        return url
+    }
+    
+    private static func resolveBaseURL() -> String {
+        if let override = ProcessInfo.processInfo.environment["API_BASE_URL"],
+           !override.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return override
+        }
+        
+        if let infoValue = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String,
+           !infoValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return infoValue
+        }
+        
+        assertionFailure("API_BASE_URL is not configured. Falling back to localhost:5001 for development.")
+        return "http://localhost:5001/api"
     }
     
     // MARK: - JSON Helpers
