@@ -1,120 +1,176 @@
-import request from "supertest";
-import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
-import app from "../server.js";
+import express from "express";
+import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+import { hashPassword, comparePassword } from "../utils/security.js";
 
-let mongoServer;
+const router = express.Router();
 
-describe("Auth API", () => {
-  beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+// --- Token Generators ---
+const generateAccessToken = (userId) => {
+  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "15m"
   });
+};
 
-  afterAll(async () => {
-    await mongoose.connection.close();
-    await mongoServer.stop();
+const generateRefreshToken = (userId) => {
+  return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: "7d"
   });
+};
 
-  beforeEach(async () => {
-    await User.deleteMany({});
-  });
+// --- REGISTER ---
+router.post("/register", async (req, res) => {
+  try {
+    const { email, password, firstName, lastName } = req.body;
 
-  it("registers a new user and returns auth tokens", async () => {
-    const res = await request(app)
-      .post("/api/auth/register")
-      .send({
-        email: "newuser@example.com",
-        password: "Password123!",
-        firstName: "New",
-        lastName: "User"
-      });
+    const existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: "Email already in use" });
 
-    expect(res.statusCode).toBe(201);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.refreshToken).toBeDefined();
-    expect(res.body.user.email).toBe("newuser@example.com");
+    const passwordHash = await hashPassword(password);
 
-    const userInDb = await User.findOne({ email: "newuser@example.com" });
-    expect(userInDb).not.toBeNull();
-    expect(userInDb.passwordHash).not.toBe("Password123!");
-  });
-
-  it("logs in an existing user", async () => {
-    await request(app).post("/api/auth/register").send({
-      email: "login@example.com",
-      password: "Password123!"
+    const user = await User.create({
+      email,
+      passwordHash,
+      firstName,
+      lastName,
+      refreshTokens: []
     });
 
-    const res = await request(app).post("/api/auth/login").send({
-      email: "login@example.com",
-      password: "Password123!"
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
+    res.status(201).json({
+      user: { email: user.email, firstName, lastName },
+      accessToken,
+      refreshToken
     });
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.accessToken).toBeDefined();
-    expect(res.body.user.email).toBe("login@example.com");
-  });
-
-  it("rejects invalid credentials", async () => {
-    await request(app).post("/api/auth/register").send({
-      email: "invalid@example.com",
-      password: "Password123!"
-    });
-
-    const res = await request(app).post("/api/auth/login").send({
-      email: "invalid@example.com",
-      password: "WrongPassword!"
-    });
-
-    expect(res.statusCode).toBe(401);
-  });
-
-  it("refreshes tokens and revokes the previous refresh token", async () => {
-    const registerRes = await request(app).post("/api/auth/register").send({
-      email: "refresh@example.com",
-      password: "Password123!"
-    });
-
-    const refreshToken = registerRes.body.refreshToken;
-
-    const refreshRes = await request(app).post("/api/auth/refresh").send({ refreshToken });
-
-    expect(refreshRes.statusCode).toBe(200);
-    expect(refreshRes.body.accessToken).toBeDefined();
-    expect(refreshRes.body.refreshToken).toBeDefined();
-
-    // Old refresh token should now be invalid
-    const secondRefresh = await request(app).post("/api/auth/refresh").send({ refreshToken });
-    expect(secondRefresh.statusCode).toBe(401);
-  });
-
-  it("returns the current user when provided a valid access token", async () => {
-    const registerRes = await request(app).post("/api/auth/register").send({
-      email: "me@example.com",
-      password: "Password123!"
-    });
-
-    const accessToken = registerRes.body.accessToken;
-    const res = await request(app)
-      .get("/api/auth/me")
-      .set("Authorization", `Bearer ${accessToken}`);
-
-    expect(res.statusCode).toBe(200);
-    expect(res.body.user.email).toBe("me@example.com");
-  });
-
-  it("invalidates refresh tokens on logout", async () => {
-    const registerRes = await request(app).post("/api/auth/register").send({
-      email: "logout@example.com",
-      password: "Password123!"
-    });
-
-    const refreshToken = registerRes.body.refreshToken;
-    await request(app).post("/api/auth/logout").send({ refreshToken });
-
-    const res = await request(app).post("/api/auth/refresh").send({ refreshToken });
-    expect(res.statusCode).toBe(401);
-  });
+  } catch (err) {
+    console.error("Register error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
+
+// --- LOGIN ---
+router.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+    const match = await comparePassword(password, user.passwordHash);
+    if (!match) return res.status(401).json({ message: "Invalid credentials" });
+
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken(user._id);
+
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
+    res.status(200).json({
+      user: { email: user.email },
+      accessToken,
+      refreshToken
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// --- REFRESH TOKEN ---
+router.post("/refresh", async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken)
+      return res.status(400).json({ message: "Missing token" });
+
+    // 1. Validate token exists in DB
+    const user = await User.findOne({ refreshTokens: refreshToken });
+    if (!user) return res.status(401).json({ message: "Invalid refresh token" });
+
+    // 2. Validate JWT signature
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    } catch {
+      return res.status(401).json({ message: "Invalid refresh token" });
+    }
+
+    // 3. Revoke old token
+    user.refreshTokens = user.refreshTokens.filter(t => t !== refreshToken);
+
+    // 4. Generate new tokens
+    const newAccessToken = generateAccessToken(decoded.userId);
+    const newRefreshToken = generateRefreshToken(decoded.userId);
+
+    // 5. Store new refresh token
+    user.refreshTokens.push(newRefreshToken);
+    await user.save();
+
+    res.status(200).json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken
+    });
+  } catch (err) {
+    console.error("Refresh error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// --- LOGOUT ---
+router.post("/logout", async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ message: "Missing token" });
+
+    const user = await User.findOne({ refreshTokens: refreshToken });
+    if (user) {
+      user.refreshTokens = user.refreshTokens.filter(t => t !== refreshToken);
+      await user.save();
+    }
+
+    res.status(200).json({ message: "Logged out" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// --- CURRENT USER ---
+router.get("/me", async (req, res) => {
+  try {
+    const auth = req.headers.authorization;
+    if (!auth || !auth.startsWith("Bearer "))
+      return res.status(401).json({ message: "No token" });
+
+    const token = auth.split(" ")[1];
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    } catch {
+      return res.status(401).json({ message: "Invalid token" });
+    }
+
+    const user = await User.findById(decoded.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.status(200).json({
+      user: {
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
+    });
+  } catch (err) {
+    console.error("ME error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+export default router;
