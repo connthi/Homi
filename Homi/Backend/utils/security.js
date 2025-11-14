@@ -114,9 +114,10 @@ export function verifyRefreshToken(token) {
 function createSignedToken(payload, secret, ttlSeconds) {
   const issuedAt = Math.floor(Date.now() / 1000);
   const expiresAt = issuedAt + ttlSeconds;
+  const jti = randomBytes(16).toString("hex");
 
   const encodedPayload = base64UrlEncodeBuffer(
-    Buffer.from(JSON.stringify({ ...payload, iat: issuedAt, exp: expiresAt }))
+    Buffer.from(JSON.stringify({ ...payload, iat: issuedAt, exp: expiresAt, jti }))
   );
 
   const data = `${JWT_HEADER_ENCODED}.${encodedPayload}`;
