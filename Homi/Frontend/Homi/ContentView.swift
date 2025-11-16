@@ -42,7 +42,6 @@ struct ContentView: View {
 // MARK: - Main Menu View
 
 struct MainMenuView: View {
-    @EnvironmentObject var authManager: AuthManager
     @Binding var showingRoomView: Bool
     
     var body: some View {
@@ -94,18 +93,6 @@ struct MainMenuView: View {
                 Spacer()
             }
             .navigationTitle("Home")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        Task {
-                            await authManager.logout()
-                        }
-                    } label: {
-                        Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
-                    }
-                    .disabled(authManager.isLoading)
-                }
-            }
         }
     }
 }

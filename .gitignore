@@ -9,6 +9,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+package-lock.json
 
 # --- Build & coverage ---
 dist/
@@ -22,12 +23,10 @@ coverage/
 .idea/
 
 # --- iOS / Xcode ---
+*.xcuserdata
 DerivedData/
-*.xcworkspace/
-*.xcodeproj/
-xcuserdata/
-*.swiftpm
-.build/
+*.xcworkspace
 
 # --- Backend specific ---
 Homi/Backend/.env
+
