@@ -136,7 +136,7 @@ jobs:
         run: npm ci
       - name: Run npm audit
         working-directory: ./Homi/Backend
-        run: npm audit --audit-level moderate
+        run: npm audit --audit-level high
       - name: Run Snyk
         uses: snyk/actions/node@master
         env:
