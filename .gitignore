@@ -3,6 +3,7 @@
 *.log
 *.tmp
 .env
+.ci-rerun-check
 
 # --- Node ---
 node_modules/

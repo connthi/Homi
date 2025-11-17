@@ -15,14 +15,19 @@
 
 ## Project Overview
 
-Homi was created to make **room planning effortless** by offering users a native 3D tool to design and experiment with room layouts before physically rearranging anything.
+Homi is a room planning companion app that lets users create, manipulate, and save 3D furniture layouts. Whether you're moving into a new space or experimenting with different configurations, Homi helps you visualize your ideas instantly.
 
-Users can:
-- Create a 3D digital version of their room  
-- Add and manipulate furniture interactively  
-- Adjust camera angles and perspectives in real time  
-- Save and load custom room layouts  
-- Export their designs as images or share them with others  
+With Homi, users can:
+
+  - 🛋 Add 3D furniture to a virtual room
+  - ✋ Drag, rotate, and scale items using natural gestures
+  - 🧭 Use dynamic camera controls to move around the space
+  - 💾 Save layouts to their account
+  - ☁️ Load past room designs from the cloud
+  - 🎨 Customize wall colors when creating a new room
+  - 🔐 Register, log in, and manage accounts (JWT auth)
+
+Homi’s goal is to make 3D room design simple, fast, and accessible—all from your phone. 
 
 ---
 
@@ -67,42 +72,46 @@ Homi follows a **client-server model** optimized for modularity and performance.
   - `/layouts` – Create, read, update, delete room layouts  
   - `/catalog` – Retrieve furniture catalog data  
 - Interfaces with MongoDB for persistent storage  
----
 
-## Operational Use Case (Prototype)
+## How to Report a Bug
+We appreciate all bug reports!
+To help us diagnose issues efficiently, please include:
 
-As of Week 4, the following end-to-end use case is fully functional:
+Bug Report Template
 
-### Use Case 1: Place and Manipulate a Furniture Item
+Bug Description:
+Short summary of the issue.
+Steps to Reproduce:
+- Step 1
+- Step 2
+- Step 3
 
-**User Action:** User taps the **"Add Furniture"** button.  
-**System Response:** The system displays the **Furniture Catalog** list fetched from the backend.
+Expected Behavior:
+What you thought would happen.
 
-**User Action:** User selects a **"Sofa"** item from the catalog.  
-**System Response:** The system instantiates a **3D model** of the sofa at the center of the room layout.
+Actual Behavior:
+What happened instead.
 
-**User Action:** User taps on the sofa and choose to move, rotate, or scale the sofa.  
-**System Response:** The system highlights the funiture, and provides a UI that says
-move, rotate, scale
+Device Information:
+- Device model
+- iOS version
+- App version
 
-**User Action:** User taps on move and drag the sofa around the room.
-**System Response:** The system moves the sofa object around its **horizontal axis**.
+Screenshots:
+If available.
 
-**User Action:** User taps on scale and performs a **two-finger enlarge gesture** on the sofa.  
-**System Response:** The system scales the sofa object on the size depending on the action.
+Reporting Options
+- GitHub Issues
+- Email: ptang6@uw.edu
+- In-app support (coming soon)
 
-**User Action:** User taps on rotate and performs a **two-finger rotation gesture** on the sofa.  
-**System Response:** The system rotates the sofa object around its **vertical axis**.
+## Support & Community
 
-**User Action:** User taps done.  
-**System Response:** The system **deselects** the sofa, registering its final **position and rotation**.
+Documentation: See DEVELOPER_GUIDE.md and USER_GUIDE.md
 
-This use case demonstrates the complete integration of all major system components:
-- **Frontend (iOS/SceneKit):** Gesture handling, 3D object rendering, and camera controls  
-- **Backend (Node.js/Express):** Serves the furniture catalog via API requests  
-- **Database (MongoDB Atlas):** Stores catalog data used for spawning 3D models
+GitHub Issues: Report bugs and track progress
 
----
+Contact: ptang6@uw.edu
 
 ## Getting Started
 **Living Document**
