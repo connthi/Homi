@@ -6,15 +6,26 @@ import User from "../models/userModel.js";
 
 let mongoServer;
 
+// In case MongoMemoryServer is a bit slow on first startup
+if (globalThis.jest) {
+  globalThis.jest.setTimeout(30000);
+}
+
 describe("Auth API", () => {
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
-    await mongoose.connect(mongoServer.getUri());
+    const uri = mongoServer.getUri();
+    await mongoose.connect(uri);
   });
 
   afterAll(async () => {
+    // Cleanly tear everything down so Jest doesn't complain
+    await mongoose.connection.dropDatabase();
     await mongoose.connection.close();
-    await mongoServer.stop();
+
+    if (mongoServer) {
+      await mongoServer.stop();
+    }
   });
 
   beforeEach(async () => {
