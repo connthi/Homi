@@ -1,22 +1,23 @@
 import request from "supertest";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import { jest } from "@jest/globals";
 import app from "../server.js";
 import User from "../models/userModel.js";
 
 let mongoServer;
 
-// In case MongoMemoryServer is a bit slow on first startup
-if (globalThis.jest) {
-  globalThis.jest.setTimeout(30000);
-}
+// Allow slower startup/teardown for the in-memory Mongo server
+jest.setTimeout(30000);
 
 describe("Auth API", () => {
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
+    mongoServer = await MongoMemoryServer.create({
+      instance: { ip: "127.0.0.1" }
+    });
     const uri = mongoServer.getUri();
     await mongoose.connect(uri);
-  });
+  }, 30000);
 
   afterAll(async () => {
     // Cleanly tear everything down so Jest doesn't complain
@@ -26,7 +27,7 @@ describe("Auth API", () => {
     if (mongoServer) {
       await mongoServer.stop();
     }
-  });
+  }, 30000);
 
   beforeEach(async () => {
     await User.deleteMany({});
