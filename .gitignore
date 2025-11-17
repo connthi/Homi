@@ -23,7 +23,7 @@ coverage/
 .idea/
 
 # --- iOS / Xcode ---
-*.xcuserdata
+**/xcuserdata/
 DerivedData/
 *.xcworkspace
 

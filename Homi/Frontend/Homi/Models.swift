@@ -1,6 +1,30 @@
 import Foundation
 import SceneKit
 
+// MARK: - Authentication Models
+
+struct User: Codable, Identifiable {
+    let id: String
+    let email: String
+    let firstName: String?
+    let lastName: String?
+    let createdAt: Date?
+    let updatedAt: Date?
+}
+
+struct AuthResponse: Codable {
+    let tokenType: String
+    let accessToken: String
+    let refreshToken: String
+    let accessTokenExpiresAt: TimeInterval
+    let refreshTokenExpiresAt: TimeInterval
+    let user: User
+}
+
+struct UserEnvelope: Codable {
+    let user: User
+}
+
 // MARK: - Data Models matching backend API
 
 struct Layout: Codable, Identifiable {
