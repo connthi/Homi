@@ -22,9 +22,9 @@
   "devDependencies": {
     "cross-env": "^10.1.0",
     "jest": "^30.2.0",
+    "mongodb-memory-server": "^8.12.2",
     "nodemon": "^3.1.10",
-    "supertest": "^7.1.4",
-    "mongodb-memory-server": "^9.10.2"
+    "supertest": "^7.1.4"
   },
   "author": "Homi Team",
   "license": "MIT",
