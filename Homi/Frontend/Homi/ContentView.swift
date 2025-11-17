@@ -1,40 +1,50 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject var authManager: AuthManager
     @StateObject private var layoutManager = LayoutManager()
+    
     @State private var selectedTab = 0
     @State private var showingRoomView = false
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Main Menu / Home
-            MainMenuView(showingRoomView: $showingRoomView)
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Home")
-                }
-                .tag(0)
             
-            // Furniture Catalog
-            CatalogView()
-                .tabItem {
-                    Image(systemName: "sofa.fill")
-                    Text("Catalog")
-                }
-                .tag(1)
+            // HOME
+            NavigationStack {
+                MainMenuView(showingRoomView: $showingRoomView)
+            }
+            .tabItem {
+                Image(systemName: "house.fill")
+                Text("Home")
+            }
+            .tag(0)
             
-            // Saved Layouts
-            SavedLayoutsView(showingRoomView: $showingRoomView)
-                .tabItem {
-                    Image(systemName: "folder.fill")
-                    Text("Layouts")
-                }
-                .tag(2)
+            // CATALOG
+            NavigationStack {
+                CatalogView()
+            }
+            .tabItem {
+                Image(systemName: "sofa.fill")
+                Text("Catalog")
+            }
+            .tag(1)
+            
+            // SAVED LAYOUTS
+            NavigationStack {
+                SavedLayoutsView(showingRoomView: $showingRoomView)
+            }
+            .tabItem {
+                Image(systemName: "folder.fill")
+                Text("Layouts")
+            }
+            .tag(2)
         }
         .environmentObject(layoutManager)
         .fullScreenCover(isPresented: $showingRoomView) {
             RoomView()
                 .environmentObject(layoutManager)
+                .environmentObject(authManager)
         }
     }
 }
@@ -42,60 +52,71 @@ struct ContentView: View {
 // MARK: - Main Menu View
 
 struct MainMenuView: View {
+    @EnvironmentObject var authManager: AuthManager
     @Binding var showingRoomView: Bool
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 32) {
-                Spacer()
+        VStack(spacing: 32) {
+            Spacer()
+            
+            VStack(spacing: 16) {
+                Image(systemName: "cube.transparent")
+                    .font(.system(size: 80))
+                    .foregroundColor(.blue)
                 
-                VStack(spacing: 16) {
-                    Image(systemName: "cube.transparent")
-                        .font(.system(size: 80))
-                        .foregroundColor(.blue)
-                    
-                    Text("Homi")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                    
-                    Text("Design your perfect space")
-                        .font(.title3)
-                        .foregroundColor(.secondary)
-                }
+                Text("Homi")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
                 
-                Spacer()
-                
-                VStack(spacing: 16) {
-                    Button(action: {
-                        showingRoomView = true
-                    }) {
-                        Label("Start New Design", systemImage: "plus.circle.fill")
-                            .font(.title3)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                    }
-                    
-                    Text("or")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("Load a saved layout from the Layouts tab")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, 32)
-                
-                Spacer()
+                Text("Design your perfect space")
+                    .font(.title3)
+                    .foregroundColor(.secondary)
             }
-            .navigationTitle("Home")
+            
+            Spacer()
+            
+            VStack(spacing: 16) {
+                Button {
+                    showingRoomView = true
+                } label: {
+                    Label("Start New Design", systemImage: "plus.circle.fill")
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+                
+                Text("or")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Text("Load a saved layout from the Layouts tab")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, 32)
+            
+            Spacer()
+        }
+        .navigationTitle("Home")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    Task { await authManager.logout() }
+                } label: {
+                    Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                }
+            }
         }
     }
 }
+
+
+// MARK: - Saved Layouts View
 
 struct SavedLayoutsView: View {
     @EnvironmentObject var layoutManager: LayoutManager
@@ -190,6 +211,8 @@ struct SavedLayoutsView: View {
     }
 }
 
+// MARK: - Layout Row
+
 struct LayoutRowView: View {
     let layout: Layout
     @Binding var showingRoomView: Bool
@@ -265,9 +288,10 @@ struct LayoutRowView: View {
             }
         }
     }
-
 }
 
 #Preview {
     ContentView()
+        .environmentObject(AuthManager())
+        .environmentObject(LayoutManager())
 }

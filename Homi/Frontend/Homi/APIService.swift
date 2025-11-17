@@ -127,7 +127,6 @@ class APIService {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = 30
         
         if let body = body {
             request.httpBody = body
@@ -202,26 +201,23 @@ class APIService {
     }
     
     private static func resolveBaseURL() -> String {
-        // Check for environment variable override (useful for testing)
         if let override = ProcessInfo.processInfo.environment["API_BASE_URL"],
            !override.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return override
         }
         
-        // Check Info.plist for configuration
         if let infoValue = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String,
            !infoValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return infoValue
         }
         
-        // Default to Render production URL
-        #if DEBUG
-        // In debug mode, you can still use localhost if needed
-        // Uncomment the line below to use localhost in debug builds
-        // return "http://localhost:5001/api"
-        return "https://homi-sfhr.onrender.com/api"
+        // 3. Default behavior
+        #if targetEnvironment(simulator)
+            // Simulator → can reach localhost
+            return "http://localhost:5001/api"
         #else
-        return "https://homi-sfhr.onrender.com/api"
+            // Physical iPhone → must use production
+            return "https://homi-sfhr.onrender.com/api"
         #endif
     }
     

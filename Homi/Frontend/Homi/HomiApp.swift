@@ -2,6 +2,8 @@ import SwiftUI
 
 @main
 struct HomiApp: App {
+    @StateObject private var authManager = AuthManager()
+    @StateObject private var layoutManager = LayoutManager()
     
     init() {
         // Force debug output on app launch
@@ -10,7 +12,25 @@ struct HomiApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environmentObject(authManager)
+                .environmentObject(layoutManager)
+        }
+    }
+    
+    private struct RootView: View {
+        @EnvironmentObject var authManager: AuthManager
+        @EnvironmentObject var layoutManager: LayoutManager
+        
+        var body: some View {
+            Group {
+                if authManager.isAuthenticated {
+                    ContentView()
+                } else {
+                    AuthenticationView()
+                }
+            }
+            .animation(.easeInOut, value: authManager.isAuthenticated)
         }
     }
     
@@ -37,7 +57,6 @@ struct HomiApp: App {
                     for file in usdzFiles {
                         print("   • \(file)")
                         
-                        // Check if file actually exists and get size
                         let fullPath = (resourcePath as NSString).appendingPathComponent(file)
                         if let attrs = try? FileManager.default.attributesOfItem(atPath: fullPath),
                            let size = attrs[.size] as? Int64 {

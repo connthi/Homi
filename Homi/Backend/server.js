@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 
 import layoutRoutes from "./routes/layoutRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use(cors());
 
 // Routes
+app.use("/api/auth", authRoutes);
 app.use("/api/layouts", layoutRoutes);
 app.use("/api/catalog", catalogRoutes);
 
