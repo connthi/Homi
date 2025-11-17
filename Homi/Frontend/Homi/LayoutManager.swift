@@ -18,7 +18,7 @@ class LayoutManager: ObservableObject {
 
     // MARK: - Layout Management
 
-    func createNewLayout(name: String) {
+    func createNewLayout(name: String, wallColor: UIColor = UIColor(white: 0.95, alpha: 1.0)) {
         let newLayout = Layout(
             id: nil,
             userId: "default_user",
@@ -28,7 +28,7 @@ class LayoutManager: ObservableObject {
         )
         currentLayout = newLayout
         furnitureNodes = []
-        wallColor = UIColor(white: 0.95, alpha: 1.0) // Reset to default white
+        self.wallColor = wallColor // Set the selected wall color
     }
 
     func loadLayout(_ layout: Layout) {
