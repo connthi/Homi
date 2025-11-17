@@ -1,33 +1,28 @@
 import request from "supertest";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { jest } from "@jest/globals";
+import dotenv from "dotenv";
 import app from "../server.js";
 import User from "../models/userModel.js";
 
-let mongoServer;
+dotenv.config();
 
-// Allow slower startup/teardown for the in-memory Mongo server
-jest.setTimeout(30000);
+// Default MongoDB URI for testing (fallback if .env file doesn't exist)
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://Homi_db_user:Z3ruSgh5GxvBU5bz@homi.0xgveje.mongodb.net/?retryWrites=true&w=majority&appName=Homi";
+
+// Allow slower startup/teardown
+jest.setTimeout(40000);
 
 describe("Auth API", () => {
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create({
-      instance: { ip: "127.0.0.1" }
-    });
-    const uri = mongoServer.getUri();
-    await mongoose.connect(uri);
-  }, 30000);
+    await mongoose.connect(MONGO_URI);
+  }, 40000);
 
   afterAll(async () => {
     // Cleanly tear everything down so Jest doesn't complain
     await mongoose.connection.dropDatabase();
     await mongoose.connection.close();
-
-    if (mongoServer) {
-      await mongoServer.stop();
-    }
-  }, 30000);
+  }, 40000);
 
   beforeEach(async () => {
     await User.deleteMany({});
