@@ -1,5 +1,3 @@
-// RoomView.swift - Enhanced 3D interaction with room editing
-
 import SwiftUI
 import SceneKit
 
@@ -30,6 +28,7 @@ struct RoomView: View {
     @State private var editMode: EditMode = .move
     @State private var isEditingRoom = false
     @State private var roomConfig = EditableRoom.default
+    @State private var showingWallColorPicker = false
     
     enum EditMode {
         case move, rotate, scale
@@ -72,7 +71,27 @@ struct RoomView: View {
                     .buttonStyle(.bordered)
                     
                     Spacer()
-                    
+
+                    // Wall Color Picker Button
+                    Button(action: {
+                        showingWallColorPicker = true
+                    }) {
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color(layoutManager.wallColor))
+                                .frame(width: 20, height: 20)
+                                .overlay(
+                                    Circle()
+                                        .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
+                                )
+                            Image(systemName: "paintbrush.fill")
+                                .font(.caption)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .background(Color(.systemBackground).opacity(0.9))
+                    .cornerRadius(8)
+
                     // Room Edit Toggle
                     Button(action: {
                         withAnimation {
@@ -138,16 +157,13 @@ struct RoomView: View {
                             Text("Width:")
                                 .frame(width: 60, alignment: .leading)
                             Slider(value: $roomConfig.width, in: EditableRoom.minSize...EditableRoom.maxSize, step: 0.1)
-                                .onChange(of: roomConfig.width) { v in
-                                    roomConfig.width = max(EditableRoom.minSize, min(EditableRoom.maxSize, (v * 10).rounded() / 10))
+                                .onChange(of: roomConfig.width) { oldValue, newValue in
+                                    roomConfig.width = max(EditableRoom.minSize, min(EditableRoom.maxSize, (newValue * 10).rounded() / 10))
                                 }
                             TextField("", value: $roomConfig.width, format: .number.precision(.fractionLength(1)))
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 60)
                                 .multilineTextAlignment(.center)
-                                .onChange(of: roomConfig.width) { v in
-                                    roomConfig.width = max(EditableRoom.minSize, min(EditableRoom.maxSize, (v * 10).rounded() / 10))
-                                }
                             Text("m").foregroundColor(.secondary)
                         }
 
@@ -156,16 +172,13 @@ struct RoomView: View {
                             Text("Length:")
                                 .frame(width: 60, alignment: .leading)
                             Slider(value: $roomConfig.length, in: EditableRoom.minSize...EditableRoom.maxSize, step: 0.1)
-                                .onChange(of: roomConfig.length) { v in
-                                    roomConfig.length = max(EditableRoom.minSize, min(EditableRoom.maxSize, (v * 10).rounded() / 10))
+                                .onChange(of: roomConfig.length) { oldValue, newValue in
+                                    roomConfig.length = max(EditableRoom.minSize, min(EditableRoom.maxSize, (newValue * 10).rounded() / 10))
                                 }
                             TextField("", value: $roomConfig.length, format: .number.precision(.fractionLength(1)))
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 60)
                                 .multilineTextAlignment(.center)
-                                .onChange(of: roomConfig.length) { v in
-                                    roomConfig.length = max(EditableRoom.minSize, min(EditableRoom.maxSize, (v * 10).rounded() / 10))
-                                }
                             Text("m").foregroundColor(.secondary)
                         }
 
@@ -174,16 +187,13 @@ struct RoomView: View {
                             Text("Height:")
                                 .frame(width: 60, alignment: .leading)
                             Slider(value: $roomConfig.height, in: 2.0...5.0, step: 0.1)
-                                .onChange(of: roomConfig.height) { v in
-                                    roomConfig.height = max(2.0, min(5.0, (v * 10).rounded() / 10))
+                                .onChange(of: roomConfig.height) { oldValue, newValue in
+                                    roomConfig.height = max(2.0, min(5.0, (newValue * 10).rounded() / 10))
                                 }
                             TextField("", value: $roomConfig.height, format: .number.precision(.fractionLength(1)))
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 60)
                                 .multilineTextAlignment(.center)
-                                .onChange(of: roomConfig.height) { v in
-                                    roomConfig.height = max(2.0, min(5.0, (v * 10).rounded() / 10))
-                                }
                             Text("m").foregroundColor(.secondary)
                         }
              
@@ -365,8 +375,8 @@ struct RoomView: View {
             NewLayoutDialog(
                 layoutName: $newLayoutName,
                 isPresented: $showingNewLayoutDialog,
-                onCreate: { name in
-                    layoutManager.createNewLayout(name: name)
+                onCreate: { name, wallColor in
+                    layoutManager.createNewLayout(name: name, wallColor: wallColor)
                     newLayoutName = ""
                     showingCatalogSheet = true
                 }
@@ -383,6 +393,14 @@ struct RoomView: View {
                 onDismiss: {
                     showingCatalogSheet = false
                 }
+            )
+        }
+        .sheet(isPresented: $showingWallColorPicker) {
+            WallColorPickerSheet(
+                selectedColor: Binding(
+                    get: { Color(layoutManager.wallColor) },
+                    set: { layoutManager.wallColor = UIColor($0) }
+                )
             )
         }
     }
@@ -650,7 +668,7 @@ struct RoomSceneView: UIViewRepresentable {
         sceneView.scene = scene
         
         context.coordinator.sceneView = sceneView
-        context.coordinator.setupRoom(scene: scene, wallColor: parent.wallColor)
+        context.coordinator.setupRoom(scene: scene)
         context.coordinator.setupCamera(scene: scene)
         context.coordinator.setupLighting(scene: scene)
         context.coordinator.setupGestures(sceneView: sceneView)
@@ -707,8 +725,8 @@ struct RoomSceneView: UIViewRepresentable {
             self.parent = parent
         }
         
-        func setupRoom(scene: SCNScene, wallColor: UIColor) {
-            createRoomGeometry(scene: scene, config: parent.roomConfig, wallColor: wallColor)
+        func setupRoom(scene: SCNScene) {
+            createRoomGeometry(scene: scene, config: parent.roomConfig, wallColor: parent.wallColor)
         }
         
         private func makeWallMaterial(color: UIColor) -> SCNMaterial {
@@ -1365,6 +1383,93 @@ struct EditModeButton: View {
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Wall Color Picker Sheet
+struct WallColorPickerSheet: View {
+    @Environment(\.dismiss) var dismiss
+    @Binding var selectedColor: Color
+    
+    private let wallColorOptions: [(name: String, color: Color)] = [
+        ("White", Color(UIColor(white: 0.95, alpha: 1.0))),
+        ("Beige", Color(red: 0.96, green: 0.96, blue: 0.86)),
+        ("Light Gray", Color(UIColor(white: 0.85, alpha: 1.0))),
+        ("Cream", Color(red: 1.0, green: 0.99, blue: 0.94)),
+        ("Pale Blue", Color(red: 0.88, green: 0.94, blue: 0.98)),
+        ("Light Green", Color(red: 0.92, green: 0.98, blue: 0.92)),
+        ("Soft Pink", Color(red: 0.98, green: 0.92, blue: 0.94)),
+        ("Light Yellow", Color(red: 0.99, green: 0.98, blue: 0.88)),
+        ("Lavender", Color(red: 0.94, green: 0.92, blue: 0.98)),
+        ("Peach", Color(red: 0.98, green: 0.94, blue: 0.90)),
+        ("Mint", Color(red: 0.94, green: 0.98, blue: 0.96)),
+        ("Sky", Color(red: 0.90, green: 0.96, blue: 0.98))
+    ]
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Preview
+                    VStack(spacing: 12) {
+                        Text("Preview")
+                            .font(.headline)
+                        
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(selectedColor)
+                            .frame(height: 120)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .strokeBorder(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                            .shadow(radius: 4)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top)
+                    
+                    Divider()
+                    
+                    // Color Grid
+                    VStack(spacing: 16) {
+                        Text("Select Wall Color")
+                            .font(.headline)
+                        
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 16) {
+                            ForEach(wallColorOptions, id: \.name) { option in
+                                WallColorOption(
+                                    name: option.name,
+                                    color: option.color,
+                                    isSelected: selectedColor == option.color
+                                ) {
+                                    selectedColor = option.color
+                                }
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                    
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .padding()
+                }
+            }
+            .navigationTitle("Wall Color")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
