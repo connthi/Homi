@@ -51,67 +51,244 @@ struct ContentView: View {
 
 // MARK: - Main Menu View
 
+// MARK: - Main Menu View (Dashboard Style)
+
 struct MainMenuView: View {
     @EnvironmentObject var authManager: AuthManager
+    @EnvironmentObject var layoutManager: LayoutManager
     @Binding var showingRoomView: Bool
     
+    // Local state for the dashboard
+    @State private var recentLayouts: [Layout] = []
+    @State private var isLoadingRecents = false
+    
     var body: some View {
-        VStack(spacing: 32) {
-            Spacer()
-            
-            VStack(spacing: 16) {
-                Image(systemName: "cube.transparent")
-                    .font(.system(size: 80))
-                    .foregroundColor(.blue)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
                 
-                Text("Homi")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+                // 1. HEADER SECTION
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Welcome Home")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        Text("Ready to design?")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    // Profile / Logout Button
+                    Menu {
+                        Button(role: .destructive) {
+                            Task { await authManager.logout() }
+                        } label: {
+                            Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                    } label: {
+                        Image(systemName: "person.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.gray)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top, 16)
                 
-                Text("Design your perfect space")
-                    .font(.title3)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            VStack(spacing: 16) {
-                Button {
+                // 2. HERO SECTION (Start New)
+                Button(action: {
+                    // Reset layout manager for a fresh start
+                    layoutManager.createNewLayout(name: "New Room \(Date().formatted(date: .abbreviated, time: .omitted))")
                     showingRoomView = true
-                } label: {
-                    Label("Start New Design", systemImage: "plus.circle.fill")
-                        .font(.title3)
-                        .fontWeight(.semibold)
+                }) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("New Project")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                            Text("Start from scratch")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundColor(.white)
+                    }
+                    .padding(20)
+                    .background(
+                        LinearGradient(colors: [Color.blue, Color.blue.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    )
+                    .cornerRadius(20)
+                    .shadow(color: Color.blue.opacity(0.3), radius: 10, x: 0, y: 5)
+                }
+                .padding(.horizontal)
+                
+                // 3. RECENT PROJECTS (Horizontal Scroll)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Jump Back In")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    if isLoadingRecents {
+                        ProgressView()
+                            .frame(height: 120)
+                            .frame(maxWidth: .infinity)
+                    } else if recentLayouts.isEmpty {
+                        // Empty State for Recents
+                        VStack(spacing: 8) {
+                            Image(systemName: "clock")
+                                .font(.largeTitle)
+                                .foregroundColor(.gray.opacity(0.5))
+                            Text("No recent designs")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(height: 120)
                         .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .background(Color(.systemGray6))
+                        .cornerRadius(16)
+                        .padding(.horizontal)
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                ForEach(recentLayouts) { layout in
+                                    RecentProjectCard(layout: layout) {
+                                        // Action: Load this layout and open room view
+                                        layoutManager.loadLayout(layout)
+                                        showingRoomView = true
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                        }
+                    }
                 }
                 
-                Text("or")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                // 4. INSPIRATION / TOOLS (Grid)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Get Inspired")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                        // Static cards for visual appeal
+                        InspirationCard(title: "Modern Living", icon: "sofa.fill", color: .orange)
+                        InspirationCard(title: "Minimalist", icon: "square.split.bottomrightquarter", color: .teal)
+                        InspirationCard(title: "Office", icon: "desktopcomputer", color: .indigo)
+                        InspirationCard(title: "Cozy Bedroom", icon: "bed.double.fill", color: .pink)
+                    }
+                    .padding(.horizontal)
+                }
                 
-                Text("Load a saved layout from the Layouts tab")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                Spacer(minLength: 40)
             }
-            .padding(.horizontal, 32)
+        }
+        .navigationBarHidden(true) // Hide default nav bar for custom header look
+        .onAppear {
+            loadRecentLayouts()
+        }
+    }
+    
+    // Helper to fetch layouts for the carousel
+    private func loadRecentLayouts() {
+        isLoadingRecents = true
+        Task {
+            do {
+                // We fetch all, but we will sort and take the top 5
+                let allLayouts = try await APIService.shared.fetchLayouts()
+                await MainActor.run {
+                    // Sort by creation date (newest first) and take top 5
+                    self.recentLayouts = allLayouts
+                        .sorted(by: { $0.createdAt > $1.createdAt })
+                        .prefix(5)
+                        .map { $0 } // Convert ArraySlice back to Array
+                    self.isLoadingRecents = false
+                }
+            } catch {
+                print("Failed to fetch recents: \(error)")
+                await MainActor.run { isLoadingRecents = false }
+            }
+        }
+    }
+}
+
+// MARK: - Subcomponents for Dashboard
+
+struct RecentProjectCard: View {
+    let layout: Layout
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading) {
+                // Placeholder visual for the room
+                ZStack {
+                    Rectangle()
+                        .fill(Color(.systemGray6))
+                    Image(systemName: "cube.transparent")
+                        .foregroundColor(.blue.opacity(0.3))
+                        .font(.largeTitle)
+                }
+                .frame(height: 80)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(layout.name)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                    
+                    Text(layout.createdAt, style: .date)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+                .padding(10)
+            }
+            .background(Color(.systemBackground))
+            .frame(width: 140, height: 140)
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        }
+    }
+}
+
+struct InspirationCard: View {
+    let title: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(alignment: .leading) {
+            Circle()
+                .fill(color.opacity(0.1))
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Image(systemName: icon)
+                        .foregroundColor(color)
+                        .font(.system(size: 18))
+                )
             
             Spacer()
+            
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(.primary)
         }
-        .navigationTitle("Home")
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    Task { await authManager.logout() }
-                } label: {
-                    Label("Logout", systemImage: "rectangle.portrait.and.arrow.right")
-                }
-            }
-        }
+        .padding()
+        .frame(height: 100)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemBackground))
+        .cornerRadius(16)
+        // Subtle border instead of shadow for a cleaner look
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color(.systemGray5), lineWidth: 1)
+        )
     }
 }
 
