@@ -23,7 +23,7 @@ struct LoginView: View {
                 
                 VStack(spacing: 18) {
                     floatingField(title: "Email Address", icon: "envelope") {
-                        TextField("you@homi.app", text: $email)
+                        TextField("Email", text: $email)
                             .keyboardType(.emailAddress)
                             .textContentType(.emailAddress)
                             .autocapitalization(.none)
