@@ -2,6 +2,9 @@ import SwiftUI
 
 struct RegisterView: View {
     @EnvironmentObject var authManager: AuthManager
+    
+    private let minimumPasswordLength = 8
+
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
@@ -35,6 +38,13 @@ struct RegisterView: View {
                     secureField(title: "Password", text: $password, isVisible: $isPasswordVisible)
                     
                     secureField(title: "Confirm Password", text: $confirmPassword, isVisible: $isConfirmPasswordVisible)
+
+                    if let inlineMessage = passwordRequirementsMessage {
+                        Text(inlineMessage)
+                            .font(.footnote)
+                            .foregroundColor(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
                 
                 if let error = errorMessage {
@@ -77,7 +87,17 @@ struct RegisterView: View {
         !email.isEmpty &&
         !password.isEmpty &&
         password == confirmPassword &&
-        password.count >= 8
+        password.count >= minimumPasswordLength
+    }
+
+    private var passwordRequirementsMessage: String? {
+        if password.count < minimumPasswordLength {
+            return "Password must be at least \(minimumPasswordLength) characters."
+        }
+        if !confirmPassword.isEmpty && password != confirmPassword {
+            return "Passwords must match."
+        }
+        return nil
     }
     
     private func modernField(title: String,

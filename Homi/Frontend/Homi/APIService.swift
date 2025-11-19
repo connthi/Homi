@@ -166,11 +166,16 @@ class APIService {
     }
     
     private func handleServerError(statusCode: Int, data: Data) throws {
+        let message = try? decoder.decode(APIMessageResponse.self, from: data).message
+
         if statusCode == 401 {
+            // Preserve meaningful server message (e.g., invalid credentials) when present
+            if let message, !message.isEmpty {
+                throw APIError.serverError(statusCode: statusCode, message: message)
+            }
             throw APIError.unauthorized
         }
         
-        let message = try? decoder.decode(APIMessageResponse.self, from: data).message
         throw APIError.serverError(statusCode: statusCode, message: message)
     }
     
