@@ -2,7 +2,6 @@ import SwiftUI
 
 struct CatalogView: View {
     @EnvironmentObject var layoutManager: LayoutManager
-    @State private var catalogItems: [CatalogItem] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var searchText = ""
@@ -10,6 +9,10 @@ struct CatalogView: View {
     @State private var showingWallpaperPicker = false
     
     private let categories = ["All", "Sofa", "Chair", "Table", "Bed", "Storage", "Lighting"]
+
+    private var catalogItems: [CatalogItem] {
+        layoutManager.catalogItems
+    }
     
     var filteredItems: [CatalogItem] {
         let categoryFiltered = selectedCategory == "All" ? catalogItems : catalogItems.filter { $0.type == selectedCategory }
@@ -22,87 +25,83 @@ struct CatalogView: View {
     }
     
     var body: some View {
-        NavigationView {
-            VStack {
-                if isLoading {
-                    ProgressView("Loading catalog...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let error = errorMessage {
-                    VStack {
-                        Image(systemName: "exclamationmark.triangle")
-                            .font(.largeTitle)
-                            .foregroundColor(.red)
-                        Text("Error: \(error)")
-                            .foregroundColor(.red)
-                            .padding()
-                        Button("Retry") {
-                            loadCatalog()
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
+        VStack {
+            if isLoading {
+                ProgressView("Loading catalog...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    VStack(spacing: 0) {
-                        // Search Bar
-                        SearchBar(text: $searchText)
-                            .padding(.horizontal)
-                        
-                        // Category Filter
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(categories, id: \.self) { category in
-                                    CategoryButton(
-                                        title: category,
-                                        isSelected: selectedCategory == category
-                                    ) {
-                                        selectedCategory = category
-                                    }
+            } else if let error = errorMessage {
+                VStack {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundColor(.red)
+                    Text("Error: \(error)")
+                        .foregroundColor(.red)
+                        .padding()
+                    Button("Retry") {
+                        loadCatalog()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                VStack(spacing: 0) {
+                    // Search Bar
+                    SearchBar(text: $searchText)
+                        .padding(.horizontal)
+                    
+                    // Category Filter
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(categories, id: \.self) { category in
+                                CategoryButton(
+                                    title: category,
+                                    isSelected: selectedCategory == category
+                                ) {
+                                    selectedCategory = category
                                 }
                             }
-                            .padding(.horizontal)
                         }
-                        .padding(.vertical, 8)
-                        
-                        // Catalog Grid
-                        ScrollView {
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 16) {
-                                ForEach(filteredItems) { item in
-                                    CatalogItemCard(item: item)
-                                }
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical, 8)
+                    
+                    // Catalog Grid
+                    ScrollView {
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 16) {
+                            ForEach(filteredItems) { item in
+                                CatalogItemCard(item: item)
                             }
-                            .padding()
                         }
+                        .padding()
                     }
                 }
             }
-            .navigationTitle("Furniture Catalog")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingWallpaperPicker = true
-                    }) {
-                        Image(systemName: "paintbrush.fill")
-                            .foregroundColor(.blue)
-                    }
+        }
+        .navigationTitle("Furniture Catalog")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingWallpaperPicker = true
+                }) {
+                    Image(systemName: "paintbrush.fill")
+                        .foregroundColor(.blue)
                 }
             }
-            .refreshable {
-                await loadCatalogAsync()
+        }
+        .refreshable {
+            await loadCatalogAsync()
+        }
+        .onAppear {
+            if !layoutManager.isCatalogLoaded {
+                loadCatalog()
             }
-            .onAppear {
-                if !layoutManager.isCatalogLoaded {
-                    loadCatalog()
-                } else {
-                    catalogItems = layoutManager.catalogItems
-                }
-            }
-            .sheet(isPresented: $showingWallpaperPicker) {
-                WallpaperPickerView()
-                    .environmentObject(layoutManager)
-            }
+        }
+        .sheet(isPresented: $showingWallpaperPicker) {
+            WallpaperPickerView()
+                .environmentObject(layoutManager)
         }
     }
     
@@ -119,7 +118,8 @@ struct CatalogView: View {
         do {
             let items = try await APIService.shared.fetchCatalog()
             await MainActor.run {
-                self.catalogItems = items
+                layoutManager.catalogItems = items
+                layoutManager.isCatalogLoaded = true
                 self.isLoading = false
             }
         } catch {
