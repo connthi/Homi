@@ -98,8 +98,8 @@ struct MainMenuView: View {
                 
                 // 2. HERO SECTION (Start New)
                 Button(action: {
-                    // Reset layout manager for a fresh start
-                    layoutManager.createNewLayout(name: "New Room \(Date().formatted(date: .abbreviated, time: .omitted))")
+                    layoutManager.currentLayout = nil
+                    layoutManager.furnitureNodes = []
                     showingRoomView = true
                 }) {
                     HStack {

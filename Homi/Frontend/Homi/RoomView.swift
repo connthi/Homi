@@ -29,6 +29,7 @@ struct RoomView: View {
     @State private var isEditingRoom = false
     @State private var roomConfig = EditableRoom.default
     @State private var showingWallColorPicker = false
+    @State private var showHints = true
     
     enum EditMode {
         case move, rotate, scale
@@ -60,86 +61,111 @@ struct RoomView: View {
             
             // UI Overlay
             VStack {
-                // Top Controls
-                HStack {
-                    Button(action: { dismiss() }) {
-                        HStack {
-                            Image(systemName: "chevron.left")
-                            Text("Back")
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    Spacer()
-
-                    // Wall Color Picker Button
-                    Button(action: {
-                        showingWallColorPicker = true
-                    }) {
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(Color(layoutManager.wallColor))
-                                .frame(width: 20, height: 20)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
-                                )
-                            Image(systemName: "paintbrush.fill")
-                                .font(.caption)
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .background(Color(.systemBackground).opacity(0.9))
-                    .cornerRadius(8)
-
-                    // Room Edit Toggle
-                    Button(action: {
-                        withAnimation {
-                            isEditingRoom.toggle()
-                            if isEditingRoom {
-                                isEditing = false
-                                selectedFurnitureNode = nil
+                // Top Controls - Reorganized
+                HStack(alignment: .top) {
+                    // Left: Back button and layout name
+                    VStack(alignment: .leading, spacing: 8) {
+                        Button(action: { dismiss() }) {
+                            HStack {
+                                Image(systemName: "chevron.left")
+                                Text("Back")
                             }
                         }
-                    }) {
-                        Image(systemName: isEditingRoom ? "house.fill" : "house")
-                            .font(.title3)
-                    }
-                    .buttonStyle(.bordered)
-                    .background(isEditingRoom ? Color.orange.opacity(0.2) : Color.clear)
-                    .cornerRadius(8)
-                    
-                    Button(action: {
-                        withAnimation {
-                            isFirstPersonMode.toggle()
+                        .buttonStyle(.bordered)
+                        
+                        if let layout = layoutManager.currentLayout {
+                            Text(layout.name)
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.6))
+                                .cornerRadius(8)
+                                .lineLimit(1)
                         }
-                    }) {
-                        Image(systemName: isFirstPersonMode ? "camera.fill" : "person.fill")
-                            .font(.title3)
                     }
-                    .buttonStyle(.bordered)
-                    .background(isFirstPersonMode ? Color.blue.opacity(0.2) : Color.clear)
-                    .cornerRadius(8)
                     
                     Spacer()
                     
-                    if let layout = layoutManager.currentLayout {
-                        Text(layout.name)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.black.opacity(0.6))
+                    // Right: Save button and tool buttons
+                    VStack(alignment: .trailing, spacing: 8) {
+                        // Save button
+                        if layoutManager.currentLayout != nil {
+                            Button("Save") {
+                                saveLayout()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        
+                        // Tool buttons row
+                        VStack(spacing: 8) {
+                            // Wall Color Picker Button
+                            Button(action: {
+                                showingWallColorPicker = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(Color(layoutManager.wallColor))
+                                        .frame(width: 16, height: 16)
+                                        .overlay(
+                                            Circle()
+                                                .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
+                                        )
+                                    Image(systemName: "paintbrush.fill")
+                                        .font(.caption)
+                                }
+                                .padding(8)
+                            }
+                            .buttonStyle(.bordered)
+                            .background(Color(.systemBackground).opacity(0.9))
                             .cornerRadius(8)
-                    }
-                    
-                    Spacer()
-                    
-                    if layoutManager.currentLayout != nil {
-                        Button("Save") {
-                            saveLayout()
+
+                            // Room Edit Toggle
+                            Button(action: {
+                                withAnimation {
+                                    isEditingRoom.toggle()
+                                    if isEditingRoom {
+                                        isEditing = false
+                                        selectedFurnitureNode = nil
+                                    }
+                                }
+                            }) {
+                                Image(systemName: isEditingRoom ? "house.fill" : "house")
+                                    .font(.body)
+                                    .padding(8)
+                            }
+                            .buttonStyle(.bordered)
+                            .background(isEditingRoom ? Color.orange.opacity(0.2) : Color(.systemBackground).opacity(0.9))
+                            .cornerRadius(8)
+                            
+                            // First Person Toggle
+                            Button(action: {
+                                withAnimation {
+                                    isFirstPersonMode.toggle()
+                                }
+                            }) {
+                                Image(systemName: isFirstPersonMode ? "camera.fill" : "person.fill")
+                                    .font(.body)
+                                    .padding(8)
+                            }
+                            .buttonStyle(.bordered)
+                            .background(isFirstPersonMode ? Color.blue.opacity(0.2) : Color(.systemBackground).opacity(0.9))
+                            .cornerRadius(8)
+                            
+                            // Hide/Show Hints Toggle
+                            Button(action: {
+                                withAnimation {
+                                    showHints.toggle()
+                                }
+                            }) {
+                                Image(systemName: showHints ? "eye.fill" : "eye.slash.fill")
+                                    .font(.body)
+                                    .padding(8)
+                            }
+                            .buttonStyle(.bordered)
+                            .background(Color(.systemBackground).opacity(0.9))
+                            .cornerRadius(8)
                         }
-                        .buttonStyle(.borderedProminent)
                     }
                 }
                 .padding()
@@ -249,58 +275,60 @@ struct RoomView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 
-                // Hints
-                if isEditingRoom {
-                    HintView(
-                        title: "Room Editor",
-                        icon: "house.fill",
-                        hints: [
-                            "Adjust sliders to resize room",
-                            "Furniture stays in place",
-                            "Tap house icon to exit"
-                        ],
-                        color: .orange
-                    )
-                } else if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
-                    HintView(
-                        title: "Camera Controls",
-                        hints: [
-                            "Drag: Rotate camera",
-                            "Two fingers: Pan",
-                            "Pinch: Zoom"
-                        ]
-                    )
-                } else if isFirstPersonMode && !isEditing {
-                    HintView(
-                        title: "First Person View",
-                        icon: "person.fill.viewfinder",
-                        hints: [
-                            "Drag: Look around",
-                            "Front wall turns transparent"
-                        ],
-                        color: .blue
-                    )
-                } else if !isEditing && selectedFurnitureNode != nil {
-                    HintView(
-                        title: "Furniture Selected",
-                        hints: ["Tap 'Edit' to modify"],
-                        color: .blue
-                    )
-                } else if isEditing && selectedFurnitureNode != nil {
-                    HintView(
-                        title: editMode == .move ? "Move Mode" : (editMode == .rotate ? "Rotate Mode" : "Scale Mode"),
-                        hints: editMode == .move ? [
-                            "Drag to move furniture",
-                            "Collision detection active"
-                        ] : editMode == .rotate ? [
-                            "Drag left/right to rotate",
-                            "Smooth 360° rotation"
-                        ] : [
-                            "Drag up/down to scale",
-                            "Maintains proportions"
-                        ],
-                        color: .green
-                    )
+                // Hints - Now toggleable
+                if showHints {
+                    if isEditingRoom {
+                        HintView(
+                            title: "Room Editor",
+                            icon: "house.fill",
+                            hints: [
+                                "Adjust sliders to resize room",
+                                "Furniture stays in place",
+                                "Tap house icon to exit"
+                            ],
+                            color: .orange
+                        )
+                    } else if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
+                        HintView(
+                            title: "Camera Controls",
+                            hints: [
+                                "Drag: Rotate camera",
+                                "Two fingers: Pan",
+                                "Pinch: Zoom"
+                            ]
+                        )
+                    } else if isFirstPersonMode && !isEditing {
+                        HintView(
+                            title: "First Person View",
+                            icon: "person.fill.viewfinder",
+                            hints: [
+                                "Drag: Look around",
+                                "Walls turn transparent"
+                            ],
+                            color: .blue
+                        )
+                    } else if !isEditing && selectedFurnitureNode != nil {
+                        HintView(
+                            title: "Furniture Selected",
+                            hints: ["Tap 'Edit' to modify"],
+                            color: .blue
+                        )
+                    } else if isEditing && selectedFurnitureNode != nil {
+                        HintView(
+                            title: editMode == .move ? "Move Mode" : (editMode == .rotate ? "Rotate Mode" : "Scale Mode"),
+                            hints: editMode == .move ? [
+                                "Drag to move furniture",
+                                "Collision detection active"
+                            ] : editMode == .rotate ? [
+                                "Drag left/right to rotate",
+                                "Smooth 360° rotation"
+                            ] : [
+                                "Drag up/down to scale",
+                                "Maintains proportions"
+                            ],
+                            color: .green
+                        )
+                    }
                 }
                 
                 // Bottom Controls
@@ -383,7 +411,6 @@ struct RoomView: View {
             )
         }
         .sheet(isPresented: $showingCatalogSheet) {
-            // Enhanced catalog picker with search and categories
             CatalogPickerView(
                 catalogItems: layoutManager.catalogItems,
                 onSelectItem: { item in
@@ -874,72 +901,50 @@ struct RoomSceneView: UIViewRepresentable {
         func updateWallTransparency(scene: SCNScene) {
             guard let camera = sceneView?.pointOfView else { return }
 
-            // Camera world-space info
             let camPos = camera.presentation.worldPosition
-            let camFwd = camera.presentation.worldFront // <- forward is worldFront (no negation)
+            let camForward = camera.presentation.worldFront
 
-            // Walls with their outward normals in world space
-            let walls: [(name: String, node: SCNNode?, normal: SCNVector3)] = [
-                ("frontWall", frontWallNode, SCNVector3(0, 0,  1)), // z = +L/2
-                ("backWall",  backWallNode,  SCNVector3(0, 0, -1)), // z = -L/2
-                ("leftWall",  leftWallNode,  SCNVector3(-1, 0, 0)), // x = -W/2
-                ("rightWall", rightWallNode, SCNVector3( 1, 0, 0))  // x = +W/2
+            let walls: [(SCNNode?, SCNVector3)] = [
+                (frontWallNode, SCNVector3(0, 0, 1)),
+                (backWallNode,  SCNVector3(0, 0, -1)),
+                (leftWallNode,  SCNVector3(-1, 0, 0)),
+                (rightWallNode, SCNVector3(1, 0, 0))
             ]
 
-            // Helper to apply transparency to all materials on a node
-            func setTransparency(_ node: SCNNode, _ alpha: CGFloat) {
-                guard let geom = node.geometry else { return }
+            func setAlpha(_ node: SCNNode?, _ alpha: CGFloat) {
+                guard let node = node, let geom = node.geometry else { return }
+
                 SCNTransaction.begin()
                 SCNTransaction.animationDuration = 0.25
 
-                // Render transparent walls AFTER opaque stuff
-                node.renderingOrder = (alpha < 1.0) ? 100 : 0
+                node.renderingOrder = alpha < 1.0 ? 100 : 0
 
-                // Update all materials
-                var mats = geom.materials
-                for i in 0..<mats.count {
-                    let m = mats[i]
-                    m.transparency = alpha
-                    m.transparencyMode = .aOne
-                    m.isDoubleSided = true
-                    // Critical: don’t write depth when transparent so it doesn’t block what’s behind
-                    m.writesToDepthBuffer = (alpha >= 1.0)
-                    m.readsFromDepthBuffer = true
-                    mats[i] = m
+                for mat in geom.materials {
+                    mat.transparency = alpha
+                    mat.transparencyMode = .aOne
+                    mat.isDoubleSided = true
+                    mat.writesToDepthBuffer = alpha == 1.0
+                    mat.readsFromDepthBuffer = true
                 }
-                geom.materials = mats
+
                 SCNTransaction.commit()
             }
 
-            // Determine which walls should be ghosted
-            for (name, node, normal) in walls {
-                guard let wall = node else { continue }
+            for (node, normal) in walls {
+                guard let node = node else { continue }
 
-                let wallPos = wall.presentation.worldPosition
+                let wallPos = node.presentation.worldPosition
+                let wallToCam = camPos - wallPos
 
-                // Vector from wall to camera
-                let wallToCam = SCNVector3(camPos.x - wallPos.x, camPos.y - wallPos.y, camPos.z - wallPos.z)
+                let facingCamera = dot(wallToCam, normal) > 0
+                let cameraLookingAtWall = dot(camForward, normal) < -0.2
+                let distanceToWall = length(wallToCam)
 
-                // Is the camera in front of this wall's outward face?
-                // (i.e., on the side the normal points toward)
-                let inFront = dot(wallToCam, normal) > 0
+                let shouldBeTransparent =
+                    isFirstPersonMode ? (node == frontWallNode)
+                    : (facingCamera && cameraLookingAtWall && distanceToWall < 25)
 
-                // Is the camera roughly looking at the room through this wall?
-                // (forward has some component opposite the wall normal)
-                let lookingTowardWall = dot(camFwd, normal) < -0.15
-
-                // Reasonable proximity check so far walls don't flicker
-                let dist = length(wallToCam)
-                let closeEnough = dist < 30.0
-
-                let shouldBeTransparent: Bool
-                if isFirstPersonMode {
-                    shouldBeTransparent = (name == "frontWall")
-                } else {
-                    shouldBeTransparent = inFront && lookingTowardWall && closeEnough
-                }
-
-                setTransparency(wall, shouldBeTransparent ? 0.2 : 1.0)
+                setAlpha(node, shouldBeTransparent ? 0.15 : 1.0)
             }
         }
 
@@ -1474,5 +1479,9 @@ struct WallColorPickerSheet: View {
 }
 
 prefix func - (v: SCNVector3) -> SCNVector3 {
-    return SCNVector3(-v.x, -v.y, -v.z)
+    SCNVector3(-v.x, -v.y, -v.z)
+}
+
+func - (a: SCNVector3, b: SCNVector3) -> SCNVector3 {
+    SCNVector3(a.x - b.x, a.y - b.y, a.z - b.z)
 }
