@@ -1,5 +1,6 @@
 import SwiftUI
 import SceneKit
+import Photos
 
 // MARK: - Room Configuration Model
 struct EditableRoom {
@@ -30,6 +31,7 @@ struct RoomView: View {
     @State private var roomConfig = EditableRoom.default
     @State private var showingWallColorPicker = false
     @State private var showHints = true
+    @State private var sceneViewRef: SCNView?
     
     enum EditMode {
         case move, rotate, scale
@@ -47,6 +49,7 @@ struct RoomView: View {
                 isEditingRoom: $isEditingRoom,
                 roomConfig: $roomConfig,
                 wallColor: layoutManager.wallColor,
+                sceneViewRef: $sceneViewRef,
                 onFurnitureMoved: { furnitureItem, position in
                     layoutManager.updateFurniturePosition(furnitureItem, position: position)
                 },
@@ -447,7 +450,6 @@ struct RoomView: View {
                     withAnimation {
                         showSuccessMessage = false
                     }
-                    dismiss()
                 }
             } catch {
                 print("Failed to save layout: \(error)")
@@ -680,6 +682,7 @@ struct RoomSceneView: UIViewRepresentable {
     @Binding var isEditingRoom: Bool
     @Binding var roomConfig: EditableRoom
     let wallColor: UIColor
+    @Binding var sceneViewRef: SCNView?
     let onFurnitureMoved: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureRotated: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureScaled: (FurnitureItem, SCNVector3) -> Void
@@ -699,6 +702,11 @@ struct RoomSceneView: UIViewRepresentable {
         context.coordinator.setupCamera(scene: scene)
         context.coordinator.setupLighting(scene: scene)
         context.coordinator.setupGestures(sceneView: sceneView)
+        
+        // Store reference to scene view
+        DispatchQueue.main.async {
+            sceneViewRef = sceneView
+        }
         
         return sceneView
     }
@@ -1445,7 +1453,7 @@ struct WallColorPickerSheet: View {
                             GridItem(.flexible())
                         ], spacing: 16) {
                             ForEach(wallColorOptions, id: \.name) { option in
-                                WallColorOption(
+                                WallColorPickerOption(
                                     name: option.name,
                                     color: option.color,
                                     isSelected: selectedColor == option.color
@@ -1475,6 +1483,43 @@ struct WallColorPickerSheet: View {
                 }
             }
         }
+    }
+}
+
+struct WallColorPickerOption: View {
+    let name: String
+    let color: Color
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(color)
+                    .frame(height: 80)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected ? 3 : 1)
+                    )
+                    .overlay(
+                        Group {
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.blue)
+                                    .background(Circle().fill(Color.white).padding(4))
+                            }
+                        }
+                    )
+                
+                Text(name)
+                    .font(.caption)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundColor(.primary)
+            }
+        }
+        .buttonStyle(.plain)
     }
 }
 
