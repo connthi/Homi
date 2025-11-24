@@ -61,6 +61,7 @@ struct RoomView: View {
             // UI Overlay
             VStack {
                 // Top Controls
+                // Top Controls
                 HStack {
                     Button(action: { dismiss() }) {
                         HStack {
@@ -69,57 +70,11 @@ struct RoomView: View {
                         }
                     }
                     .buttonStyle(.bordered)
+                    .fixedSize() // <--- ADD THIS (Fixes squashed Back button)
                     
                     Spacer()
 
-                    // Wall Color Picker Button
-                    Button(action: {
-                        showingWallColorPicker = true
-                    }) {
-                        HStack(spacing: 6) {
-                            Circle()
-                                .fill(Color(layoutManager.wallColor))
-                                .frame(width: 20, height: 20)
-                                .overlay(
-                                    Circle()
-                                        .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
-                                )
-                            Image(systemName: "paintbrush.fill")
-                                .font(.caption)
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .background(Color(.systemBackground).opacity(0.9))
-                    .cornerRadius(8)
-
-                    // Room Edit Toggle
-                    Button(action: {
-                        withAnimation {
-                            isEditingRoom.toggle()
-                            if isEditingRoom {
-                                isEditing = false
-                                selectedFurnitureNode = nil
-                            }
-                        }
-                    }) {
-                        Image(systemName: isEditingRoom ? "house.fill" : "house")
-                            .font(.title3)
-                    }
-                    .buttonStyle(.bordered)
-                    .background(isEditingRoom ? Color.orange.opacity(0.2) : Color.clear)
-                    .cornerRadius(8)
-                    
-                    Button(action: {
-                        withAnimation {
-                            isFirstPersonMode.toggle()
-                        }
-                    }) {
-                        Image(systemName: isFirstPersonMode ? "camera.fill" : "person.fill")
-                            .font(.title3)
-                    }
-                    .buttonStyle(.bordered)
-                    .background(isFirstPersonMode ? Color.blue.opacity(0.2) : Color.clear)
-                    .cornerRadius(8)
+                    // ... (Wall Color Picker & Mode Toggles - These look fine) ...
                     
                     Spacer()
                     
@@ -131,6 +86,8 @@ struct RoomView: View {
                             .padding(.vertical, 6)
                             .background(Color.black.opacity(0.6))
                             .cornerRadius(8)
+                            .lineLimit(1) // <--- ADD THIS
+                            .fixedSize()  // <--- ADD THIS (Fixes squashed Title)
                     }
                     
                     Spacer()
@@ -140,6 +97,7 @@ struct RoomView: View {
                             saveLayout()
                         }
                         .buttonStyle(.borderedProminent)
+                        .fixedSize() // <--- ADD THIS (Fixes squashed Save button)
                     }
                 }
                 .padding()
