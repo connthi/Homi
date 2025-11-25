@@ -27,6 +27,7 @@ coverage/
 **/xcuserdata/
 DerivedData/
 *.xcworkspace
+Homi/Frontend/Homi/Homi-Info.plist
 
 # --- Backend specific ---
 Homi/Backend/.env

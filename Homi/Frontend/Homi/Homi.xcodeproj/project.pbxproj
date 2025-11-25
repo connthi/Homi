@@ -24,6 +24,7 @@
 		796C452D2EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45242EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz */; };
 		796C452E2EBADF3A004A2403 /* PorTable.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 796C45262EBADF3A004A2403 /* PorTable.usdz */; };
 		796C45332EC18227004A2403 /* NewLayoutDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C45322EC18227004A2403 /* NewLayoutDialog.swift */; };
+		796C48132ED25DCD004A2403 /* ImageExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C48122ED25DCD004A2403 /* ImageExporter.swift */; };
 		8FA7D2012F0A3E1D005BC5A2 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA7D2002F0A3E1D005BC5A2 /* AuthManager.swift */; };
 		8FA7D2032F0A3E2A005BC5A2 /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA7D2022F0A3E2A005BC5A2 /* AuthenticationView.swift */; };
 		8FA7D2052F0A3E34005BC5A2 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA7D2042F0A3E34005BC5A2 /* LoginView.swift */; };
@@ -50,6 +51,8 @@
 		796C45252EBADF3A004A2403 /* Office_desks_wooden.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Office_desks_wooden.usdz; sourceTree = "<group>"; };
 		796C45262EBADF3A004A2403 /* PorTable.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = PorTable.usdz; sourceTree = "<group>"; };
 		796C45322EC18227004A2403 /* NewLayoutDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewLayoutDialog.swift; sourceTree = "<group>"; };
+		796C48122ED25DCD004A2403 /* ImageExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageExporter.swift; sourceTree = "<group>"; };
+		796C48142ED264E1004A2403 /* Homi-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Homi-Info.plist"; sourceTree = "<group>"; };
 		8FA7D2002F0A3E1D005BC5A2 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		8FA7D2022F0A3E2A005BC5A2 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
 		8FA7D2042F0A3E34005BC5A2 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -71,6 +74,8 @@
 		796C44DF2EA958A9004A2403 = {
 			isa = PBXGroup;
 			children = (
+				796C48142ED264E1004A2403 /* Homi-Info.plist */,
+				796C48122ED25DCD004A2403 /* ImageExporter.swift */,
 				796C45072EA960F0004A2403 /* Assets.xcassets */,
 				796C45052EA9605A004A2403 /* Preview Content */,
 				796C45022EA96053004A2403 /* RoomView.swift */,
@@ -200,6 +205,7 @@
 				796C44F72EA96019004A2403 /* APIService.swift in Sources */,
 				796C45032EA96053004A2403 /* RoomView.swift in Sources */,
 				8FA7D2012F0A3E1D005BC5A2 /* AuthManager.swift in Sources */,
+				796C48132ED25DCD004A2403 /* ImageExporter.swift in Sources */,
 				8FA7D2032F0A3E2A005BC5A2 /* AuthenticationView.swift in Sources */,
 				8FA7D2052F0A3E34005BC5A2 /* LoginView.swift in Sources */,
 				8FA7D2072F0A3E3D005BC5A2 /* RegisterView.swift in Sources */,
@@ -343,6 +349,9 @@
 				DEVELOPMENT_TEAM = WWQJF372VV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Homi-Info.plist";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We need permission to save your room layout images to your photo library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need permission to save your room layout images to your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -378,6 +387,9 @@
 				DEVELOPMENT_TEAM = WWQJF372VV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Homi-Info.plist";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "We need permission to save your room layout images to your photo library.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need permission to save your room layout images to your photo library.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

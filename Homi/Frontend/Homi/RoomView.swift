@@ -1,5 +1,6 @@
 import SwiftUI
 import SceneKit
+import Photos
 
 // MARK: - Room Configuration Model
 struct EditableRoom {
@@ -29,6 +30,8 @@ struct RoomView: View {
     @State private var isEditingRoom = false
     @State private var roomConfig = EditableRoom.default
     @State private var showingWallColorPicker = false
+    @State private var showHints = true
+    @State private var sceneViewRef: SCNView?
     
     enum EditMode {
         case move, rotate, scale
@@ -46,6 +49,7 @@ struct RoomView: View {
                 isEditingRoom: $isEditingRoom,
                 roomConfig: $roomConfig,
                 wallColor: layoutManager.wallColor,
+                sceneViewRef: $sceneViewRef,
                 onFurnitureMoved: { furnitureItem, position in
                     layoutManager.updateFurniturePosition(furnitureItem, position: position)
                 },
@@ -78,13 +82,83 @@ struct RoomView: View {
                     
                     Spacer()
                     
-                    if let layout = layoutManager.currentLayout {
-                        Text(layout.name)
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(Color.black.opacity(0.6))
+                    // Right: Save button and tool buttons
+                    VStack(alignment: .trailing, spacing: 8) {
+                        // Save button
+                        if layoutManager.currentLayout != nil {
+                            Button("Save") {
+                                saveLayout()
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
+                        
+                        // Tool buttons row
+                        VStack(spacing: 8) {
+                            // Wall Color Picker Button
+                            Button(action: {
+                                showingWallColorPicker = true
+                            }) {
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(Color(layoutManager.wallColor))
+                                        .frame(width: 16, height: 16)
+                                        .overlay(
+                                            Circle()
+                                                .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
+                                        )
+                                    Image(systemName: "paintbrush.fill")
+                                        .font(.caption)
+                                }
+                                .padding(8)
+                            }
+                            .buttonStyle(.bordered)
+                            .background(Color(.systemBackground).opacity(0.9))
+                            .cornerRadius(8)
+
+                            // Room Edit Toggle
+                            Button(action: {
+                                withAnimation {
+                                    isEditingRoom.toggle()
+                                    if isEditingRoom {
+                                        isEditing = false
+                                        selectedFurnitureNode = nil
+                                    }
+                                }
+                            }) {
+                                Image(systemName: isEditingRoom ? "house.fill" : "house")
+                                    .font(.body)
+                                    .padding(8)
+                            }
+                            .buttonStyle(.bordered)
+                            .background(isEditingRoom ? Color.orange.opacity(0.2) : Color(.systemBackground).opacity(0.9))
+                            .cornerRadius(8)
+                            
+                            // First Person Toggle
+                            Button(action: {
+                                withAnimation {
+                                    isFirstPersonMode.toggle()
+                                }
+                            }) {
+                                Image(systemName: isFirstPersonMode ? "camera.fill" : "person.fill")
+                                    .font(.body)
+                                    .padding(8)
+                            }
+                            .buttonStyle(.bordered)
+                            .background(isFirstPersonMode ? Color.blue.opacity(0.2) : Color(.systemBackground).opacity(0.9))
+                            .cornerRadius(8)
+                            
+                            // Hide/Show Hints Toggle
+                            Button(action: {
+                                withAnimation {
+                                    showHints.toggle()
+                                }
+                            }) {
+                                Image(systemName: showHints ? "eye.fill" : "eye.slash.fill")
+                                    .font(.body)
+                                    .padding(8)
+                            }
+                            .buttonStyle(.bordered)
+                            .background(Color(.systemBackground).opacity(0.9))
                             .cornerRadius(8)
                             .lineLimit(1) // <--- ADD THIS
                             .fixedSize()  // <--- ADD THIS (Fixes squashed Title)
@@ -207,58 +281,60 @@ struct RoomView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 
-                // Hints
-                if isEditingRoom {
-                    HintView(
-                        title: "Room Editor",
-                        icon: "house.fill",
-                        hints: [
-                            "Adjust sliders to resize room",
-                            "Furniture stays in place",
-                            "Tap house icon to exit"
-                        ],
-                        color: .orange
-                    )
-                } else if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
-                    HintView(
-                        title: "Camera Controls",
-                        hints: [
-                            "Drag: Rotate camera",
-                            "Two fingers: Pan",
-                            "Pinch: Zoom"
-                        ]
-                    )
-                } else if isFirstPersonMode && !isEditing {
-                    HintView(
-                        title: "First Person View",
-                        icon: "person.fill.viewfinder",
-                        hints: [
-                            "Drag: Look around",
-                            "Front wall turns transparent"
-                        ],
-                        color: .blue
-                    )
-                } else if !isEditing && selectedFurnitureNode != nil {
-                    HintView(
-                        title: "Furniture Selected",
-                        hints: ["Tap 'Edit' to modify"],
-                        color: .blue
-                    )
-                } else if isEditing && selectedFurnitureNode != nil {
-                    HintView(
-                        title: editMode == .move ? "Move Mode" : (editMode == .rotate ? "Rotate Mode" : "Scale Mode"),
-                        hints: editMode == .move ? [
-                            "Drag to move furniture",
-                            "Collision detection active"
-                        ] : editMode == .rotate ? [
-                            "Drag left/right to rotate",
-                            "Smooth 360° rotation"
-                        ] : [
-                            "Drag up/down to scale",
-                            "Maintains proportions"
-                        ],
-                        color: .green
-                    )
+                // Hints - Now toggleable
+                if showHints {
+                    if isEditingRoom {
+                        HintView(
+                            title: "Room Editor",
+                            icon: "house.fill",
+                            hints: [
+                                "Adjust sliders to resize room",
+                                "Furniture stays in place",
+                                "Tap house icon to exit"
+                            ],
+                            color: .orange
+                        )
+                    } else if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
+                        HintView(
+                            title: "Camera Controls",
+                            hints: [
+                                "Drag: Rotate camera",
+                                "Two fingers: Pan",
+                                "Pinch: Zoom"
+                            ]
+                        )
+                    } else if isFirstPersonMode && !isEditing {
+                        HintView(
+                            title: "First Person View",
+                            icon: "person.fill.viewfinder",
+                            hints: [
+                                "Drag: Look around",
+                                "Walls turn transparent"
+                            ],
+                            color: .blue
+                        )
+                    } else if !isEditing && selectedFurnitureNode != nil {
+                        HintView(
+                            title: "Furniture Selected",
+                            hints: ["Tap 'Edit' to modify"],
+                            color: .blue
+                        )
+                    } else if isEditing && selectedFurnitureNode != nil {
+                        HintView(
+                            title: editMode == .move ? "Move Mode" : (editMode == .rotate ? "Rotate Mode" : "Scale Mode"),
+                            hints: editMode == .move ? [
+                                "Drag to move furniture",
+                                "Collision detection active"
+                            ] : editMode == .rotate ? [
+                                "Drag left/right to rotate",
+                                "Smooth 360° rotation"
+                            ] : [
+                                "Drag up/down to scale",
+                                "Maintains proportions"
+                            ],
+                            color: .green
+                        )
+                    }
                 }
                 
                 // Bottom Controls
@@ -341,7 +417,6 @@ struct RoomView: View {
             )
         }
         .sheet(isPresented: $showingCatalogSheet) {
-            // Enhanced catalog picker with search and categories
             CatalogPickerView(
                 catalogItems: layoutManager.catalogItems,
                 onSelectItem: { item in
@@ -378,7 +453,6 @@ struct RoomView: View {
                     withAnimation {
                         showSuccessMessage = false
                     }
-                    dismiss()
                 }
             } catch {
                 print("Failed to save layout: \(error)")
@@ -611,6 +685,7 @@ struct RoomSceneView: UIViewRepresentable {
     @Binding var isEditingRoom: Bool
     @Binding var roomConfig: EditableRoom
     let wallColor: UIColor
+    @Binding var sceneViewRef: SCNView?
     let onFurnitureMoved: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureRotated: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureScaled: (FurnitureItem, SCNVector3) -> Void
@@ -630,6 +705,11 @@ struct RoomSceneView: UIViewRepresentable {
         context.coordinator.setupCamera(scene: scene)
         context.coordinator.setupLighting(scene: scene)
         context.coordinator.setupGestures(sceneView: sceneView)
+        
+        // Store reference to scene view
+        DispatchQueue.main.async {
+            sceneViewRef = sceneView
+        }
         
         return sceneView
     }
@@ -1376,7 +1456,7 @@ struct WallColorPickerSheet: View {
                             GridItem(.flexible())
                         ], spacing: 16) {
                             ForEach(wallColorOptions, id: \.name) { option in
-                                WallColorOption(
+                                WallColorPickerOption(
                                     name: option.name,
                                     color: option.color,
                                     isSelected: selectedColor == option.color
@@ -1409,6 +1489,47 @@ struct WallColorPickerSheet: View {
     }
 }
 
+struct WallColorPickerOption: View {
+    let name: String
+    let color: Color
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(color)
+                    .frame(height: 80)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected ? 3 : 1)
+                    )
+                    .overlay(
+                        Group {
+                            if isSelected {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.blue)
+                                    .background(Circle().fill(Color.white).padding(4))
+                            }
+                        }
+                    )
+                
+                Text(name)
+                    .font(.caption)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundColor(.primary)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 prefix func - (v: SCNVector3) -> SCNVector3 {
-    return SCNVector3(-v.x, -v.y, -v.z)
+    SCNVector3(-v.x, -v.y, -v.z)
+}
+
+func - (a: SCNVector3, b: SCNVector3) -> SCNVector3 {
+    SCNVector3(a.x - b.x, a.y - b.y, a.z - b.z)
 }

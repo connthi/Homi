@@ -1,4 +1,6 @@
 import SwiftUI
+import SceneKit
+import Photos
 
 struct ContentView: View {
     @EnvironmentObject var authManager: AuthManager
@@ -49,8 +51,6 @@ struct ContentView: View {
     }
 }
 
-// MARK: - Main Menu View
-
 // MARK: - Main Menu View (Dashboard Style)
 
 struct MainMenuView: View {
@@ -98,8 +98,8 @@ struct MainMenuView: View {
                 
                 // 2. HERO SECTION (Start New)
                 Button(action: {
-                    // Reset layout manager for a fresh start
-                    layoutManager.createNewLayout(name: "New Room \(Date().formatted(date: .abbreviated, time: .omitted))")
+                    layoutManager.currentLayout = nil
+                    layoutManager.furnitureNodes = []
                     showingRoomView = true
                 }) {
                     HStack {
@@ -187,25 +187,22 @@ struct MainMenuView: View {
                 Spacer(minLength: 40)
             }
         }
-        .navigationBarHidden(true) // Hide default nav bar for custom header look
+        .navigationBarHidden(true)
         .onAppear {
             loadRecentLayouts()
         }
     }
     
-    // Helper to fetch layouts for the carousel
     private func loadRecentLayouts() {
         isLoadingRecents = true
         Task {
             do {
-                // We fetch all, but we will sort and take the top 5
                 let allLayouts = try await APIService.shared.fetchLayouts()
                 await MainActor.run {
-                    // Sort by creation date (newest first) and take top 5
                     self.recentLayouts = allLayouts
                         .sorted(by: { $0.createdAt > $1.createdAt })
                         .prefix(5)
-                        .map { $0 } // Convert ArraySlice back to Array
+                        .map { $0 }
                     self.isLoadingRecents = false
                 }
             } catch {
@@ -225,7 +222,6 @@ struct RecentProjectCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading) {
-                // Placeholder visual for the room
                 ZStack {
                     Rectangle()
                         .fill(Color(.systemGray6))
@@ -284,14 +280,12 @@ struct InspirationCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.systemBackground))
         .cornerRadius(16)
-        // Subtle border instead of shadow for a cleaner look
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color(.systemGray5), lineWidth: 1)
         )
     }
 }
-
 
 // MARK: - Saved Layouts View
 
@@ -303,63 +297,63 @@ struct SavedLayoutsView: View {
     @State private var errorMessage: String?
     
     var body: some View {
-        NavigationView {
-            VStack {
-                if isLoading {
-                    ProgressView("Loading layouts...")
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let error = errorMessage {
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.largeTitle)
-                                .foregroundColor(.red)
-                            Text("Error Loading Layouts")
-                                .font(.headline)
-                                .foregroundColor(.red)
-                            Text(error)
-                                .foregroundColor(.red)
-                                .multilineTextAlignment(.center)
-                                .padding()
-                                .font(.caption)
-                            Button("Retry") {
-                                loadLayouts()
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        .padding()
-                    }
+        VStack(spacing: 0) {
+            if isLoading {
+                ProgressView("Loading layouts...")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if layouts.isEmpty {
-                    VStack {
-                        Image(systemName: "folder")
+            } else if let error = errorMessage {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle")
                             .font(.largeTitle)
-                            .foregroundColor(.gray)
-                        Text("No saved layouts")
-                            .foregroundColor(.gray)
-                        Text("Create your first room layout in the Home tab")
-                            .foregroundColor(.secondary)
+                            .foregroundColor(.red)
+                        Text("Error Loading Layouts")
+                            .font(.headline)
+                            .foregroundColor(.red)
+                        Text(error)
+                            .foregroundColor(.red)
                             .multilineTextAlignment(.center)
                             .padding()
+                            .font(.caption)
+                        Button("Retry") {
+                            loadLayouts()
+                        }
+                        .buttonStyle(.borderedProminent)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    List {
-                        ForEach(layouts) { layout in
-                            LayoutRowView(layout: layout, showingRoomView: $showingRoomView) {
-                                loadLayouts()
-                            }
+                    .padding()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if layouts.isEmpty {
+                VStack {
+                    Image(systemName: "folder")
+                        .font(.largeTitle)
+                        .foregroundColor(.gray)
+                    Text("No saved layouts")
+                        .foregroundColor(.gray)
+                    Text("Create your first room layout in the Home tab")
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                List {
+                    ForEach(layouts) { layout in
+                        LayoutRowView(layout: layout, showingRoomView: $showingRoomView) {
+                            loadLayouts()
                         }
                     }
                 }
+                .listStyle(.insetGrouped)
             }
-            .navigationTitle("Saved Layouts")
-            .refreshable {
-                await loadLayoutsAsync()
-            }
-            .onAppear {
-                loadLayouts()
-            }
+        }
+        .navigationTitle("Saved Layouts")
+        .navigationBarTitleDisplayMode(.large)
+        .refreshable {
+            await loadLayoutsAsync()
+        }
+        .onAppear {
+            loadLayouts()
         }
     }
     
@@ -388,7 +382,7 @@ struct SavedLayoutsView: View {
     }
 }
 
-// MARK: - Layout Row
+// MARK: - Layout Row with Export Button
 
 struct LayoutRowView: View {
     let layout: Layout
@@ -397,49 +391,176 @@ struct LayoutRowView: View {
     @EnvironmentObject var layoutManager: LayoutManager
     @State private var showingDeleteAlert = false
     @State private var isDeleting = false
+    @State private var showExportSuccess = false
+    @State private var showExportError = false
+    @State private var exportErrorMessage = ""
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(layout.name)
-                    .font(.headline)
-                Spacer()
-                Text(layout.createdAt, style: .date)
+        ZStack {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(layout.name)
+                        .font(.headline)
+                    Spacer()
+                    Text(layout.createdAt, style: .date)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Text("\(layout.furnitureItems.count) furniture items")
                     .font(.caption)
                     .foregroundColor(.secondary)
+                
+                HStack(spacing: 8) {
+                    Button("Load") {
+                        layoutManager.loadLayout(layout)
+                        showingRoomView = true
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isDeleting)
+                    
+                    Button("Export") {
+                        exportLayout()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(isDeleting)
+                    
+                    Spacer()
+                    
+                    Button("Delete") {
+                        showingDeleteAlert = true
+                    }
+                    .buttonStyle(.bordered)
+                    .foregroundColor(.red)
+                    .disabled(isDeleting)
+                }
+            }
+            .padding(.vertical, 4)
+            .opacity(isDeleting ? 0.5 : 1.0)
+            .alert("Delete Layout", isPresented: $showingDeleteAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    deleteLayout()
+                }
+            } message: {
+                Text("Are you sure you want to delete '\(layout.name)'? This action cannot be undone.")
             }
             
-            Text("\(layout.furnitureItems.count) furniture items")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            HStack {
-                Button("Load") {
-                    layoutManager.loadLayout(layout)
-                    showingRoomView = true
+            // Export Success Toast
+            if showExportSuccess {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Image(systemName: "photo.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Saved to Photos!")
+                            .fontWeight(.semibold)
+                    }
+                    .padding()
+                    .background(Color(.systemBackground))
+                    .cornerRadius(12)
+                    .shadow(radius: 10)
                 }
-                .buttonStyle(.bordered)
-                .disabled(isDeleting)
-                
-                Spacer()
-                
-                Button("Delete") {
-                    showingDeleteAlert = true
-                }
-                .buttonStyle(.bordered)
-                .foregroundColor(.red)
-                .disabled(isDeleting)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
-        .padding(.vertical, 4)
-        .opacity(isDeleting ? 0.5 : 1.0)
-        .alert("Delete Layout", isPresented: $showingDeleteAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                deleteLayout()
-            }
+        .alert("Export Failed", isPresented: $showExportError) {
+            Button("OK", role: .cancel) { }
         } message: {
-            Text("Are you sure you want to delete '\(layout.name)'? This action cannot be undone.")
+            Text(exportErrorMessage)
+        }
+    }
+    
+    private func exportLayout() {
+        // Create a temporary scene to export
+        let scene = SCNScene()
+        
+        // Setup room
+        let roomConfig = EditableRoom.default
+        let wallColor = layoutManager.wallColor
+        
+        // Create room geometry
+        let roomWidth = CGFloat(roomConfig.width)
+        let roomLength = CGFloat(roomConfig.length)
+        let roomHeight = CGFloat(roomConfig.height)
+        
+        // Floor
+        let floorGeometry = SCNBox(width: roomWidth, height: 0.1, length: roomLength, chamferRadius: 0)
+        let floorMaterial = SCNMaterial()
+        floorMaterial.diffuse.contents = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0)
+        floorGeometry.materials = [floorMaterial]
+        let floorNode = SCNNode(geometry: floorGeometry)
+        floorNode.position = SCNVector3(0, 0, 0)
+        scene.rootNode.addChildNode(floorNode)
+        
+        // Walls
+        let wallMaterial = SCNMaterial()
+        wallMaterial.diffuse.contents = wallColor
+        
+        let backWall = SCNBox(width: roomWidth, height: roomHeight, length: 0.1, chamferRadius: 0)
+        backWall.materials = [wallMaterial.copy() as! SCNMaterial]
+        let backWallNode = SCNNode(geometry: backWall)
+        backWallNode.position = SCNVector3(0, roomHeight/2, -roomLength/2)
+        backWallNode.name = "backWall"
+        scene.rootNode.addChildNode(backWallNode)
+        
+        let leftWall = SCNBox(width: 0.1, height: roomHeight, length: roomLength, chamferRadius: 0)
+        leftWall.materials = [wallMaterial.copy() as! SCNMaterial]
+        let leftWallNode = SCNNode(geometry: leftWall)
+        leftWallNode.position = SCNVector3(-roomWidth/2, roomHeight/2, 0)
+        leftWallNode.name = "leftWall"
+        scene.rootNode.addChildNode(leftWallNode)
+        
+        // Add furniture
+        let furnitureNodes = layout.furnitureItems.map { furnitureItem -> FurnitureNode in
+            let catalogItem = layoutManager.catalogItems.first { $0.id == furnitureItem.furnitureId }
+            return FurnitureNode(furnitureItem: furnitureItem, catalogItem: catalogItem)
+        }
+        
+        for node in furnitureNodes {
+            node.setupGeometryIfNeeded()
+            scene.rootNode.addChildNode(node)
+        }
+        
+        // Add lighting
+        let ambientLight = SCNLight()
+        ambientLight.type = .ambient
+        ambientLight.color = UIColor(white: 0.6, alpha: 1.0)
+        ambientLight.intensity = 800
+        let ambientNode = SCNNode()
+        ambientNode.light = ambientLight
+        scene.rootNode.addChildNode(ambientNode)
+        
+        let mainLight = SCNLight()
+        mainLight.type = .directional
+        mainLight.intensity = 1500
+        let mainLightNode = SCNNode()
+        mainLightNode.light = mainLight
+        mainLightNode.position = SCNVector3(5, 10, 5)
+        mainLightNode.look(at: SCNVector3(0, 0, 0))
+        scene.rootNode.addChildNode(mainLightNode)
+        
+        // Export
+        ImageExporter.shared.exportRoomLayout(
+            scene: scene,
+            furnitureNodes: furnitureNodes,
+            roomConfig: roomConfig,
+            wallColor: wallColor
+        ) { result in
+            switch result {
+            case .success:
+                withAnimation {
+                    showExportSuccess = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation {
+                        showExportSuccess = false
+                    }
+                }
+            case .failure(let error):
+                exportErrorMessage = error.localizedDescription
+                showExportError = true
+            }
         }
     }
     
@@ -447,7 +568,7 @@ struct LayoutRowView: View {
         isDeleting = true
         Task {
             guard let id = layout.id else {
-                print("❌ No layout ID found — cannot delete unsaved layout.")
+                print("❌ No layout ID found – cannot delete unsaved layout.")
                 isDeleting = false
                 return
             }

@@ -13,9 +13,24 @@ iOS Frontend Requirements
   - iOS Deployment Target: 17.0+
   - Swift 5.9+
 
+## Install Xcode
+1. Open **App Store**
+2. Search for **Xcode**
+3. Click **Install** (16–20GB download)
+4. Open Xcode → Accept license
+5. Install command-line tools:
+   ```bash
+   xcode-select --install
+   ```
+
+Verify installation:
+```bash
+xcodebuild -version
+```
+
 ## Clone the Repository
 
-git clone https://github.com/uwproject-homi/homi.git
+git clone https://github.com/connthi/Homi.git
 cd homi
 
 ## Build Instructions
@@ -164,6 +179,7 @@ iOS Architecture (SwiftUI + SceneKit)
 │   │       ├── CatalogView.swift # SwiftUI view displaying the furniture catalog with search, category filters, and responsive grid layout for browsing items.
 │   │       ├── ContentView.swift # Main SwiftUI entry view managing app navigation. Hosts tabs for Home, Catalog, and Saved Layouts, and launches the 3D Room editor.
 │   │       ├── HomiApp.swift # App entry point. Launches the main SwiftUI window and logs bundle contents to verify that 3D .usdz model files are properly included.
+│   │       ├── ImageExporter.swift # ImageExporter renders the 3D room from a fixed angled camera, captures a snapshot, and saves the final image to the user's photo library.
 │   │       ├── LayoutManager.swift # Central state manager for layouts and furniture. Handles loading catalog data, creating, saving, and updating room layouts, and syncing 3D scene furniture nodes.
 │   │       ├── LoginView.swift # Login screen UI allowing users to enter credentials and sign into their Homi account.
 │   │       ├── Models.swift # Defines layout, furniture, and catalog data models, plus FurnitureNode for rendering and scaling 3D models in SceneKit.
@@ -176,3 +192,61 @@ iOS Architecture (SwiftUI + SceneKit)
 └── DEVELOPER_GUIDE.md # Developer guide for to run and test Homi
 └── USER_GUIDE.md # User guide on how to use Homi
 ```
+
+## Continuous Integration (CI) Overview
+
+The project uses **GitHub Actions** for full CI/CD automation.
+
+### Jobs:
+
+### `backend-tests`
+- Installs backend  
+- Spins up MongoDB container  
+- Runs Jest tests  
+
+### `frontend-tests`
+- Builds iOS app on macOS runner  
+- Validates Swift compilation  
+- Runs XCTest automatically  
+
+### `integration-tests`
+- Depends on backend + frontend tests  
+- Runs combined tests  
+
+### `code-quality`
+- ESLint  
+- Formatting checks  
+- Placeholder for style/lint rules  
+
+### `security-scan`
+- Runs `npm audit --audit-level critical`  
+- Runs Snyk with threshold `high`  
+
+### `build-and-deploy`
+- Runs only on PRs or pushes to main/master  
+- Builds backend  
+- Deploys to staging (placeholder)
+
+### `notify`
+- Echoes success/failure status  
+
+CI file location:
+```
+.github/workflows/ci.yml
+```
+
+---
+
+## Contribution Workflow
+
+1. Create feature branch:  
+   ```
+   git checkout -b feature/my-feature
+   ```
+2. Make changes  
+3. Add tests for your changes  
+4. Commit and push  
+5. Open Pull Request  
+6. CI must pass  
+7. Request review  
+8. Merge into `main`

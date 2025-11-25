@@ -1,5 +1,6 @@
 import express from "express";
 import Layout from "../models/layoutModel.js";
+import { authenticate } from "../middleware/authMiddleware.js";
 
 // Create a new Express router to group all layout-related routes
 const router = express.Router();
@@ -7,11 +8,16 @@ const router = express.Router();
 /**
  *  POST /api/layouts
  *  Purpose: Create and save a new room layout
+ *  PROTECTED: Requires authentication
  */
-router.post("/", async (req, res) => {
+router.post("/", authenticate, async (req, res) => {
   try {
     // Create a new Layout document from the request body (JSON data)
-    const layout = new Layout(req.body);
+    // Associate it with the authenticated user
+    const layout = new Layout({
+      ...req.body,
+      userId: req.user.id  // Ensure layout belongs to authenticated user
+    });
 
     // Save the layout into MongoDB
     await layout.save();
@@ -26,12 +32,13 @@ router.post("/", async (req, res) => {
 
 /**
  *  GET /api/layouts
- *  Purpose: Retrieve all saved layouts
+ *  Purpose: Retrieve all saved layouts for the authenticated user
+ *  PROTECTED: Requires authentication
  */
-router.get("/", async (req, res) => {
+router.get("/", authenticate, async (req, res) => {
   try {
-    // Fetch all layouts stored in MongoDB
-    const layouts = await Layout.find();
+    // Fetch only layouts that belong to the authenticated user
+    const layouts = await Layout.find({ userId: req.user.id });
 
     // Return them as JSON
     res.json(layouts);
@@ -44,13 +51,18 @@ router.get("/", async (req, res) => {
 /**
  *  GET /api/layouts/:id
  *  Purpose: Retrieve a specific layout by its MongoDB ID
+ *  PROTECTED: Requires authentication and ownership
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticate, async (req, res) => {
   try {
     // Search for a layout using the ID in the request URL
-    const layout = await Layout.findById(req.params.id);
+    // AND verify it belongs to the authenticated user
+    const layout = await Layout.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
 
-    // If not found, return a 404 (Not Found)
+    // If not found or doesn't belong to user, return a 404 (Not Found)
     if (!layout) return res.status(404).json({ message: "Layout not found" });
 
     // Otherwise, return the layout as JSON
@@ -64,14 +76,31 @@ router.get("/:id", async (req, res) => {
 /**
  *  PUT /api/layouts/:id
  *  Purpose: Update an existing layout by ID
+ *  PROTECTED: Requires authentication and ownership
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticate, async (req, res) => {
   try {
-    // Find the layout by ID and update it with new data from the request body
-    const layout = await Layout.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    // Find the layout by ID AND verify it belongs to the authenticated user
+    const layout = await Layout.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+
+    if (!layout) {
+      return res.status(404).json({ message: "Layout not found" });
+    }
+
+    // Update the layout with new data from the request body
+    // Prevent userId from being changed
+    const { userId, ...updateData } = req.body;
+    const updatedLayout = await Layout.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
 
     // Return the updated layout
-    res.json(layout);
+    res.json(updatedLayout);
   } catch (error) {
     // If validation fails or ID is invalid, return HTTP 400
     res.status(400).json({ message: error.message });
@@ -81,11 +110,19 @@ router.put("/:id", async (req, res) => {
 /**
  *  DELETE /api/layouts/:id
  *  Purpose: Remove a layout by its ID
+ *  PROTECTED: Requires authentication and ownership
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authenticate, async (req, res) => {
   try {
-    // Delete the layout from MongoDB by its ID
-    await Layout.findByIdAndDelete(req.params.id);
+    // Find and delete the layout only if it belongs to the authenticated user
+    const layout = await Layout.findOneAndDelete({
+      _id: req.params.id,
+      userId: req.user.id
+    });
+
+    if (!layout) {
+      return res.status(404).json({ message: "Layout not found" });
+    }
 
     // Confirm deletion to the client
     res.json({ message: "Layout deleted" });
