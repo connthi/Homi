@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   firstName: { type: String, trim: true },
   lastName: { type: String, trim: true },
+  role: { type: String, default: "user" },
   refreshTokens: [refreshTokenSchema]
 }, { timestamps: true });
 

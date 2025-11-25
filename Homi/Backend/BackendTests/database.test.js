@@ -38,6 +38,32 @@ async function getAuthToken() {
   return loginRes.body.accessToken;
 }
 
+// Helper function to get admin auth token for tests
+async function getAdminToken() {
+  const testEmail = `admin_${Date.now()}@example.com`;
+  const registerRes = await request(app)
+    .post("/api/auth/register")
+    .send({
+      email: testEmail,
+      password: "Password123!",
+      firstName: "Admin",
+      lastName: "User"
+    });
+  
+  // Update user to have admin role directly in MongoDB
+  await User.updateOne({ email: testEmail }, { role: "admin" });
+  
+  // Login again to get a fresh token after role update
+  const loginRes = await request(app)
+    .post("/api/auth/login")
+    .send({
+      email: testEmail,
+      password: "Password123!"
+    });
+  
+  return loginRes.body.accessToken;
+}
+
 beforeAll(async () => {
   await mongoose.connect(MONGO_URI);
 });
@@ -51,19 +77,19 @@ describe("Database Models JSON Transformation", () => {
     // Clear test data before each test
     await Catalog.deleteMany({ name: /^Test/ });
     await Layout.deleteMany({ name: /^Test/ });
-    await User.deleteMany({ email: /^test_/ });
+    await User.deleteMany({ email: /^(test_|admin_)/ });
   });
 
   afterAll(async () => {
     // Clean up test data
     await Catalog.deleteMany({ name: /^Test/ });
     await Layout.deleteMany({ name: /^Test/ });
-    await User.deleteMany({ email: /^test_/ });
+    await User.deleteMany({ email: /^(test_|admin_)/ });
   });
 
   describe("Catalog Model", () => {
     it("should return _id as string via API", async () => {
-      const token = await getAuthToken();
+      const token = await getAdminToken();
       const catalogData = {
         name: "Test API Sofa",
         type: "Sofa",
@@ -84,7 +110,7 @@ describe("Database Models JSON Transformation", () => {
     });
 
     it("should return all catalog items with string _ids", async () => {
-      const token = await getAuthToken();
+      const token = await getAdminToken();
       // Create a test item first
       await request(app)
         .post("/api/catalog")
@@ -115,10 +141,11 @@ describe("Database Models JSON Transformation", () => {
   describe("Layout Model", () => {
     it("should return layout with string _id and furniture item _ids via API", async () => {
       const token = await getAuthToken();
+      const adminToken = await getAdminToken();
       // First create a catalog item
       const catalogResponse = await request(app)
         .post("/api/catalog")
-        .set("Authorization", `Bearer ${token}`)
+        .set("Authorization", `Bearer ${adminToken}`)
         .send({
           name: "Test API Table",
           type: "Table",
@@ -130,7 +157,6 @@ describe("Database Models JSON Transformation", () => {
 
       // Create a layout with furniture
       const layoutData = {
-        userId: "test_user",
         name: "Test API Room",
         furnitureItems: [
           {
@@ -162,7 +188,6 @@ describe("Database Models JSON Transformation", () => {
     it("should return layouts with proper date format", async () => {
       const token = await getAuthToken();
       const layoutData = {
-        userId: "test_user",
         name: "Test API Layout Date",
         furnitureItems: []
       };
@@ -186,7 +211,6 @@ describe("Database Models JSON Transformation", () => {
         .post("/api/layouts")
         .set("Authorization", `Bearer ${token}`)
         .send({
-          userId: "test_user",
           name: "Test API Retrieve",
           furnitureItems: []
         });
