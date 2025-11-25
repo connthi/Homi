@@ -74,7 +74,6 @@ describe("Layout API", () => {
   it("should create and return a new layout", async () => {
     const token = await getAuthToken();
     const layout = {
-      userId: "test_user_123",
       name: "Test Layout",
       furnitureItems: [
         {
@@ -94,7 +93,8 @@ describe("Layout API", () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.name).toBe("Test Layout");
-    expect(res.body.userId).toBe("test_user_123");
+    expect(typeof res.body.userId).toBe("string");
+    expect(res.body.userId).toMatch(/^[a-f0-9]{24}$/);
     expect(Array.isArray(res.body.furnitureItems)).toBe(true);
     expect(res.body.furnitureItems.length).toBe(1);
     expect(res.body.furnitureItems[0].furnitureId).toBe("sofa01");
@@ -106,7 +106,6 @@ describe("Layout API", () => {
   it("should create layout with empty furnitureItems array", async () => {
     const token = await getAuthToken();
     const layout = {
-      userId: "test_user_456",
       name: "Test Empty Layout",
       furnitureItems: []
     };
@@ -118,6 +117,8 @@ describe("Layout API", () => {
 
     expect(res.statusCode).toBe(201);
     expect(res.body.name).toBe("Test Empty Layout");
+    expect(typeof res.body.userId).toBe("string");
+    expect(res.body.userId).toMatch(/^[a-f0-9]{24}$/);
     expect(Array.isArray(res.body.furnitureItems)).toBe(true);
     expect(res.body.furnitureItems.length).toBe(0);
   });
@@ -126,7 +127,6 @@ describe("Layout API", () => {
   it("should return a specific layout by ID", async () => {
     const token = await getAuthToken();
     const layout = {
-      userId: "test_user_789",
       name: "Test Layout for GET",
       furnitureItems: []
     };
@@ -173,7 +173,6 @@ describe("Layout API", () => {
   it("should update an existing layout", async () => {
     const token = await getAuthToken();
     const layout = {
-      userId: "test_user_update",
       name: "Test Layout Original",
       furnitureItems: []
     };
@@ -186,7 +185,6 @@ describe("Layout API", () => {
     const layoutId = createRes.body._id;
 
     const updateData = {
-      userId: "test_user_update",
       name: "Test Layout Updated",
       furnitureItems: [
         {
@@ -213,7 +211,6 @@ describe("Layout API", () => {
   it("should delete a layout by ID", async () => {
     const token = await getAuthToken();
     const layout = {
-      userId: "test_user_delete",
       name: "Test Layout to Delete",
       furnitureItems: []
     };
@@ -242,7 +239,6 @@ describe("Layout API", () => {
   it("should create layout with multiple furniture items", async () => {
     const token = await getAuthToken();
     const layout = {
-      userId: "test_user_multi",
       name: "Test Multi-Furniture Layout",
       furnitureItems: [
         {
@@ -278,7 +274,6 @@ describe("Layout API", () => {
   it("should preserve furniture item position, rotation, and scale", async () => {
     const token = await getAuthToken();
     const layout = {
-      userId: "test_user_pos",
       name: "Test Position Layout",
       furnitureItems: [
         {
@@ -311,12 +306,10 @@ describe("Layout API", () => {
   it("should return all layouts including newly created ones", async () => {
     const token = await getAuthToken();
     const layout1 = {
-      userId: "test_user_all",
       name: "Test Layout 1",
       furnitureItems: []
     };
     const layout2 = {
-      userId: "test_user_all",
       name: "Test Layout 2",
       furnitureItems: []
     };

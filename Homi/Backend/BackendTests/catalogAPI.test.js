@@ -38,6 +38,32 @@ async function getAuthToken() {
   return loginRes.body.accessToken;
 }
 
+// Helper function to get admin auth token for tests
+async function getAdminToken() {
+  const testEmail = `admin_${Date.now()}@example.com`;
+  const registerRes = await request(app)
+    .post("/api/auth/register")
+    .send({
+      email: testEmail,
+      password: "Password123!",
+      firstName: "Admin",
+      lastName: "User"
+    });
+  
+  // Update user to have admin role directly in MongoDB
+  await User.updateOne({ email: testEmail }, { role: "admin" });
+  
+  // Login again to get a fresh token after role update
+  const loginRes = await request(app)
+    .post("/api/auth/login")
+    .send({
+      email: testEmail,
+      password: "Password123!"
+    });
+  
+  return loginRes.body.accessToken;
+}
+
 // Before any tests run, connect to MongoDB using the URI from our .env file
 beforeAll(async () => {
   await mongoose.connect(MONGO_URI);
@@ -46,13 +72,13 @@ beforeAll(async () => {
 // Clean up test data before each test
 beforeEach(async () => {
   await Catalog.deleteMany({ name: /^Test/ });
-  await User.deleteMany({ email: /^test_/ });
+  await User.deleteMany({ email: /^(test_|admin_)/ });
 });
 
 // After all tests finish, close the MongoDB connection to prevent hanging processes
 afterAll(async () => {
   await Catalog.deleteMany({ name: /^Test/ });
-  await User.deleteMany({ email: /^test_/ });
+  await User.deleteMany({ email: /^(test_|admin_)/ });
   await mongoose.connection.close();
 });
 
@@ -72,7 +98,7 @@ describe("Catalog API", () => {
 
   // Test #2: Check if we can successfully create a new catalog item
   it("should create a new catalog item", async () => {
-    const token = await getAuthToken();
+    const token = await getAdminToken();
     const item = {
       name: "Test Chair",
       type: "Chair",
@@ -99,7 +125,7 @@ describe("Catalog API", () => {
 
   // Test #3: Verify created item appears in GET request
   it("should return created catalog item in GET request", async () => {
-    const token = await getAuthToken();
+    const token = await getAdminToken();
     const item = {
       name: "Test Sofa",
       type: "Sofa",
@@ -127,7 +153,7 @@ describe("Catalog API", () => {
 
   // Test #4: Should reject catalog item with missing required fields
   it("should reject catalog item with missing name", async () => {
-    const token = await getAuthToken();
+    const token = await getAdminToken();
     const item = {
       type: "Table",
       defaultDimensions: { width: 1.0, height: 0.4, depth: 0.6 }
@@ -142,7 +168,7 @@ describe("Catalog API", () => {
 
   // Test #5: Should reject catalog item with missing type
   it("should reject catalog item with missing type", async () => {
-    const token = await getAuthToken();
+    const token = await getAdminToken();
     const item = {
       name: "Test Table",
       defaultDimensions: { width: 1.0, height: 0.4, depth: 0.6 }
@@ -157,7 +183,7 @@ describe("Catalog API", () => {
 
   // Test #6: Should reject catalog item with missing dimensions
   it("should reject catalog item with missing defaultDimensions", async () => {
-    const token = await getAuthToken();
+    const token = await getAdminToken();
     const item = {
       name: "Test Table",
       type: "Table"
@@ -172,7 +198,7 @@ describe("Catalog API", () => {
 
   // Test #7: Should accept catalog item with optional fields
   it("should accept catalog item with optional fields", async () => {
-    const token = await getAuthToken();
+    const token = await getAdminToken();
     const item = {
       name: "Test Bed",
       type: "Bed",
@@ -196,7 +222,7 @@ describe("Catalog API", () => {
 
   // Test #8: Should handle empty materialOptions array
   it("should accept catalog item with empty materialOptions", async () => {
-    const token = await getAuthToken();
+    const token = await getAdminToken();
     const item = {
       name: "Test Lamp",
       type: "Lighting",
@@ -215,7 +241,7 @@ describe("Catalog API", () => {
 
   // Test #9: Should return _id as string (for Swift compatibility)
   it("should return _id as string in response", async () => {
-    const token = await getAuthToken();
+    const token = await getAdminToken();
     const item = {
       name: "Test Cabinet",
       type: "Storage",

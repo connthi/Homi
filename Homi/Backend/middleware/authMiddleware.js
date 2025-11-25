@@ -22,7 +22,8 @@ export async function authenticate(req, res, next) {
       id: user._id.toString(),
       email: user.email,
       firstName: user.firstName,
-      lastName: user.lastName
+      lastName: user.lastName,
+      isAdmin: user.role === "admin"
     };
 
     next();
