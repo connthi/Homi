@@ -64,29 +64,21 @@ struct RoomView: View {
             
             // UI Overlay
             VStack {
-                // Top Controls - Reorganized
-                HStack(alignment: .top) {
-                    // Left: Back button and layout name
-                    VStack(alignment: .leading, spacing: 8) {
-                        Button(action: { dismiss() }) {
-                            HStack {
-                                Image(systemName: "chevron.left")
-                                Text("Back")
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                        
-                        if let layout = layoutManager.currentLayout {
-                            Text(layout.name)
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 6)
-                                .background(Color.black.opacity(0.6))
-                                .cornerRadius(8)
-                                .lineLimit(1)
+                // Top Controls
+                // Top Controls
+                HStack {
+                    Button(action: { dismiss() }) {
+                        HStack {
+                            Image(systemName: "chevron.left")
+                            Text("Back")
                         }
                     }
+                    .buttonStyle(.bordered)
+                    .fixedSize() // <--- ADD THIS (Fixes squashed Back button)
+                    
+                    Spacer()
+
+                    // ... (Wall Color Picker & Mode Toggles - These look fine) ...
                     
                     Spacer()
                     
@@ -168,7 +160,18 @@ struct RoomView: View {
                             .buttonStyle(.bordered)
                             .background(Color(.systemBackground).opacity(0.9))
                             .cornerRadius(8)
+                            .lineLimit(1) // <--- ADD THIS
+                            .fixedSize()  // <--- ADD THIS (Fixes squashed Title)
+                    }
+                    
+                    Spacer()
+                    
+                    if layoutManager.currentLayout != nil {
+                        Button("Save") {
+                            saveLayout()
                         }
+                        .buttonStyle(.borderedProminent)
+                        .fixedSize() // <--- ADD THIS (Fixes squashed Save button)
                     }
                 }
                 .padding()
@@ -907,52 +910,43 @@ struct RoomSceneView: UIViewRepresentable {
         }
         
         func updateWallTransparency(scene: SCNScene) {
-            guard let camera = sceneView?.pointOfView else { return }
-
-            let camPos = camera.presentation.worldPosition
-            let camForward = camera.presentation.worldFront
-
-            let walls: [(SCNNode?, SCNVector3)] = [
-                (frontWallNode, SCNVector3(0, 0, 1)),
-                (backWallNode,  SCNVector3(0, 0, -1)),
-                (leftWallNode,  SCNVector3(-1, 0, 0)),
-                (rightWallNode, SCNVector3(1, 0, 0))
-            ]
-
-            func setAlpha(_ node: SCNNode?, _ alpha: CGFloat) {
-                guard let node = node, let geom = node.geometry else { return }
-
-                SCNTransaction.begin()
-                SCNTransaction.animationDuration = 0.25
-
-                node.renderingOrder = alpha < 1.0 ? 100 : 0
-
-                for mat in geom.materials {
-                    mat.transparency = alpha
-                    mat.transparencyMode = .aOne
-                    mat.isDoubleSided = true
-                    mat.writesToDepthBuffer = alpha == 1.0
-                    mat.readsFromDepthBuffer = true
-                }
-
-                SCNTransaction.commit()
+            // 1. Normalize Angle (0-360)
+            var angle = Int(cameraAngleY) % 360
+            if angle < 0 { angle += 360 }
+            
+            // 2. Reset: Start with all walls visible
+            frontWallNode?.isHidden = false
+            backWallNode?.isHidden = false
+            leftWallNode?.isHidden = false
+            rightWallNode?.isHidden = false
+            
+            if isFirstPersonMode {
+                // In First Person, show everything (or add custom logic)
+                return
             }
-
-            for (node, normal) in walls {
-                guard let node = node else { continue }
-
-                let wallPos = node.presentation.worldPosition
-                let wallToCam = camPos - wallPos
-
-                let facingCamera = dot(wallToCam, normal) > 0
-                let cameraLookingAtWall = dot(camForward, normal) < -0.2
-                let distanceToWall = length(wallToCam)
-
-                let shouldBeTransparent =
-                    isFirstPersonMode ? (node == frontWallNode)
-                    : (facingCamera && cameraLookingAtWall && distanceToWall < 25)
-
-                setAlpha(node, shouldBeTransparent ? 0.15 : 1.0)
+            
+            // 3. Independent Checks (No 'else') with Overlap
+            // We use a +/- 60 degree buffer so that at corners (like 45°), 
+            // BOTH adjacent walls will be hidden.
+            
+            // Front Wall (0°): Hide if camera is between 300° and 60°
+            if angle > 300 || angle < 60 {
+                frontWallNode?.isHidden = true
+            }
+            
+            // Right Wall (90°): Hide if camera is between 30° and 150°
+            if angle > 30 && angle < 150 {
+                rightWallNode?.isHidden = true
+            }
+            
+            // Back Wall (180°): Hide if camera is between 120° and 240°
+            if angle > 120 && angle < 240 {
+                backWallNode?.isHidden = true
+            }
+            
+            // Left Wall (270°): Hide if camera is between 210° and 330°
+            if angle > 210 && angle < 330 {
+                leftWallNode?.isHidden = true
             }
         }
 
@@ -1129,6 +1123,7 @@ struct RoomSceneView: UIViewRepresentable {
         @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
             let translation = gesture.translation(in: gesture.view)
             
+            // CASE 1: Editing Furniture (Move / Rotate / Scale)
             if isEditing && parent.selectedNode != nil {
                 guard let selected = parent.selectedNode,
                     let scene = sceneView?.scene else { return }
@@ -1136,12 +1131,14 @@ struct RoomSceneView: UIViewRepresentable {
                 switch editMode {
                 case .move:
                     let moveSpeed: Float = 0.01
+                    // Calculate new position based on drag
                     let newPosition = SCNVector3(
                         selected.position.x + Float(translation.x) * moveSpeed,
                         selected.position.y,
                         selected.position.z - Float(translation.y) * moveSpeed
                     )
                     
+                    // Apply collision logic to keep it inside walls
                     let clampedPosition = applyCollisionDetection(position: newPosition, furniture: selected, scene: scene)
                     selected.position = clampedPosition
                     
@@ -1164,12 +1161,14 @@ struct RoomSceneView: UIViewRepresentable {
                     
                 case .scale:
                     let scaleSpeed: Float = 0.01
+                    // Dragging UP scales up, DOWN scales down
                     let scaleDelta = 1.0 + Float(-translation.y) * scaleSpeed
                     let newScale = SCNVector3(
                         selected.scale.x * scaleDelta,
                         selected.scale.y * scaleDelta,
                         selected.scale.z * scaleDelta
                     )
+                    // Clamp scale between 0.5x and 3.0x
                     let clampedScale = SCNVector3(
                         max(0.5, min(3.0, newScale.x)),
                         max(0.5, min(3.0, newScale.y)),
@@ -1184,31 +1183,35 @@ struct RoomSceneView: UIViewRepresentable {
                 
                 gesture.setTranslation(.zero, in: gesture.view)
                 
+            // CASE 2: First Person Camera Look
             } else if isFirstPersonMode {
-                firstPersonAngleY -= Float(translation.x) * 0.5
-                firstPersonAngleX -= Float(translation.y) * 0.5
-                firstPersonAngleX = max(-89, min(89, firstPersonAngleX))
+                firstPersonAngleY -= Float(translation.x) * 0.005
+                firstPersonAngleX -= Float(translation.y) * 0.005
+                // Limit looking up/down so you don't flip over
+                firstPersonAngleX = max(-1.5, min(1.5, firstPersonAngleX))
                 
-                firstPersonCamera?.eulerAngles = SCNVector3(
-                    firstPersonAngleX * .pi / 180.0,
-                    firstPersonAngleY * .pi / 180.0,
-                    0
-                )
+                firstPersonCamera?.eulerAngles = SCNVector3(firstPersonAngleX, firstPersonAngleY, 0)
+                
                 gesture.setTranslation(.zero, in: gesture.view)
                 
-                // Update wall transparency in first person mode
+                // Update walls (optional in FP mode, but good for consistency)
                 if let scene = sceneView?.scene {
                     updateWallTransparency(scene: scene)
                 }
                 
+            // CASE 3: Orbit Camera (Standard View)
             } else {
+                // Rotate Camera around the room center
                 cameraAngleY -= Float(translation.x) * 0.5
                 cameraAngleX -= Float(translation.y) * 0.5
-                cameraAngleX = max(-89, min(89, cameraAngleX))
+                
+                // Clamp vertical angle so you can't go under the floor
+                cameraAngleX = max(-89, min(-5, cameraAngleX))
+                
                 updateCameraPosition()
                 gesture.setTranslation(.zero, in: gesture.view)
                 
-                // Update wall transparency during camera rotation
+                // CRITICAL: Update wall visibility immediately while rotating
                 if let scene = sceneView?.scene {
                     updateWallTransparency(scene: scene)
                 }
