@@ -2,6 +2,7 @@ import request from "supertest";
 import mongoose from "mongoose";
 import app from "../server.js";
 import Layout from "../models/layoutModel.js";
+import User from "../models/userModel.js";
 import dotenv from "dotenv";
 
 // Load environment variables before running any tests
@@ -9,6 +10,33 @@ dotenv.config();
 
 // Default MongoDB URI for testing (fallback if .env file doesn't exist)
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://Homi_db_user:Z3ruSgh5GxvBU5bz@homi.0xgveje.mongodb.net/?retryWrites=true&w=majority&appName=Homi";
+
+// Helper function to get auth token for tests
+async function getAuthToken() {
+  const testEmail = `test_${Date.now()}@example.com`;
+  const registerRes = await request(app)
+    .post("/api/auth/register")
+    .send({
+      email: testEmail,
+      password: "Password123!",
+      firstName: "Test",
+      lastName: "User"
+    });
+  
+  if (registerRes.statusCode === 201) {
+    return registerRes.body.accessToken;
+  }
+  
+  // If registration fails, try login
+  const loginRes = await request(app)
+    .post("/api/auth/login")
+    .send({
+      email: testEmail,
+      password: "Password123!"
+    });
+  
+  return loginRes.body.accessToken;
+}
 
 // Before any test runs, establish a connection to the MongoDB test database
 beforeAll(async () => {
@@ -18,11 +46,13 @@ beforeAll(async () => {
 // Clean up test data before each test
 beforeEach(async () => {
   await Layout.deleteMany({ name: /^Test/ });
+  await User.deleteMany({ email: /^test_/ });
 });
 
 // After all tests complete, close the MongoDB connection to free resources
 afterAll(async () => {
   await Layout.deleteMany({ name: /^Test/ });
+  await User.deleteMany({ email: /^test_/ });
   await mongoose.connection.close();
 });
 
@@ -31,7 +61,10 @@ describe("Layout API", () => {
 
   // Test #1: GET /api/layouts should return an array
   it("should return an array of layouts", async () => {
-    const res = await request(app).get("/api/layouts");
+    const token = await getAuthToken();
+    const res = await request(app)
+      .get("/api/layouts")
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
@@ -39,6 +72,7 @@ describe("Layout API", () => {
 
   // Test #2: POST /api/layouts should create a new layout
   it("should create and return a new layout", async () => {
+    const token = await getAuthToken();
     const layout = {
       userId: "test_user_123",
       name: "Test Layout",
@@ -53,7 +87,10 @@ describe("Layout API", () => {
       ]
     };
 
-    const res = await request(app).post("/api/layouts").send(layout);
+    const res = await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout);
 
     expect(res.statusCode).toBe(201);
     expect(res.body.name).toBe("Test Layout");
@@ -67,13 +104,17 @@ describe("Layout API", () => {
 
   // Test #3: POST /api/layouts should create layout with empty furnitureItems
   it("should create layout with empty furnitureItems array", async () => {
+    const token = await getAuthToken();
     const layout = {
       userId: "test_user_456",
       name: "Test Empty Layout",
       furnitureItems: []
     };
 
-    const res = await request(app).post("/api/layouts").send(layout);
+    const res = await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout);
 
     expect(res.statusCode).toBe(201);
     expect(res.body.name).toBe("Test Empty Layout");
@@ -83,17 +124,23 @@ describe("Layout API", () => {
 
   // Test #4: GET /api/layouts/:id should return a specific layout
   it("should return a specific layout by ID", async () => {
+    const token = await getAuthToken();
     const layout = {
       userId: "test_user_789",
       name: "Test Layout for GET",
       furnitureItems: []
     };
 
-    const createRes = await request(app).post("/api/layouts").send(layout);
+    const createRes = await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout);
     expect(createRes.statusCode).toBe(201);
     const layoutId = createRes.body._id;
 
-    const getRes = await request(app).get(`/api/layouts/${layoutId}`);
+    const getRes = await request(app)
+      .get(`/api/layouts/${layoutId}`)
+      .set("Authorization", `Bearer ${token}`);
     expect(getRes.statusCode).toBe(200);
     expect(getRes.body._id).toBe(layoutId);
     expect(getRes.body.name).toBe("Test Layout for GET");
@@ -101,8 +148,11 @@ describe("Layout API", () => {
 
   // Test #5: GET /api/layouts/:id should return 404 for non-existent layout
   it("should return 404 for non-existent layout ID", async () => {
+    const token = await getAuthToken();
     const fakeId = "507f1f77bcf86cd799439011"; // Valid ObjectId format but doesn't exist
-    const res = await request(app).get(`/api/layouts/${fakeId}`);
+    const res = await request(app)
+      .get(`/api/layouts/${fakeId}`)
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.statusCode).toBe(404);
     expect(res.body.message).toBe("Layout not found");
@@ -110,21 +160,28 @@ describe("Layout API", () => {
 
   // Test #6: GET /api/layouts/:id should return 500 for invalid ID format
   it("should handle invalid layout ID format", async () => {
+    const token = await getAuthToken();
     const invalidId = "invalid-id-format";
-    const res = await request(app).get(`/api/layouts/${invalidId}`);
+    const res = await request(app)
+      .get(`/api/layouts/${invalidId}`)
+      .set("Authorization", `Bearer ${token}`);
 
     expect(res.statusCode).toBe(500);
   });
 
   // Test #7: PUT /api/layouts/:id should update an existing layout
   it("should update an existing layout", async () => {
+    const token = await getAuthToken();
     const layout = {
       userId: "test_user_update",
       name: "Test Layout Original",
       furnitureItems: []
     };
 
-    const createRes = await request(app).post("/api/layouts").send(layout);
+    const createRes = await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout);
     expect(createRes.statusCode).toBe(201);
     const layoutId = createRes.body._id;
 
@@ -142,7 +199,10 @@ describe("Layout API", () => {
       ]
     };
 
-    const updateRes = await request(app).put(`/api/layouts/${layoutId}`).send(updateData);
+    const updateRes = await request(app)
+      .put(`/api/layouts/${layoutId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send(updateData);
     expect(updateRes.statusCode).toBe(200);
     expect(updateRes.body.name).toBe("Test Layout Updated");
     expect(updateRes.body.furnitureItems.length).toBe(1);
@@ -151,27 +211,36 @@ describe("Layout API", () => {
 
   // Test #8: DELETE /api/layouts/:id should delete a layout
   it("should delete a layout by ID", async () => {
+    const token = await getAuthToken();
     const layout = {
       userId: "test_user_delete",
       name: "Test Layout to Delete",
       furnitureItems: []
     };
 
-    const createRes = await request(app).post("/api/layouts").send(layout);
+    const createRes = await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout);
     expect(createRes.statusCode).toBe(201);
     const layoutId = createRes.body._id;
 
-    const deleteRes = await request(app).delete(`/api/layouts/${layoutId}`);
+    const deleteRes = await request(app)
+      .delete(`/api/layouts/${layoutId}`)
+      .set("Authorization", `Bearer ${token}`);
     expect(deleteRes.statusCode).toBe(200);
     expect(deleteRes.body.message).toBe("Layout deleted");
 
     // Verify it's actually deleted
-    const getRes = await request(app).get(`/api/layouts/${layoutId}`);
+    const getRes = await request(app)
+      .get(`/api/layouts/${layoutId}`)
+      .set("Authorization", `Bearer ${token}`);
     expect(getRes.statusCode).toBe(404);
   });
 
   // Test #9: Layout should include furnitureItems with proper structure
   it("should create layout with multiple furniture items", async () => {
+    const token = await getAuthToken();
     const layout = {
       userId: "test_user_multi",
       name: "Test Multi-Furniture Layout",
@@ -193,7 +262,10 @@ describe("Layout API", () => {
       ]
     };
 
-    const res = await request(app).post("/api/layouts").send(layout);
+    const res = await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout);
     expect(res.statusCode).toBe(201);
     expect(res.body.furnitureItems.length).toBe(2);
     expect(res.body.furnitureItems[0].furnitureId).toBe("sofa01");
@@ -204,6 +276,7 @@ describe("Layout API", () => {
 
   // Test #10: Layout furnitureItems should have proper position/rotation/scale
   it("should preserve furniture item position, rotation, and scale", async () => {
+    const token = await getAuthToken();
     const layout = {
       userId: "test_user_pos",
       name: "Test Position Layout",
@@ -218,7 +291,10 @@ describe("Layout API", () => {
       ]
     };
 
-    const res = await request(app).post("/api/layouts").send(layout);
+    const res = await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout);
     expect(res.statusCode).toBe(201);
     const item = res.body.furnitureItems[0];
     expect(item.position.x).toBe(1.5);
@@ -233,6 +309,7 @@ describe("Layout API", () => {
 
   // Test #11: GET /api/layouts should return all created layouts
   it("should return all layouts including newly created ones", async () => {
+    const token = await getAuthToken();
     const layout1 = {
       userId: "test_user_all",
       name: "Test Layout 1",
@@ -244,10 +321,18 @@ describe("Layout API", () => {
       furnitureItems: []
     };
 
-    await request(app).post("/api/layouts").send(layout1);
-    await request(app).post("/api/layouts").send(layout2);
+    await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout1);
+    await request(app)
+      .post("/api/layouts")
+      .set("Authorization", `Bearer ${token}`)
+      .send(layout2);
 
-    const res = await request(app).get("/api/layouts");
+    const res = await request(app)
+      .get("/api/layouts")
+      .set("Authorization", `Bearer ${token}`);
     expect(res.statusCode).toBe(200);
     
     const testLayouts = res.body.filter(l => l.name.startsWith("Test Layout"));
