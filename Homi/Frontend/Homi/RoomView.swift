@@ -65,7 +65,6 @@ struct RoomView: View {
             // UI Overlay
             VStack {
                 // Top Controls
-                // Top Controls
                 HStack {
                     Button(action: { dismiss() }) {
                         HStack {
@@ -74,17 +73,12 @@ struct RoomView: View {
                         }
                     }
                     .buttonStyle(.bordered)
-                    .fixedSize() // <--- ADD THIS (Fixes squashed Back button)
-                    
-                    Spacer()
-
-                    // ... (Wall Color Picker & Mode Toggles - These look fine) ...
+                    .fixedSize()
                     
                     Spacer()
                     
                     // Right: Save button and tool buttons
                     VStack(alignment: .trailing, spacing: 8) {
-                        // Save button
                         if layoutManager.currentLayout != nil {
                             Button("Save") {
                                 saveLayout()
@@ -92,9 +86,7 @@ struct RoomView: View {
                             .buttonStyle(.borderedProminent)
                         }
                         
-                        // Tool buttons row
                         VStack(spacing: 8) {
-                            // Wall Color Picker Button
                             Button(action: {
                                 showingWallColorPicker = true
                             }) {
@@ -115,7 +107,6 @@ struct RoomView: View {
                             .background(Color(.systemBackground).opacity(0.9))
                             .cornerRadius(8)
 
-                            // Room Edit Toggle
                             Button(action: {
                                 withAnimation {
                                     isEditingRoom.toggle()
@@ -133,7 +124,6 @@ struct RoomView: View {
                             .background(isEditingRoom ? Color.orange.opacity(0.2) : Color(.systemBackground).opacity(0.9))
                             .cornerRadius(8)
                             
-                            // First Person Toggle
                             Button(action: {
                                 withAnimation {
                                     isFirstPersonMode.toggle()
@@ -147,7 +137,6 @@ struct RoomView: View {
                             .background(isFirstPersonMode ? Color.blue.opacity(0.2) : Color(.systemBackground).opacity(0.9))
                             .cornerRadius(8)
                             
-                            // Hide/Show Hints Toggle
                             Button(action: {
                                 withAnimation {
                                     showHints.toggle()
@@ -160,18 +149,9 @@ struct RoomView: View {
                             .buttonStyle(.bordered)
                             .background(Color(.systemBackground).opacity(0.9))
                             .cornerRadius(8)
-                            .lineLimit(1) // <--- ADD THIS
-                            .fixedSize()  // <--- ADD THIS (Fixes squashed Title)
-                    }
-                    
-                    Spacer()
-                    
-                    if layoutManager.currentLayout != nil {
-                        Button("Save") {
-                            saveLayout()
+                            .lineLimit(1)
+                            .fixedSize()
                         }
-                        .buttonStyle(.borderedProminent)
-                        .fixedSize() // <--- ADD THIS (Fixes squashed Save button)
                     }
                 }
                 .padding()
