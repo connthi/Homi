@@ -15,72 +15,69 @@ struct RegisterView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 24) {
-                VStack(spacing: 6) {
-                    Text("Create Account")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    
-                    Text("Join Homi to start designing")
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                }
+        VStack(spacing: 24) {
+            VStack(spacing: 6) {
+                Text("Create Account")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 
-                VStack(spacing: 16) {
-                    modernField(title: "First Name (Optional)", icon: "person", text: $firstName, contentType: .givenName, autocapitalization: .words)
-                    
-                    modernField(title: "Last Name (Optional)", icon: "person", text: $lastName, contentType: .familyName, autocapitalization: .words)
-                    
-                    modernField(title: "Email Address", icon: "envelope", text: $email, contentType: .emailAddress, keyboard: .emailAddress, autocapitalization: .never)
-                    
-                    secureField(title: "Password", text: $password, isVisible: $isPasswordVisible)
-                    
-                    secureField(title: "Confirm Password", text: $confirmPassword, isVisible: $isConfirmPasswordVisible)
-
-                    if let inlineMessage = passwordRequirementsMessage {
-                        Text(inlineMessage)
-                            .font(.footnote)
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                
-                if let error = errorMessage {
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.red)
-                        Text(error)
-                            .foregroundColor(.red)
-                            .font(.callout)
-                    }
-                    .transition(.opacity)
-                }
-                
-                Button(action: handleRegister) {
-                    HStack {
-                        Spacer()
-                        if authManager.isLoading {
-                            ProgressView()
-                                .tint(.white)
-                        } else {
-                            Text("Create Account")
-                                .fontWeight(.semibold)
-                        }
-                        Spacer()
-                    }
-                    .padding()
-                    .background(Color(red: 0.24, green: 0.52, blue: 0.96))
-                    .cornerRadius(18)
-                    .foregroundColor(.white)
-                    .shadow(color: Color(red: 0.24, green: 0.52, blue: 0.96).opacity(0.35), radius: 10, x: 0, y: 8)
-                }
-                .disabled(!isFormValid || authManager.isLoading)
+                Text("Join Homi to start designing")
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
             }
-            .padding(.horizontal, 4)
+            
+            VStack(spacing: 16) {
+                modernField(title: "First Name (Optional)", icon: "person", text: $firstName, contentType: .givenName, autocapitalization: .words)
+                
+                modernField(title: "Last Name (Optional)", icon: "person", text: $lastName, contentType: .familyName, autocapitalization: .words)
+                
+                modernField(title: "Email Address", icon: "envelope", text: $email, contentType: .emailAddress, keyboard: .emailAddress, autocapitalization: .never)
+                
+                secureField(title: "Password", text: $password, isVisible: $isPasswordVisible)
+                
+                secureField(title: "Confirm Password", text: $confirmPassword, isVisible: $isConfirmPasswordVisible)
+
+                if let inlineMessage = passwordRequirementsMessage {
+                    Text(inlineMessage)
+                        .font(.footnote)
+                        .foregroundColor(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            
+            if let error = errorMessage {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.red)
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.callout)
+                }
+                .transition(.opacity)
+            }
+            
+            Button(action: handleRegister) {
+                HStack {
+                    Spacer()
+                    if authManager.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Create Account")
+                            .fontWeight(.semibold)
+                    }
+                    Spacer()
+                }
+                .padding()
+                .background(Color(red: 0.24, green: 0.52, blue: 0.96))
+                .cornerRadius(18)
+                .foregroundColor(.white)
+                .shadow(color: Color(red: 0.24, green: 0.52, blue: 0.96).opacity(0.35), radius: 10, x: 0, y: 8)
+            }
+            .disabled(!isFormValid || authManager.isLoading)
         }
-        .padding(.horizontal, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var isFormValid: Bool {

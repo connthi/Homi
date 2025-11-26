@@ -16,57 +16,60 @@ struct AuthenticationView: View {
                 )
                 .ignoresSafeArea()
                 
-                VStack(spacing: 12) {
-                    Spacer().frame(height: 24)
-                    
-                    Button(action: toggleMode) {
-                        HStack(spacing: 6) {
-                            Text(showRegister ? "Have an account?" : "Don’t have an account?")
-                            Text(showRegister ? "Log in" : "Create one")
-                                .fontWeight(.semibold)
-                        }
-                        .font(.footnote)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(Color.white.opacity(0.18))
-                        .clipShape(Capsule())
-                    }
-                    
-                    VStack(spacing: 6) {
-                        Text("Homi")
-                            .font(.system(size: 36, weight: .bold))
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        Button(action: toggleMode) {
+                            HStack(spacing: 6) {
+                                Text(showRegister ? "Have an account?" : "Don’t have an account?")
+                                Text(showRegister ? "Log in" : "Create one")
+                                    .fontWeight(.semibold)
+                            }
+                            .font(.footnote)
                             .foregroundColor(.white)
-                        Text(showRegister ? "Create a new space" : "Welcome Back")
-                            .font(.headline)
-                            .foregroundColor(.white.opacity(0.85))
-                    }
-                    .padding(.top, 8)
-                    
-                    ZStack {
-                        if showRegister {
-                            RegisterView()
-                                .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .trailing)),
-                                                        removal: .opacity.combined(with: .move(edge: .leading))))
-                        } else {
-                            LoginView()
-                                .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .leading)),
-                                                        removal: .opacity.combined(with: .move(edge: .trailing))))
+                            .padding(.horizontal, 18)
+                            .padding(.vertical, 10)
+                            .background(Color.white.opacity(0.18))
+                            .clipShape(Capsule())
                         }
+                        .padding(.top, 12)
+                        
+                        VStack(spacing: 6) {
+                            Text("Homi")
+                                .font(.system(size: 36, weight: .bold))
+                                .foregroundColor(.white)
+                            Text(showRegister ? "Create a new space" : "Welcome Back")
+                                .font(.headline)
+                                .foregroundColor(.white.opacity(0.85))
+                        }
+                        .padding(.top, 4)
+                        
+                        ZStack {
+                            if showRegister {
+                                RegisterView()
+                                    .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .trailing)),
+                                                            removal: .opacity.combined(with: .move(edge: .leading))))
+                            } else {
+                                LoginView()
+                                    .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .leading)),
+                                                            removal: .opacity.combined(with: .move(edge: .trailing))))
+                            }
+                        }
+                        .padding(24)
+                        .frame(maxWidth: 520)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        )
+                        .shadow(color: Color.black.opacity(0.15), radius: 18, x: 0, y: 10)
+                        .padding(.bottom, 8)
                     }
-                    .padding(.vertical, 32)
-                    .padding(.horizontal, 28)
-                    .frame(maxWidth: 500)
-                    .background(
-                        RoundedRectangle(cornerRadius: 32, style: .continuous)
-                            .fill(Color(.systemBackground))
-                            .shadow(color: Color.black.opacity(0.2), radius: 25, x: 0, y: 20)
-                    )
-                    .padding(.horizontal)
-                    
-                    Spacer(minLength: 40)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 28)
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .toolbar(.hidden, for: .navigationBar)
         }
     }
