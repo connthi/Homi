@@ -94,6 +94,7 @@ struct LoginView: View {
                     .foregroundColor(.white)
                     .shadow(color: Color(red: 0.40, green: 0.52, blue: 0.97).opacity(0.4), radius: 10, x: 0, y: 8)
                 }
+                .padding(.top, 12)
                 .disabled(disabled)
             }
             .padding(.horizontal, 4)
