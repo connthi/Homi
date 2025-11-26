@@ -94,31 +94,8 @@ struct LoginView: View {
                     .foregroundColor(.white)
                     .shadow(color: Color(red: 0.40, green: 0.52, blue: 0.97).opacity(0.4), radius: 10, x: 0, y: 8)
                 }
+                .padding(.top, 12)
                 .disabled(disabled)
-                
-                VStack(spacing: 16) {
-                    HStack {
-                        Rectangle()
-                            .frame(height: 1)
-                            .foregroundColor(Color(.systemGray4))
-                        Text("Or sign in with")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Rectangle()
-                            .frame(height: 1)
-                            .foregroundColor(Color(.systemGray4))
-                    }
-                    
-                    HStack(spacing: 16) {
-                        SocialLoginButton(style: .apple) {
-                            // Hook up Sign in with Apple later
-                        }
-                        SocialLoginButton(style: .google) {
-                            // Hook up Google later
-                        }
-                    }
-                }
-                
             }
             .padding(.horizontal, 4)
         }
@@ -163,79 +140,6 @@ struct LoginView: View {
                     }
                 }
             }
-        }
-    }
-}
-
-private struct SocialLoginButton: View {
-    enum Style {
-        case apple
-        case google
-    }
-    
-    let style: Style
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                icon
-                Text(styleText)
-                    .fontWeight(.semibold)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(styleBackground)
-            .foregroundColor(styleForeground)
-            .cornerRadius(16)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color(.systemGray5))
-            )
-        }
-        .buttonStyle(.plain)
-    }
-    
-    private var styleText: String {
-        switch style {
-        case .apple: return "Apple"
-        case .google: return "Google"
-        }
-    }
-    
-    private var icon: some View {
-        Group {
-            switch style {
-            case .apple:
-                Image(systemName: "applelogo")
-            case .google:
-                ZStack {
-                    Circle()
-                        .stroke(Color(red: 0.25, green: 0.45, blue: 0.85), lineWidth: 1.5)
-                        .frame(width: 18, height: 18)
-                    Text("G")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Color(red: 0.25, green: 0.45, blue: 0.85))
-                }
-            }
-        }
-    }
-    
-    private var styleBackground: Color {
-        switch style {
-        case .apple:
-            return Color.black
-        case .google:
-            return Color.white
-        }
-    }
-    
-    private var styleForeground: Color {
-        switch style {
-        case .apple:
-            return .white
-        case .google:
-            return .black
         }
     }
 }
