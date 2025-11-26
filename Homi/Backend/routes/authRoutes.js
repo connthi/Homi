@@ -9,6 +9,7 @@ import {
   hashToken
 } from "../utils/security.js";
 import { authenticate } from "../middleware/authMiddleware.js";
+import { ErrorMessages } from "../utils/errorMessages.js";
 
 const router = express.Router();
 const MAX_REFRESH_TOKENS = Number(process.env.MAX_REFRESH_TOKENS || 5);
@@ -18,18 +19,18 @@ router.post("/register", async (req, res) => {
     const { email, password, firstName, lastName } = req.body || {};
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res.status(400).json({ message: ErrorMessages.AUTH.EMAIL_PASSWORD_REQUIRED });
     }
 
     if (password.length < 8) {
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
+      return res.status(400).json({ message: ErrorMessages.AUTH.PASSWORD_TOO_SHORT });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
-      return res.status(409).json({ message: "Email is already registered" });
+      return res.status(409).json({ message: ErrorMessages.AUTH.EMAIL_ALREADY_REGISTERED });
     }
 
     const passwordHash = await hashPassword(password);
@@ -45,7 +46,7 @@ router.post("/register", async (req, res) => {
     return res.status(201).json(response);
   } catch (error) {
     console.error("Register error:", error);
-    return res.status(500).json({ message: "Unable to register user" });
+    return res.status(500).json({ message: ErrorMessages.AUTH.UNABLE_TO_REGISTER });
   }
 });
 
@@ -54,27 +55,27 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body || {};
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res.status(400).json({ message: ErrorMessages.AUTH.EMAIL_PASSWORD_REQUIRED });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: ErrorMessages.AUTH.INVALID_CREDENTIALS });
     }
 
     const isValid = await verifyPassword(password, user.passwordHash);
 
     if (!isValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: ErrorMessages.AUTH.INVALID_CREDENTIALS });
     }
 
     const response = await buildAuthResponse(user);
     return res.json(response);
   } catch (error) {
     console.error("Login error:", error);
-    return res.status(500).json({ message: "Unable to login" });
+    return res.status(500).json({ message: ErrorMessages.AUTH.UNABLE_TO_LOGIN });
   }
 });
 
@@ -83,18 +84,18 @@ router.post("/refresh", async (req, res) => {
     const { refreshToken } = req.body || {};
 
     if (!refreshToken) {
-      return res.status(400).json({ message: "refreshToken is required" });
+      return res.status(400).json({ message: ErrorMessages.AUTH.REFRESH_TOKEN_REQUIRED });
     }
 
     const payload = verifyRefreshToken(refreshToken);
     const user = await User.findById(payload.sub);
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid refresh token" });
+      return res.status(401).json({ message: ErrorMessages.AUTH.INVALID_REFRESH_TOKEN });
     }
 
     if (!isRefreshTokenStored(user, refreshToken)) {
-      return res.status(401).json({ message: "Refresh token has been revoked" });
+      return res.status(401).json({ message: ErrorMessages.AUTH.REFRESH_TOKEN_REVOKED });
     }
 
     removeRefreshToken(user, refreshToken);
@@ -102,7 +103,7 @@ router.post("/refresh", async (req, res) => {
     return res.json(response);
   } catch (error) {
     console.error("Refresh error:", error);
-    return res.status(401).json({ message: "Invalid or expired refresh token" });
+    return res.status(401).json({ message: ErrorMessages.AUTH.INVALID_OR_EXPIRED_REFRESH_TOKEN });
   }
 });
 
@@ -125,19 +126,19 @@ router.post("/logout", async (req, res) => {
     // Intentionally swallow errors to keep logout idempotent
   }
 
-  return res.json({ message: "Logged out" });
+  return res.json({ message: ErrorMessages.SUCCESS.LOGGED_OUT });
 });
 
 router.get("/me", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: ErrorMessages.NOT_FOUND.USER });
     }
     return res.json({ user: formatUser(user) });
   } catch (error) {
     console.error("Fetch current user error:", error);
-    return res.status(500).json({ message: "Unable to fetch user profile" });
+    return res.status(500).json({ message: ErrorMessages.AUTH.UNABLE_TO_FETCH_USER });
   }
 });
 
