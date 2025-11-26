@@ -8,7 +8,7 @@ class LayoutManager: ObservableObject {
     @Published var furnitureNodes: [FurnitureNode] = []
     @Published var catalogItems: [CatalogItem] = []
     @Published var isCatalogLoaded = false
-    @Published var wallColor: UIColor = .defaultWallColor
+    @Published var wallColor: UIColor = .white
 
     private let apiService = APIService.shared
 
@@ -18,7 +18,7 @@ class LayoutManager: ObservableObject {
 
     // MARK: - Layout Management
 
-    func createNewLayout(name: String, wallColor: UIColor = .defaultWallColor) {
+    func createNewLayout(name: String, wallColor: UIColor = .white) {
         let newLayout = Layout(
             id: nil,
             userId: "default_user",

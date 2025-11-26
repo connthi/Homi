@@ -217,13 +217,7 @@ class APIService {
         }
         
         // 3. Default behavior
-        #if targetEnvironment(simulator)
-            // Simulator → can reach localhost
-            return "http://localhost:5001/api"
-        #else
-            // Physical iPhone → must use production
-            return "https://homi-sfhr.onrender.com/api"
-        #endif
+        return "https://homi-sfhr.onrender.com/api"
     }
     
     // MARK: - JSON Helpers
