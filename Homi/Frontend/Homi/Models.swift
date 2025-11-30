@@ -25,7 +25,7 @@ struct UserEnvelope: Codable {
     let user: User
 }
 
-// MARK: - Data Models matching backend API
+// MARK: - Layout + Furniture Models (Backend-Aligned)
 
 struct Layout: Codable, Identifiable {
     var id: String?
@@ -48,6 +48,7 @@ struct Layout: Codable, Identifiable {
     }
 }
 
+// Represents a single furniture instance placed in a layout
 struct FurnitureItem: Codable, Identifiable {
     var id: String
     let furnitureId: String
@@ -77,16 +78,13 @@ struct FurnitureItem: Codable, Identifiable {
         self.properties = properties
     }
     
-    // Custom encoding to handle MongoDB _id field properly
+    // Custom encoding ignores UUID strings and lets the server assign real MongoDB ObjectIds
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        // Only encode _id if it looks like a MongoDB ObjectId (24 hex characters)
-        // Don't encode UUID strings as _id
+
         if id.count == 24 && id.allSatisfy({ $0.isHexDigit }) {
             try container.encode(id, forKey: .id)
         }
-        // If _id is not a MongoDB ID, let the server generate it
         
         try container.encode(furnitureId, forKey: .furnitureId)
         try container.encode(position, forKey: .position)
@@ -95,6 +93,8 @@ struct FurnitureItem: Codable, Identifiable {
         try container.encode(properties, forKey: .properties)
     }
 }
+
+// MARK: - Basic Components
 
 struct Position: Codable {
     let x: Double
@@ -119,6 +119,8 @@ struct FurnitureProperties: Codable {
     let material: String
 }
 
+// MARK: - Catalog Items
+
 struct CatalogItem: Codable, Identifiable {
     let id: String
     let name: String
@@ -141,7 +143,8 @@ struct Dimensions: Codable {
     let depth: Double
 }
 
-// MARK: - SceneKit Integration Models
+// MARK: - SceneKit Furniture Node
+// Wraps a FurnitureItem in a 3D SceneKit node and loads either USDZ models or fallback geometry.
 
 class FurnitureNode: SCNNode {
     let furnitureItem: FurnitureItem
@@ -153,13 +156,13 @@ class FurnitureNode: SCNNode {
         self.catalogItem = catalogItem
         super.init()
         
-        // Print bundle resources only once (for debugging)
+        // Print bundle model files once for debugging
         if !FurnitureNode.hasDebugPrinted {
             printBundleResources()
             FurnitureNode.hasDebugPrinted = true
         }
         
-        // IMPORTANT: Setup geometry immediately during init
+        // Build geometry immediately so the node is ready for placement
         setupGeometry()
         updateTransform()
     }
@@ -168,69 +171,56 @@ class FurnitureNode: SCNNode {
         fatalError("init(coder:) has not been implemented")
     }
     
+    // Prints the available .usdz files in the bundle (debug use)
     private func printBundleResources() {
         print("\n📁 === BUNDLE RESOURCES DEBUG ===")
         if let resourcePath = Bundle.main.resourcePath {
             do {
                 let contents = try FileManager.default.contentsOfDirectory(atPath: resourcePath)
                 let usdzFiles = contents.filter { $0.hasSuffix(".usdz") }
-                print("📦 Found \(usdzFiles.count) USDZ files in bundle:")
-                for file in usdzFiles {
-                    print("   ✅ \(file)")
-                }
+                
+                print("📦 Found \(usdzFiles.count) USDZ files:")
+                for file in usdzFiles { print("   \(file)") }
+                
                 if usdzFiles.isEmpty {
-                    print("   ⚠️ NO USDZ FILES FOUND IN BUNDLE!")
-                    print("   📂 Bundle path: \(resourcePath)")
+                    print("⚠️ No USDZ models found in bundle.")
                 }
             } catch {
-                print("   ❌ Error reading bundle: \(error)")
+                print("❌ Error reading bundle: \(error)")
             }
         }
         print("=================================\n")
     }
     
+    // Loads USDZ model file or falls back to a simple box if unavailable
     private func setupGeometry() {
         guard let modelFileName = catalogItem?.modelFileName, !modelFileName.isEmpty else {
-            print("ℹ️ [\(catalogItem?.name ?? "Unknown")] No model filename, using basic geometry")
             createBasicGeometry()
             return
         }
         
-        print("\n🔍 [\(catalogItem?.name ?? "Unknown")] Attempting to load: '\(modelFileName)'")
-        
-        // Try multiple variations of the filename
         let variations = [
-            modelFileName,                           // As-is from database
-            "\(modelFileName).usdz",                // Add .usdz
-            modelFileName.replacingOccurrences(of: ".usdz", with: ""), // Remove .usdz if present
+            modelFileName,
+            "\(modelFileName).usdz",
+            modelFileName.replacingOccurrences(of: ".usdz", with: "")
         ]
         
         var loaded = false
         for variant in variations {
             let cleanName = variant.replacingOccurrences(of: ".usdz", with: "")
-            
-            print("   🔎 Trying: '\(cleanName)' with extension 'usdz'")
-            
-            if let url = Bundle.main.url(forResource: cleanName, withExtension: "usdz") {
-                print("   ✅ FOUND at: \(url.lastPathComponent)")
-                if loadUSDZModel(from: url) {
-                    print("   ✅ Successfully loaded 3D model!")
-                    loaded = true
-                    break
-                } else {
-                    print("   ❌ Failed to parse model file")
-                }
-            } else {
-                print("   ❌ Not found in bundle")
+            if let url = Bundle.main.url(forResource: cleanName, withExtension: "usdz"),
+               loadUSDZModel(from: url) {
+                loaded = true
+                break
             }
         }
         
         if !loaded {
-            print("   ⚠️ ALL ATTEMPTS FAILED - Using basic geometry")
             createBasicGeometry()
         }
     }
     
+    // Parses and loads a USDZ file, applying automatic scaling and centering
     private func loadUSDZModel(from url: URL) -> Bool {
         do {
             let modelScene = try SCNScene(url: url, options: [
@@ -238,12 +228,16 @@ class FurnitureNode: SCNNode {
                 .flattenScene: false
             ])
             
-            // Calculate bounding box
-            var minVec = SCNVector3(Float.greatestFiniteMagnitude, Float.greatestFiniteMagnitude, Float.greatestFiniteMagnitude)
-            var maxVec = SCNVector3(-Float.greatestFiniteMagnitude, -Float.greatestFiniteMagnitude, -Float.greatestFiniteMagnitude)
+            // Compute bounding box across all nodes with geometry
+            var minVec = SCNVector3(Float.greatestFiniteMagnitude,
+                                    Float.greatestFiniteMagnitude,
+                                    Float.greatestFiniteMagnitude)
+            var maxVec = SCNVector3(-Float.greatestFiniteMagnitude,
+                                    -Float.greatestFiniteMagnitude,
+                                    -Float.greatestFiniteMagnitude)
             var hasGeometry = false
             
-            modelScene.rootNode.enumerateChildNodes { (node, _) in
+            modelScene.rootNode.enumerateChildNodes { node, _ in
                 if node.geometry != nil {
                     hasGeometry = true
                     let (localMin, localMax) = node.boundingBox
@@ -259,97 +253,74 @@ class FurnitureNode: SCNNode {
                 }
             }
             
-            if !hasGeometry {
-                print("   ⚠️ Model has no geometry!")
-                return false
-            }
+            if !hasGeometry { return false }
             
-            // Calculate actual size
+            // Dimensions of the model
             let actualWidth = CGFloat(maxVec.x - minVec.x)
             let actualHeight = CGFloat(maxVec.y - minVec.y)
             let actualDepth = CGFloat(maxVec.z - minVec.z)
             
-            print("   📏 Model dimensions: W:\(String(format: "%.2f", actualWidth))m H:\(String(format: "%.2f", actualHeight))m D:\(String(format: "%.2f", actualDepth))m")
+            // Desired size based on catalog metadata
+            let desired = catalogItem?.defaultDimensions ?? Dimensions(width: 1, height: 1, depth: 1)
             
-            // Get desired dimensions
-            let desiredWidth = CGFloat(catalogItem?.defaultDimensions.width ?? 1.0)
-            let desiredHeight = CGFloat(catalogItem?.defaultDimensions.height ?? 1.0)
-            let desiredDepth = CGFloat(catalogItem?.defaultDimensions.depth ?? 1.0)
-            
-            print("   🎯 Target dimensions: W:\(String(format: "%.2f", desiredWidth))m H:\(String(format: "%.2f", desiredHeight))m D:\(String(format: "%.2f", desiredDepth))m")
-            
-            // Calculate uniform scale
-            let scaleX = actualWidth > 0.001 ? desiredWidth / actualWidth : 1.0
-            let scaleY = actualHeight > 0.001 ? desiredHeight / actualHeight : 1.0
-            let scaleZ = actualDepth > 0.001 ? desiredDepth / actualDepth : 1.0
+            // Uniform scale to fit within desired dimensions
+            let scaleX = desired.width / max(actualWidth, 0.001)
+            let scaleY = desired.height / max(actualHeight, 0.001)
+            let scaleZ = desired.depth / max(actualDepth, 0.001)
             let uniformScale = min(scaleX, min(scaleY, scaleZ))
             
-            print("   ⚖️ Applying scale: \(String(format: "%.3f", uniformScale))")
-            
-            // Add all child nodes
+            // Clone and insert all child nodes from the model scene
             for child in modelScene.rootNode.childNodes {
-                let clonedChild = child.clone()
-                clonedChild.scale = SCNVector3(uniformScale, uniformScale, uniformScale)
+                let clone = child.clone()
+                clone.scale = SCNVector3(uniformScale, uniformScale, uniformScale)
                 
-                // Center on X-Z plane, align bottom to Y=0
-                let centerOffset = SCNVector3(
-                    -(minVec.x + maxVec.x) / 2.0 * Float(uniformScale),
+                // Center and lift model so it sits on Y = 0
+                let offset = SCNVector3(
+                    -(minVec.x + maxVec.x) / 2 * Float(uniformScale),
                     -minVec.y * Float(uniformScale),
-                    -(minVec.z + maxVec.z) / 2.0 * Float(uniformScale)
+                    -(minVec.z + maxVec.z) / 2 * Float(uniformScale)
                 )
-                clonedChild.position = centerOffset
+                clone.position = offset
                 
-                self.addChildNode(clonedChild)
+                addChildNode(clone)
             }
             
             return true
             
         } catch {
-            print("   ❌ Error loading scene: \(error.localizedDescription)")
             return false
         }
     }
     
+    // Fallback when model loading fails
     private func createBasicGeometry() {
-        let width = CGFloat(catalogItem?.defaultDimensions.width ?? 1.0)
-        let height = CGFloat(catalogItem?.defaultDimensions.height ?? 1.0)
-        let depth = CGFloat(catalogItem?.defaultDimensions.depth ?? 1.0)
+        let dims = catalogItem?.defaultDimensions ?? Dimensions(width: 1, height: 1, depth: 1)
         
-        let geometry = SCNBox(
-            width: width,
-            height: height,
-            length: depth,
+        let box = SCNBox(
+            width: dims.width,
+            height: dims.height,
+            length: dims.depth,
             chamferRadius: 0.05
         )
         
         let material = SCNMaterial()
         material.diffuse.contents = UIColor.systemBrown
         material.lightingModel = .physicallyBased
-        material.roughness.contents = 0.6
-        material.metalness.contents = 0.1
-        geometry.materials = [material]
         
-        self.geometry = geometry
-        print("   📦 Using basic box: \(String(format: "%.2f", width))m × \(String(format: "%.2f", height))m × \(String(format: "%.2f", depth))m")
+        box.materials = [material]
+        self.geometry = box
     }
     
+    // Applies saved position, rotation, and scale to the SceneKit node
     func updateTransform() {
-        // FIXED: Position - Y should be 0 for floor level since we centered the model
-        // The model is already centered at Y=0 in setupGeometry
-        position = SCNVector3(
-            furnitureItem.position.x,
-            0, // Keep on floor
-            furnitureItem.position.z
-        )
+        position = SCNVector3(furnitureItem.position.x, 0, furnitureItem.position.z)
         
-        // Rotation
         eulerAngles = SCNVector3(
             furnitureItem.rotation.x,
             furnitureItem.rotation.y,
             furnitureItem.rotation.z
         )
         
-        // Scale
         scale = SCNVector3(
             furnitureItem.scale.x,
             furnitureItem.scale.y,
@@ -357,9 +328,9 @@ class FurnitureNode: SCNNode {
         )
     }
     
+    // Ensures geometry exists before rendering
     func setupGeometryIfNeeded() {
-        // Force geometry setup if not already done
-        if self.geometry == nil && self.childNodes.isEmpty {
+        if geometry == nil && childNodes.isEmpty {
             setupGeometry()
             updateTransform()
         }

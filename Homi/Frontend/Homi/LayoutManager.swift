@@ -18,6 +18,7 @@ class LayoutManager: ObservableObject {
 
     // MARK: - Layout Management
 
+    /// Creates a new room layout with optional wall color.
     func createNewLayout(name: String, wallColor: UIColor = .white) {
         let newLayout = Layout(
             id: nil,
@@ -28,14 +29,16 @@ class LayoutManager: ObservableObject {
         )
         currentLayout = newLayout
         furnitureNodes = []
-        self.wallColor = wallColor // Set the selected wall color
+        self.wallColor = wallColor
     }
 
+    /// Loads an existing layout and updates SceneKit nodes.
     func loadLayout(_ layout: Layout) {
         currentLayout = layout
         updateFurnitureNodes()
     }
 
+    /// Saves the current layout, creating or updating depending on existence.
     func saveCurrentLayout() async throws {
         guard let layout = currentLayout else { return }
 
@@ -48,6 +51,7 @@ class LayoutManager: ObservableObject {
         }
     }
 
+    /// Updates an existing layout without recreating it.
     func updateCurrentLayout() async throws {
         guard let layout = currentLayout else { return }
         let updatedLayout = try await apiService.updateLayout(layout)
@@ -56,13 +60,13 @@ class LayoutManager: ObservableObject {
 
     // MARK: - Furniture Management
 
+    /// Adds furniture to the layout and creates its SceneKit node.
     func addFurniture(catalogItem: CatalogItem, at position: SCNVector3) {
         guard let layout = currentLayout else { return }
 
-        // IMPORTANT: Generate a UNIQUE ID for each furniture item instance
         let newFurnitureItem = FurnitureItem(
-            id: UUID().uuidString,  // ✅ Always generate new UUID, never reuse catalogItem.id
-            furnitureId: catalogItem.id,  // This references the catalog
+            id: UUID().uuidString,
+            furnitureId: catalogItem.id,
             position: Position(x: Double(position.x), y: 0, z: Double(position.z)),
             rotation: Rotation(x: 0, y: 0, z: 0),
             scale: Scale(x: 1, y: 1, z: 1),
@@ -82,11 +86,10 @@ class LayoutManager: ObservableObject {
 
         currentLayout = updatedLayout
         updateFurnitureNodes()
-        
-        // Force UI update
         objectWillChange.send()
     }
 
+    /// Removes furniture from the current layout.
     func removeFurniture(furnitureItem: FurnitureItem) {
         guard let layout = currentLayout else { return }
 
@@ -104,6 +107,7 @@ class LayoutManager: ObservableObject {
         updateFurnitureNodes()
     }
 
+    /// Updates furniture position based on drag movement.
     func updateFurniturePosition(_ furnitureItem: FurnitureItem, position: SCNVector3) {
         guard let layout = currentLayout else { return }
 
@@ -135,6 +139,7 @@ class LayoutManager: ObservableObject {
         updateFurnitureNodes()
     }
 
+    /// Updates rotation values applied to furniture.
     func updateFurnitureRotation(_ furnitureItem: FurnitureItem, rotation: SCNVector3) {
         guard let layout = currentLayout else { return }
 
@@ -166,6 +171,7 @@ class LayoutManager: ObservableObject {
         updateFurnitureNodes()
     }
 
+    /// Updates furniture scale while preserving proportions.
     func updateFurnitureScale(_ furnitureItem: FurnitureItem, scale: SCNVector3) {
         guard let layout = currentLayout else { return }
 
@@ -197,6 +203,7 @@ class LayoutManager: ObservableObject {
         updateFurnitureNodes()
     }
 
+    /// Regenerates SceneKit nodes from saved furniture items.
     private func updateFurnitureNodes() {
         guard let layout = currentLayout else {
             furnitureNodes = []
@@ -209,6 +216,9 @@ class LayoutManager: ObservableObject {
         }
     }
 
+    // MARK: - Catalog Loading
+
+    /// Loads catalog items from the backend.
     @MainActor
     func loadCatalog() async {
         do {
@@ -227,6 +237,7 @@ class LayoutManager: ObservableObject {
         }
     }
 
+    /// Retrieves a catalog item by its ID.
     func getCatalogItem(by id: String) -> CatalogItem? {
         catalogItems.first { $0.id == id }
     }

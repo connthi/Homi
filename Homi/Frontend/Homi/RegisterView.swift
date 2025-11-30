@@ -5,17 +5,22 @@ struct RegisterView: View {
     
     private let minimumPasswordLength = 8
 
+    // Form fields
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
     @State private var firstName = ""
     @State private var lastName = ""
+    
+    // UI state
     @State private var isPasswordVisible = false
     @State private var isConfirmPasswordVisible = false
     @State private var errorMessage: String?
 
     var body: some View {
         VStack(spacing: 24) {
+            
+            // MARK: - Title
             VStack(spacing: 6) {
                 Text("Create Account")
                     .font(.title2)
@@ -27,17 +32,22 @@ struct RegisterView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
             
+            // MARK: - Input Fields
             VStack(spacing: 16) {
-                modernField(title: "First Name (Optional)", icon: "person", text: $firstName, contentType: .givenName, autocapitalization: .words)
+                modernField(title: "First Name (Optional)", icon: "person",
+                            text: $firstName, contentType: .givenName, autocapitalization: .words)
                 
-                modernField(title: "Last Name (Optional)", icon: "person", text: $lastName, contentType: .familyName, autocapitalization: .words)
+                modernField(title: "Last Name (Optional)", icon: "person",
+                            text: $lastName, contentType: .familyName, autocapitalization: .words)
                 
-                modernField(title: "Email Address", icon: "envelope", text: $email, contentType: .emailAddress, keyboard: .emailAddress, autocapitalization: .never)
+                modernField(title: "Email Address", icon: "envelope",
+                            text: $email, contentType: .emailAddress,
+                            keyboard: .emailAddress, autocapitalization: .never)
                 
                 secureField(title: "Password", text: $password, isVisible: $isPasswordVisible)
-                
                 secureField(title: "Confirm Password", text: $confirmPassword, isVisible: $isConfirmPasswordVisible)
 
+                // Inline password validation message
                 if let inlineMessage = passwordRequirementsMessage {
                     Text(inlineMessage)
                         .font(.footnote)
@@ -46,6 +56,7 @@ struct RegisterView: View {
                 }
             }
             
+            // MARK: - Error Banner
             if let error = errorMessage {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -57,12 +68,12 @@ struct RegisterView: View {
                 .transition(.opacity)
             }
             
+            // MARK: - Register Button
             Button(action: handleRegister) {
                 HStack {
                     Spacer()
                     if authManager.isLoading {
-                        ProgressView()
-                            .tint(.white)
+                        ProgressView().tint(.white)
                     } else {
                         Text("Create Account")
                             .fontWeight(.semibold)
@@ -73,13 +84,15 @@ struct RegisterView: View {
                 .background(Color(red: 0.24, green: 0.52, blue: 0.96))
                 .cornerRadius(18)
                 .foregroundColor(.white)
-                .shadow(color: Color(red: 0.24, green: 0.52, blue: 0.96).opacity(0.35), radius: 10, x: 0, y: 8)
+                .shadow(color: Color(red: 0.24, green: 0.52, blue: 0.96).opacity(0.35),
+                        radius: 10, x: 0, y: 8)
             }
             .disabled(!isFormValid || authManager.isLoading)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
+    // MARK: - Validation
     private var isFormValid: Bool {
         !email.isEmpty &&
         !password.isEmpty &&
@@ -97,6 +110,7 @@ struct RegisterView: View {
         return nil
     }
     
+    // MARK: - Text Field Builder (Modern Style)
     private func modernField(title: String,
                              icon: String,
                              text: Binding<String>,
@@ -124,6 +138,7 @@ struct RegisterView: View {
         }
     }
     
+    // MARK: - Secure Field Builder
     private func secureField(title: String, text: Binding<String>, isVisible: Binding<Bool>) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
@@ -159,6 +174,7 @@ struct RegisterView: View {
         }
     }
     
+    // MARK: - Registration Handler
     private func handleRegister() {
         errorMessage = nil
         

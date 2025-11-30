@@ -6,9 +6,11 @@ struct LoginView: View {
     @State private var password = ""
     @State private var isPasswordVisible = false
     @State private var errorMessage: String?
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
+            
+            // Header
             VStack(spacing: 6) {
                 Text("Welcome Back")
                     .font(.title2)
@@ -20,6 +22,7 @@ struct LoginView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
             }
             
+            // Input Fields
             VStack(spacing: 18) {
                 floatingField(title: "Email Address", icon: "envelope") {
                     TextField("Email", text: $email)
@@ -40,6 +43,7 @@ struct LoginView: View {
                             }
                         }
                         
+                        // Toggle password visibility
                         Button {
                             isPasswordVisible.toggle()
                         } label: {
@@ -51,12 +55,12 @@ struct LoginView: View {
                 }
             }
             
-            Button("Forgot password?") {
-                // hook in later
-            }
-            .font(.footnote.weight(.semibold))
-            .foregroundColor(Color(red: 0.35, green: 0.36, blue: 0.90))
+            // Placeholder for future recovery flow
+            Button("Forgot password?") {}
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(Color(red: 0.35, green: 0.36, blue: 0.90))
             
+            // Error Display
             if let error = errorMessage {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -68,30 +72,36 @@ struct LoginView: View {
                 .transition(.opacity)
             }
             
+            // Login Button
             Button(action: handleLogin) {
                 HStack {
                     Spacer()
                     if authManager.isLoading {
-                        ProgressView()
-                            .tint(.white)
+                        ProgressView().tint(.white)
                     } else {
-                        Text("Sign in")
-                            .fontWeight(.semibold)
+                        Text("Sign in").fontWeight(.semibold)
                     }
                     Spacer()
                 }
                 .padding()
-                .background(LinearGradient(
-                    colors: [
-                        Color(red: 0.40, green: 0.52, blue: 0.97),
-                        Color(red: 0.78, green: 0.49, blue: 0.97)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                ))
+                .background(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.40, green: 0.52, blue: 0.97),
+                            Color(red: 0.78, green: 0.49, blue: 0.97)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
                 .cornerRadius(18)
                 .foregroundColor(.white)
-                .shadow(color: Color(red: 0.40, green: 0.52, blue: 0.97).opacity(0.4), radius: 10, x: 0, y: 8)
+                .shadow(
+                    color: Color(red: 0.40, green: 0.52, blue: 0.97).opacity(0.4),
+                    radius: 10,
+                    x: 0,
+                    y: 8
+                )
             }
             .padding(.top, 12)
             .disabled(disabled)
@@ -99,11 +109,17 @@ struct LoginView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
+    // Disables login button while loading or if fields are empty
     private var disabled: Bool {
         authManager.isLoading || email.isEmpty || password.isEmpty
     }
     
-    private func floatingField<Content: View>(title: String, icon: String, @ViewBuilder content: () -> Content) -> some View {
+    // Reusable floating label field with system icon
+    private func floatingField<Content: View>(
+        title: String,
+        icon: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.caption)
@@ -122,6 +138,7 @@ struct LoginView: View {
         }
     }
     
+    // Attempts login and reports backend errors
     private func handleLogin() {
         errorMessage = nil
         
