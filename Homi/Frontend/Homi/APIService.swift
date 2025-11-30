@@ -1,25 +1,13 @@
 import Foundation
 
-private struct APIMessageResponse: Codable {
-    let message: String
-}
+// Internal response models used only for decoding simple API messages.
+private struct APIMessageResponse: Codable { let message: String }
+private struct AuthCredentials: Codable { let email: String; let password: String }
+private struct RegisterPayload: Codable { let email: String; let password: String; let firstName: String?; let lastName: String? }
+private struct RefreshTokenPayload: Codable { let refreshToken: String }
 
-private struct AuthCredentials: Codable {
-    let email: String
-    let password: String
-}
-
-private struct RegisterPayload: Codable {
-    let email: String
-    let password: String
-    let firstName: String?
-    let lastName: String?
-}
-
-private struct RefreshTokenPayload: Codable {
-    let refreshToken: String
-}
-
+/// Centralized API client used for performing all authenticated and unauthenticated
+/// requests to the backend. Handles URL construction, JSON encoding/decoding, and error mapping.
 class APIService {
     static let shared = APIService()
     
@@ -34,18 +22,21 @@ class APIService {
     
     // MARK: - Layout API Methods
     
+    /// Fetches all layouts belonging to the authenticated user.
     func fetchLayouts() async throws -> [Layout] {
         let request = try makeRequest(path: "/layouts", requiresAuth: true)
         let data = try await send(request)
         return try decodeResponse([Layout].self, from: data)
     }
     
+    /// Fetches a specific layout by ID.
     func fetchLayout(id: String) async throws -> Layout {
         let request = try makeRequest(path: "/layouts/\(id)", requiresAuth: true)
         let data = try await send(request)
         return try decodeResponse(Layout.self, from: data)
     }
     
+    /// Creates a new layout on the server.
     func saveLayout(_ layout: Layout) async throws -> Layout {
         let body = try encodeBody(layout)
         let request = try makeRequest(path: "/layouts", method: "POST", body: body, requiresAuth: true)
@@ -53,10 +44,9 @@ class APIService {
         return try decodeResponse(Layout.self, from: data)
     }
     
+    /// Updates an existing layout with new properties.
     func updateLayout(_ layout: Layout) async throws -> Layout {
-        guard let id = layout.id, !id.isEmpty else {
-            throw APIError.invalidURL
-        }
+        guard let id = layout.id, !id.isEmpty else { throw APIError.invalidURL }
         
         let body = try encodeBody(layout)
         let request = try makeRequest(path: "/layouts/\(id)", method: "PUT", body: body, requiresAuth: true)
@@ -64,6 +54,7 @@ class APIService {
         return try decodeResponse(Layout.self, from: data)
     }
     
+    /// Deletes a layout from the server.
     func deleteLayout(id: String) async throws {
         let request = try makeRequest(path: "/layouts/\(id)", method: "DELETE", requiresAuth: true)
         _ = try await send(request)
@@ -71,6 +62,7 @@ class APIService {
     
     // MARK: - Catalog API Methods
     
+    /// Retrieves the furniture catalog for the authenticated user.
     func fetchCatalog() async throws -> [CatalogItem] {
         let request = try makeRequest(path: "/catalog", requiresAuth: true)
         let data = try await send(request)
@@ -79,6 +71,7 @@ class APIService {
     
     // MARK: - Authentication API Methods
     
+    /// Logs in the user and returns access/refresh tokens.
     func login(email: String, password: String) async throws -> AuthResponse {
         let payload = AuthCredentials(email: email, password: password)
         let body = try encodeBody(payload)
@@ -87,6 +80,7 @@ class APIService {
         return try decodeResponse(AuthResponse.self, from: data)
     }
     
+    /// Registers a new user.
     func register(email: String, password: String, firstName: String?, lastName: String?) async throws -> AuthResponse {
         let payload = RegisterPayload(email: email, password: password, firstName: firstName, lastName: lastName)
         let body = try encodeBody(payload)
@@ -95,6 +89,7 @@ class APIService {
         return try decodeResponse(AuthResponse.self, from: data)
     }
     
+    /// Returns the authenticated user's profile info.
     func getCurrentUser() async throws -> User {
         let request = try makeRequest(path: "/auth/me", requiresAuth: true)
         let data = try await send(request)
@@ -102,23 +97,24 @@ class APIService {
         return response.user
     }
     
+    /// Exchanges an expired access token for a new one.
     func refreshToken(refreshToken: String) async throws -> AuthResponse {
-        let payload = RefreshTokenPayload(refreshToken: refreshToken)
-        let body = try encodeBody(payload)
+        let body = try encodeBody(RefreshTokenPayload(refreshToken: refreshToken))
         let request = try makeRequest(path: "/auth/refresh", method: "POST", body: body)
         let data = try await send(request)
         return try decodeResponse(AuthResponse.self, from: data)
     }
     
+    /// Invalidates the refresh token on the server.
     func logout(refreshToken: String) async throws {
-        let payload = RefreshTokenPayload(refreshToken: refreshToken)
-        let body = try encodeBody(payload)
+        let body = try encodeBody(RefreshTokenPayload(refreshToken: refreshToken))
         let request = try makeRequest(path: "/auth/logout", method: "POST", body: body, requiresAuth: true)
         _ = try await send(request)
     }
     
-    // MARK: - Request Helpers
+    // MARK: - Request Construction
     
+    /// Builds a properly formatted URLRequest with optional body and authorization header.
     private func makeRequest(path: String,
                              method: String = "GET",
                              body: Data? = nil,
@@ -134,42 +130,41 @@ class APIService {
         }
         
         if requiresAuth {
-            guard let accessToken = authService.getAccessToken() else {
-                throw APIError.unauthorized
-            }
-            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+            guard let token = authService.getAccessToken() else { throw APIError.unauthorized }
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
         
         return request
     }
     
+    // MARK: - Request Sending
+    
+    /// Sends a request and validates the response status code. Maps server errors to APIError.
     private func send(_ request: URLRequest, expectedStatus: Int? = nil) async throws -> Data {
         do {
             let (data, response) = try await session.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw APIError.invalidResponse
-            }
+            guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
             
-            let successRange = 200..<300
-            if let expectedStatus = expectedStatus, httpResponse.statusCode != expectedStatus {
-                try handleServerError(statusCode: httpResponse.statusCode, data: data)
-            } else if !successRange.contains(httpResponse.statusCode) {
-                try handleServerError(statusCode: httpResponse.statusCode, data: data)
+            let okRange = 200..<300
+            if let expectedStatus, http.statusCode != expectedStatus {
+                try handleServerError(statusCode: http.statusCode, data: data)
+            } else if !okRange.contains(http.statusCode) {
+                try handleServerError(statusCode: http.statusCode, data: data)
             }
             
             return data
-        } catch let error as APIError {
-            throw error
+        } catch let apiError as APIError {
+            throw apiError
         } catch {
             throw APIError.networkError(error)
         }
     }
     
+    /// Attempts to parse an error message from the server before throwing.
     private func handleServerError(statusCode: Int, data: Data) throws {
         let message = try? decoder.decode(APIMessageResponse.self, from: data).message
-
+        
         if statusCode == 401 {
-            // Preserve meaningful server message (e.g., invalid credentials) when present
             if let message, !message.isEmpty {
                 throw APIError.serverError(statusCode: statusCode, message: message)
             }
@@ -179,84 +174,83 @@ class APIService {
         throw APIError.serverError(statusCode: statusCode, message: message)
     }
     
+    // MARK: - Encoding/Decoding
+    
+    /// Encodes a request body to JSON.
     private func encodeBody<T: Encodable>(_ body: T) throws -> Data {
-        do {
-            return try encoder.encode(body)
-        } catch {
-            throw APIError.encodingError(error)
-        }
+        do { return try encoder.encode(body) }
+        catch { throw APIError.encodingError(error) }
     }
     
+    /// Decodes a JSON response body into the expected model.
     private func decodeResponse<T: Decodable>(_ type: T.Type, from data: Data) throws -> T {
-        do {
-            return try decoder.decode(T.self, from: data)
-        } catch {
-            throw APIError.decodingError(error)
-        }
+        do { return try decoder.decode(T.self, from: data) }
+        catch { throw APIError.decodingError(error) }
     }
     
+    // MARK: - URL Building
+    
+    /// Safely joins base URL + endpoint path.
     private func buildURL(path: String) throws -> URL {
         let trimmedBase = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
         let trimmedPath = path.hasPrefix("/") ? String(path.dropFirst()) : path
-        let fullURL = trimmedPath.isEmpty ? trimmedBase : "\(trimmedBase)/\(trimmedPath)"
-        guard let url = URL(string: fullURL) else {
-            throw APIError.invalidURL
-        }
+        let full = trimmedPath.isEmpty ? trimmedBase : "\(trimmedBase)/\(trimmedPath)"
+        guard let url = URL(string: full) else { throw APIError.invalidURL }
         return url
     }
     
+    /// Determines API base URL using environment override → Info.plist → default.
     private static func resolveBaseURL() -> String {
         if let override = ProcessInfo.processInfo.environment["API_BASE_URL"],
            !override.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return override
         }
         
-        if let infoValue = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String,
-           !infoValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return infoValue
+        if let info = Bundle.main.object(forInfoDictionaryKey: "API_BASE_URL") as? String,
+           !info.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return info
         }
         
-        // 3. Default behavior
         return "https://homi-sfhr.onrender.com/api"
     }
     
     // MARK: - JSON Helpers
     
+    /// Shared JSON decoder with flexible date decoding support.
     private var decoder: JSONDecoder {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let dateString = try container.decode(String.self)
             
-            let formatters: [(ISO8601DateFormatter) -> Void] = [
+            let patterns: [(ISO8601DateFormatter) -> Void] = [
                 { $0.formatOptions = [.withInternetDateTime, .withFractionalSeconds] },
                 { $0.formatOptions = [.withInternetDateTime] },
                 { $0.formatOptions = [.withFullDate, .withTime, .withColonSeparatorInTime] }
             ]
             
-            for configure in formatters {
-                let formatter = ISO8601DateFormatter()
-                configure(formatter)
-                if let date = formatter.date(from: dateString) {
-                    return date
-                }
+            for configure in patterns {
+                let fmt = ISO8601DateFormatter()
+                configure(fmt)
+                if let date = fmt.date(from: dateString) { return date }
             }
             
-            let fallbackFormatter = DateFormatter()
-            fallbackFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-            fallbackFormatter.locale = Locale(identifier: "en_US_POSIX")
-            fallbackFormatter.timeZone = TimeZone(secondsFromGMT: 0)
+            let fallback = DateFormatter()
+            fallback.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+            fallback.locale = Locale(identifier: "en_US_POSIX")
+            fallback.timeZone = TimeZone(secondsFromGMT: 0)
             
-            if let date = fallbackFormatter.date(from: dateString) {
-                return date
-            }
+            if let date = fallback.date(from: dateString) { return date }
             
-            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date string: \(dateString)")
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Cannot decode date: \(dateString)"
+            )
         }
-        
         return decoder
     }
     
+    /// Shared JSON encoder using ISO-8601 dates.
     private var encoder: JSONEncoder {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
@@ -266,6 +260,7 @@ class APIService {
 
 // MARK: - Error Handling
 
+/// Errors thrown by the API layer, mapped to user-friendly descriptions.
 enum APIError: Error, LocalizedError {
     case invalidURL
     case invalidResponse
@@ -277,23 +272,17 @@ enum APIError: Error, LocalizedError {
     
     var errorDescription: String? {
         switch self {
-        case .invalidURL:
-            return "Invalid URL"
-        case .invalidResponse:
-            return "Invalid response from server"
-        case .unauthorized:
-            return "You need to log in again."
-        case .serverError(let statusCode, let message):
-            if let message = message, !message.isEmpty {
-                return message
-            }
-            return "Server error: \(statusCode)"
-        case .decodingError(let error):
-            return "Failed to decode response: \(error.localizedDescription)"
-        case .encodingError(let error):
-            return "Failed to encode request: \(error.localizedDescription)"
-        case .networkError(let error):
-            return "Network error: \(error.localizedDescription)"
+        case .invalidURL: return "Invalid URL"
+        case .invalidResponse: return "Invalid response from server"
+        case .unauthorized: return "You need to log in again."
+        case .serverError(let code, let message):
+            return message ?? "Server error: \(code)"
+        case .decodingError(let err):
+            return "Failed to decode response: \(err.localizedDescription)"
+        case .encodingError(let err):
+            return "Failed to encode request: \(err.localizedDescription)"
+        case .networkError(let err):
+            return "Network error: \(err.localizedDescription)"
         }
     }
 }

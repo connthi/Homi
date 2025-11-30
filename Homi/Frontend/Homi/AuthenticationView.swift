@@ -1,11 +1,15 @@
 import SwiftUI
 
+/// Root authentication view that switches between login and registration.
+/// Handles animated transitions and shared styling for the auth screens.
 struct AuthenticationView: View {
     @State private var showRegister = false
     
     var body: some View {
         NavigationStack {
             ZStack(alignment: .top) {
+                
+                // Background gradient applied across the full screen
                 LinearGradient(
                     colors: [
                         Color(red: 0.40, green: 0.52, blue: 0.97),
@@ -18,6 +22,8 @@ struct AuthenticationView: View {
                 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
+                        
+                        // Toggle between login and registration
                         Button(action: toggleMode) {
                             HStack(spacing: 6) {
                                 Text(showRegister ? "Have an account?" : "Don’t have an account?")
@@ -33,6 +39,7 @@ struct AuthenticationView: View {
                         }
                         .padding(.top, 12)
                         
+                        // App title and subheading
                         VStack(spacing: 6) {
                             Text("Homi")
                                 .font(.system(size: 36, weight: .bold))
@@ -43,15 +50,20 @@ struct AuthenticationView: View {
                         }
                         .padding(.top, 4)
                         
+                        // Auth form container with transitions
                         ZStack {
                             if showRegister {
                                 RegisterView()
-                                    .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .trailing)),
-                                                            removal: .opacity.combined(with: .move(edge: .leading))))
+                                    .transition(.asymmetric(
+                                        insertion: .opacity.combined(with: .move(edge: .trailing)),
+                                        removal: .opacity.combined(with: .move(edge: .leading))
+                                    ))
                             } else {
                                 LoginView()
-                                    .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .leading)),
-                                                            removal: .opacity.combined(with: .move(edge: .trailing))))
+                                    .transition(.asymmetric(
+                                        insertion: .opacity.combined(with: .move(edge: .leading)),
+                                        removal: .opacity.combined(with: .move(edge: .trailing))
+                                    ))
                             }
                         }
                         .padding(24)
@@ -74,6 +86,7 @@ struct AuthenticationView: View {
         }
     }
     
+    /// Toggles between login and registration views with an animated transition.
     private func toggleMode() {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
             showRegister.toggle()

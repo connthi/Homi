@@ -46,9 +46,9 @@ Backend (Node.js + Express)
 
 ## iOS Frontend (Swift + SceneKit)
 Open the iOS project in Xcode:
-  - Open Homi/Homi/Frontend/Homi
-  - Ensure the deployment target is iOS 17.0 or later.
-  - Press Run in Xcode to build and launch the app on an iPhone simulator or connected device.
+  - cd into Homi/Homi/Frontend/Homi
+  - In the terminal run:
+  ```open Homi.xcodeproj```
 
 ## Test Instructions
 ## Backend Tests

@@ -1,6 +1,7 @@
 import SwiftUI
 
-// MARK: - New Layout Dialog with Wall Color Selection
+// MARK: - New Layout Dialog
+// Allows users to name a new layout and select an initial wall color.
 struct NewLayoutDialog: View {
     @Binding var layoutName: String
     @Binding var isPresented: Bool
@@ -8,7 +9,7 @@ struct NewLayoutDialog: View {
     
     @State private var selectedWallColor: Color = Color(UIColor(white: 0.95, alpha: 1.0))
     
-    // Predefined wall color options
+    // Predefined color options for wall selection
     private let wallColorOptions: [(name: String, color: Color)] = [
         ("White", Color(UIColor(white: 0.95, alpha: 1.0))),
         ("Beige", Color(red: 0.96, green: 0.96, blue: 0.86)),
@@ -24,10 +25,13 @@ struct NewLayoutDialog: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 24) {
+                    
+                    // Icon / Branding
                     Image(systemName: "cube.transparent")
                         .font(.system(size: 60))
                         .foregroundColor(.blue)
                     
+                    // Title & Subtitle
                     VStack(spacing: 8) {
                         Text("Create New Layout")
                             .font(.title2)
@@ -38,6 +42,7 @@ struct NewLayoutDialog: View {
                             .foregroundColor(.secondary)
                     }
                     
+                    // Name Field
                     TextField("Layout Name", text: $layoutName)
                         .textFieldStyle(.roundedBorder)
                         .padding(.horizontal, 32)
@@ -46,7 +51,7 @@ struct NewLayoutDialog: View {
                     Divider()
                         .padding(.horizontal, 32)
                     
-                    // Wall Color Selection
+                    // MARK: - Wall Color Selection
                     VStack(spacing: 16) {
                         HStack {
                             Image(systemName: "paintbrush.fill")
@@ -57,6 +62,7 @@ struct NewLayoutDialog: View {
                         }
                         .padding(.horizontal, 32)
                         
+                        // Color Grid
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible()),
@@ -76,6 +82,7 @@ struct NewLayoutDialog: View {
                         .padding(.horizontal, 32)
                     }
                     
+                    // MARK: - Actions
                     HStack(spacing: 16) {
                         Button("Cancel") {
                             isPresented = false
@@ -101,7 +108,7 @@ struct NewLayoutDialog: View {
             .navigationBarHidden(true)
         }
         .onAppear {
-            // Set default name with timestamp
+            // Set a default layout name if empty
             if layoutName.isEmpty {
                 let formatter = DateFormatter()
                 formatter.dateFormat = "MMM d, h:mm a"
@@ -111,7 +118,8 @@ struct NewLayoutDialog: View {
     }
 }
 
-// MARK: - Wall Color Option Button
+// MARK: - Wall Color Selection Cell
+// Represents a single color option in the selection grid.
 struct WallColorOption: View {
     let name: String
     let color: Color
@@ -121,6 +129,8 @@ struct WallColorOption: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 8) {
+                
+                // Color Swatch
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(color)
@@ -130,6 +140,7 @@ struct WallColorOption: View {
                                 .strokeBorder(Color.gray.opacity(0.3), lineWidth: 1)
                         )
                     
+                    // Checkmark overlay
                     if isSelected {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.title2)
@@ -142,6 +153,7 @@ struct WallColorOption: View {
                     }
                 }
                 
+                // Label
                 Text(name)
                     .font(.caption)
                     .foregroundColor(isSelected ? .primary : .secondary)

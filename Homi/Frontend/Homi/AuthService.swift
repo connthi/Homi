@@ -1,7 +1,8 @@
 import Foundation
 import Security
 
-/// Service for managing authentication tokens using Keychain
+/// Handles secure storage and retrieval of authentication tokens using Keychain.
+/// This service isolates all Keychain logic, allowing the rest of the app to stay clean.
 class AuthService {
     static let shared = AuthService()
     
@@ -13,6 +14,8 @@ class AuthService {
     
     // MARK: - Token Storage
     
+    /// Saves access token, optional refresh token, and optional user ID.
+    /// Missing or empty values automatically clear their stored Keychain entries.
     func saveTokens(accessToken: String, refreshToken: String?, userId: String?) {
         saveToKeychain(key: accessTokenKey, value: accessToken)
         
@@ -29,30 +32,36 @@ class AuthService {
         }
     }
     
+    /// Returns the stored access token, if available.
     func getAccessToken() -> String? {
         return getFromKeychain(key: accessTokenKey)
     }
     
+    /// Returns the stored refresh token, if available.
     func getRefreshToken() -> String? {
         return getFromKeychain(key: refreshTokenKey)
     }
     
+    /// Returns the stored user ID, if available.
     func getUserId() -> String? {
         return getFromKeychain(key: userIdKey)
     }
     
+    /// Removes all stored authentication values.
     func clearTokens() {
         deleteFromKeychain(key: accessTokenKey)
         deleteFromKeychain(key: refreshTokenKey)
         deleteFromKeychain(key: userIdKey)
     }
     
+    /// Basic authentication check based solely on presence of an access token.
     var isAuthenticated: Bool {
         return getAccessToken() != nil
     }
     
     // MARK: - Keychain Helpers
     
+    /// Writes a string value to Keychain, replacing any existing item with the same key.
     private func saveToKeychain(key: String, value: String) {
         let data = value.data(using: .utf8)!
         
@@ -62,13 +71,14 @@ class AuthService {
             kSecValueData as String: data
         ]
         
-        // Delete existing item first
+        // Remove previous value to avoid duplicate entries
         SecItemDelete(query as CFDictionary)
         
-        // Add new item
+        // Write new value
         SecItemAdd(query as CFDictionary, nil)
     }
     
+    /// Reads a string from Keychain.
     private func getFromKeychain(key: String) -> String? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -89,6 +99,7 @@ class AuthService {
         return value
     }
     
+    /// Removes a single Keychain entry.
     private func deleteFromKeychain(key: String) {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
