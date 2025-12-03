@@ -26,6 +26,7 @@
 		796C45332EC18227004A2403 /* NewLayoutDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C45322EC18227004A2403 /* NewLayoutDialog.swift */; };
 		796C48132ED25DCD004A2403 /* ImageExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C48122ED25DCD004A2403 /* ImageExporter.swift */; };
 		796C48462EDBD6DC004A2403 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796C48452EDBD6DC004A2403 /* UIColor+Extensions.swift */; };
+		796C49DB2EDCE85C004A2403 /* Homi-info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 796C49DA2EDCE85C004A2403 /* Homi-info.plist */; };
 		8FA7D2012F0A3E1D005BC5A2 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA7D2002F0A3E1D005BC5A2 /* AuthManager.swift */; };
 		8FA7D2032F0A3E2A005BC5A2 /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA7D2022F0A3E2A005BC5A2 /* AuthenticationView.swift */; };
 		8FA7D2052F0A3E34005BC5A2 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FA7D2042F0A3E34005BC5A2 /* LoginView.swift */; };
@@ -53,8 +54,8 @@
 		796C45262EBADF3A004A2403 /* PorTable.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = PorTable.usdz; sourceTree = "<group>"; };
 		796C45322EC18227004A2403 /* NewLayoutDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewLayoutDialog.swift; sourceTree = "<group>"; };
 		796C48122ED25DCD004A2403 /* ImageExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageExporter.swift; sourceTree = "<group>"; };
-		796C48142ED264E1004A2403 /* Homi-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Homi-Info.plist"; sourceTree = "<group>"; };
 		796C48452EDBD6DC004A2403 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIColor+Extensions.swift"; sourceTree = "<group>"; };
+		796C49DA2EDCE85C004A2403 /* Homi-info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Homi-info.plist"; sourceTree = "<group>"; };
 		8FA7D2002F0A3E1D005BC5A2 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
 		8FA7D2022F0A3E2A005BC5A2 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationView.swift; sourceTree = "<group>"; };
 		8FA7D2042F0A3E34005BC5A2 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
@@ -76,8 +77,8 @@
 		796C44DF2EA958A9004A2403 = {
 			isa = PBXGroup;
 			children = (
+				796C49DA2EDCE85C004A2403 /* Homi-info.plist */,
 				796C48452EDBD6DC004A2403 /* UIColor+Extensions.swift */,
-				796C48142ED264E1004A2403 /* Homi-Info.plist */,
 				796C48122ED25DCD004A2403 /* ImageExporter.swift */,
 				796C45072EA960F0004A2403 /* Assets.xcassets */,
 				796C45052EA9605A004A2403 /* Preview Content */,
@@ -188,6 +189,7 @@
 				796C45282EBADF3A004A2403 /* Bookshelf.usdz in Resources */,
 				796C45292EBADF3A004A2403 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */,
 				796C452A2EBADF3A004A2403 /* Office_desks_wooden.usdz in Resources */,
+				796C49DB2EDCE85C004A2403 /* Homi-info.plist in Resources */,
 				796C452B2EBADF3A004A2403 /* Cozy_Elegance.usdz in Resources */,
 				796C452C2EBADF3A004A2403 /* Bed.usdz in Resources */,
 				796C452D2EBADF3A004A2403 /* Gameready_Gaming_Chair.usdz in Resources */,
