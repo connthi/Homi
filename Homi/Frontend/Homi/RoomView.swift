@@ -738,6 +738,7 @@ struct RoomSceneView: UIViewRepresentable {
         private var cameraAngleY: Float = 30.0
         private var firstPersonAngleX: Float = 0.0
         private var firstPersonAngleY: Float = 0.0
+        private let dimensionLabelName = "dimensionLabel"
         
         init(_ parent: RoomSceneView) {
             self.parent = parent
@@ -1046,6 +1047,7 @@ struct RoomSceneView: UIViewRepresentable {
             
             if let previousSelection = parent.selectedNode {
                 removeSelectionHighlight(from: previousSelection)
+                removeDimensionLabel(from: previousSelection)
             }
             
             if let hit = hitResults.first {
@@ -1067,6 +1069,7 @@ struct RoomSceneView: UIViewRepresentable {
                 if let furniture = furnitureNode {
                     parent.selectedNode = furniture
                     addSelectionHighlight(to: furniture)
+                    addDimensionLabel(to: furniture)
                 } else {
                     parent.selectedNode = nil
                 }
@@ -1156,6 +1159,8 @@ struct RoomSceneView: UIViewRepresentable {
                     )
                     selected.scale = clampedScale
                     
+                    addDimensionLabel(to: selected)
+
                     if gesture.state == .ended {
                         parent.onFurnitureScaled(selected.furnitureItem, clampedScale)
                     }
@@ -1290,6 +1295,8 @@ struct RoomSceneView: UIViewRepresentable {
                     max(0.5, min(3.0, newScale.z))
                 )
                 selected.scale = clampedScale
+
+                addDimensionLabel(to: selected)
                 
                 if gesture.state == .ended {
                     parent.onFurnitureScaled(selected.furnitureItem, clampedScale)
@@ -1306,6 +1313,64 @@ struct RoomSceneView: UIViewRepresentable {
             gesture.scale = 1.0
         }
         
+        func addDimensionLabel(to furniture: FurnitureNode) {
+            // Remove any existing label first
+            removeDimensionLabel(from: furniture)
+            
+            // Get bounding box dimensions
+            let (min, max) = furniture.boundingBox
+            let width = (max.x - min.x) * furniture.scale.x
+            let height = (max.y - min.y) * furniture.scale.y
+            let depth = (max.z - min.z) * furniture.scale.z
+            
+            // Create dimension text
+            let dimensionText = String(format: "%.2fm × %.2fm × %.2fm", width, height, depth)
+            let textGeometry = SCNText(string: dimensionText, extrusionDepth: 0.01)
+            
+            // Style the text
+            if let font = UIFont(name: "Helvetica-Bold", size: 18) {
+                textGeometry.font = font
+            }
+            textGeometry.flatness = 0.1
+            
+            let textMaterial = SCNMaterial()
+            textMaterial.diffuse.contents = UIColor.black
+            textMaterial.specular.contents = UIColor.black
+            
+            let outlineMaterial = SCNMaterial()
+            outlineMaterial.diffuse.contents = UIColor.black.withAlphaComponent(0.8)
+            
+            textGeometry.materials = [textMaterial, outlineMaterial]
+            
+            // Create text node
+            let textNode = SCNNode(geometry: textGeometry)
+            textNode.name = dimensionLabelName
+            
+            // Scale down the text
+            textNode.scale = SCNVector3(0.004, 0.004, 0.004)
+            
+            // Center the text horizontally
+            let textBounds = textGeometry.boundingBox
+            let textWidth = textBounds.max.x - textBounds.min.x
+            textNode.pivot = SCNMatrix4MakeTranslation(textWidth / 2, 0, 0)
+            
+            // Position above the furniture
+            textNode.position = SCNVector3(0, max.y * furniture.scale.y + 0.15, 0)
+            
+            // Make it face the camera (billboard constraint)
+            let billboardConstraint = SCNBillboardConstraint()
+            billboardConstraint.freeAxes = .Y
+            textNode.constraints = [billboardConstraint]
+            
+            // Add to furniture node
+            furniture.addChildNode(textNode)
+        }
+
+        /// Remove the dimension label from furniture
+        func removeDimensionLabel(from furniture: FurnitureNode) {
+            furniture.childNode(withName: dimensionLabelName, recursively: false)?.removeFromParentNode()
+        }
+
         private func distance(_ a: SCNVector3, _ b: SCNVector3) -> Float {
             let dx = a.x - b.x
             let dy = a.y - b.y
