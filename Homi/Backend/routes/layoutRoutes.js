@@ -2,6 +2,7 @@ import express from "express";
 import Layout from "../models/layoutModel.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
+import { ErrorMessages } from "../utils/errorMessages.js";
 
 // Create a new Express router to group all layout-related routes
 const router = express.Router();
@@ -64,7 +65,7 @@ router.get("/:id", authenticate, async (req, res) => {
     });
 
     // If not found or doesn't belong to user, return a 404 (Not Found)
-    if (!layout) return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "Layout not found" });
+    if (!layout) return res.status(HTTP_STATUS.NOT_FOUND).json({ message: ErrorMessages.NOT_FOUND.LAYOUT });
 
     // Otherwise, return the layout as JSON
     res.status(HTTP_STATUS.OK).json(layout);
@@ -88,7 +89,7 @@ router.put("/:id", authenticate, async (req, res) => {
     });
 
     if (!layout) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "Layout not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: ErrorMessages.NOT_FOUND.LAYOUT });
     }
 
     // Update the layout with new data from the request body
@@ -122,11 +123,11 @@ router.delete("/:id", authenticate, async (req, res) => {
     });
 
     if (!layout) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "Layout not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: ErrorMessages.NOT_FOUND.LAYOUT });
     }
 
     // Confirm deletion to the client
-    res.status(HTTP_STATUS.OK).json({ message: "Layout deleted" });
+    res.status(HTTP_STATUS.OK).json({ message: ErrorMessages.SUCCESS.LAYOUT_DELETED });
   } catch (error) {
     // Handle any database or server errors
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: error.message });

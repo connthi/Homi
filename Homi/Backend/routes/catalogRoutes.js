@@ -2,6 +2,7 @@ import express from "express";
 import Catalog from "../models/catalogModel.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import { HTTP_STATUS } from "../utils/httpStatus.js";
+import { ErrorMessages } from "../utils/errorMessages.js";
 
 // Create a new Express router instance
 const router = express.Router();
@@ -32,7 +33,7 @@ router.get("/", async (req, res) => {
 router.post("/", authenticate, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
-      return res.status(HTTP_STATUS.FORBIDDEN).json({ message: "Admin access required" });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ message: ErrorMessages.AUTHZ.ADMIN_ACCESS_REQUIRED });
     }
 
     // Create a new Catalog document using data from the request body
@@ -57,7 +58,7 @@ router.post("/", authenticate, async (req, res) => {
 router.put("/:id", authenticate, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
-      return res.status(HTTP_STATUS.FORBIDDEN).json({ message: "Admin access required" });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ message: ErrorMessages.AUTHZ.ADMIN_ACCESS_REQUIRED });
     }
 
     const item = await Catalog.findByIdAndUpdate(
@@ -67,7 +68,7 @@ router.put("/:id", authenticate, async (req, res) => {
     );
 
     if (!item) {
-      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "Catalog item not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: ErrorMessages.NOT_FOUND.CATALOG_ITEM });
     }
 
     res.status(HTTP_STATUS.OK).json(item);
