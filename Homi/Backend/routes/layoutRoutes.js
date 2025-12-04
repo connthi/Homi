@@ -1,6 +1,7 @@
 import express from "express";
 import Layout from "../models/layoutModel.js";
 import { authenticate } from "../middleware/authMiddleware.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 // Create a new Express router to group all layout-related routes
 const router = express.Router();
@@ -23,10 +24,10 @@ router.post("/", authenticate, async (req, res) => {
     await layout.save();
 
     // Respond with HTTP 201 (Created) and return the saved layout data
-    res.status(201).json(layout);
+    res.status(HTTP_STATUS.CREATED).json(layout);
   } catch (error) {
     // If something goes wrong (e.g., validation error), return HTTP 400
-    res.status(400).json({ message: error.message });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ message: error.message });
   }
 });
 
@@ -41,10 +42,10 @@ router.get("/", authenticate, async (req, res) => {
     const layouts = await Layout.find({ userId: req.user.id });
 
     // Return them as JSON
-    res.json(layouts);
+    res.status(HTTP_STATUS.OK).json(layouts);
   } catch (error) {
     // Handle any server/database errors
-    res.status(500).json({ message: error.message });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 });
 
@@ -63,13 +64,13 @@ router.get("/:id", authenticate, async (req, res) => {
     });
 
     // If not found or doesn't belong to user, return a 404 (Not Found)
-    if (!layout) return res.status(404).json({ message: "Layout not found" });
+    if (!layout) return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "Layout not found" });
 
     // Otherwise, return the layout as JSON
-    res.json(layout);
+    res.status(HTTP_STATUS.OK).json(layout);
   } catch (error) {
     // If the ID format is invalid or a DB error occurs, return HTTP 500
-    res.status(500).json({ message: error.message });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 });
 
@@ -87,7 +88,7 @@ router.put("/:id", authenticate, async (req, res) => {
     });
 
     if (!layout) {
-      return res.status(404).json({ message: "Layout not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "Layout not found" });
     }
 
     // Update the layout with new data from the request body
@@ -100,10 +101,10 @@ router.put("/:id", authenticate, async (req, res) => {
     );
 
     // Return the updated layout
-    res.json(updatedLayout);
+    res.status(HTTP_STATUS.OK).json(updatedLayout);
   } catch (error) {
     // If validation fails or ID is invalid, return HTTP 400
-    res.status(400).json({ message: error.message });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ message: error.message });
   }
 });
 
@@ -121,14 +122,14 @@ router.delete("/:id", authenticate, async (req, res) => {
     });
 
     if (!layout) {
-      return res.status(404).json({ message: "Layout not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "Layout not found" });
     }
 
     // Confirm deletion to the client
-    res.json({ message: "Layout deleted" });
+    res.status(HTTP_STATUS.OK).json({ message: "Layout deleted" });
   } catch (error) {
     // Handle any database or server errors
-    res.status(500).json({ message: error.message });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 });
 

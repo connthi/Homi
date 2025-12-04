@@ -739,6 +739,15 @@ struct RoomSceneView: UIViewRepresentable {
         private var firstPersonAngleX: Float = 0.0
         private var firstPersonAngleY: Float = 0.0
         
+        // MARK: - Constants
+        private static let wallPadding: Float = 0.05
+        private static let furnitureSeparationPadding: Float = 0.05
+        private static let moveSpeed: Float = 0.01
+        private static let rotationSpeed: Float = 0.01
+        private static let scaleSpeed: Float = 0.01
+        private static let minFurnitureScale: Float = 0.5
+        private static let maxFurnitureScale: Float = 3.0
+        
         init(_ parent: RoomSceneView) {
             self.parent = parent
         }
@@ -1110,7 +1119,7 @@ struct RoomSceneView: UIViewRepresentable {
 
                 switch editMode {
                 case .move:
-                    let moveSpeed: Float = 0.01
+                    let moveSpeed = Self.moveSpeed
                     // Calculate new position based on drag
                     let newPosition = SCNVector3(
                         selected.position.x + Float(translation.x) * moveSpeed,
@@ -1127,7 +1136,7 @@ struct RoomSceneView: UIViewRepresentable {
                     }
                     
                 case .rotate:
-                    let rotationSpeed: Float = 0.01
+                    let rotationSpeed = Self.rotationSpeed
                     let newRotation = SCNVector3(
                         selected.eulerAngles.x,
                         selected.eulerAngles.y - Float(translation.x) * rotationSpeed,
@@ -1140,7 +1149,7 @@ struct RoomSceneView: UIViewRepresentable {
                     }
                     
                 case .scale:
-                    let scaleSpeed: Float = 0.01
+                    let scaleSpeed = Self.scaleSpeed
                     // Dragging UP scales up, DOWN scales down
                     let scaleDelta = 1.0 + Float(-translation.y) * scaleSpeed
                     let newScale = SCNVector3(
@@ -1148,12 +1157,8 @@ struct RoomSceneView: UIViewRepresentable {
                         selected.scale.y * scaleDelta,
                         selected.scale.z * scaleDelta
                     )
-                    // Clamp scale between 0.5x and 3.0x
-                    let clampedScale = SCNVector3(
-                        max(0.5, min(3.0, newScale.x)),
-                        max(0.5, min(3.0, newScale.y)),
-                        max(0.5, min(3.0, newScale.z))
-                    )
+                    // Clamp scale between min and max limits
+                    let clampedScale = clampFurnitureScale(newScale)
                     selected.scale = clampedScale
                     
                     if gesture.state == .ended {
@@ -1208,7 +1213,7 @@ struct RoomSceneView: UIViewRepresentable {
             
             var clampedPosition = position
             
-            let wallPadding: Float = 0.05
+            let wallPadding = Self.wallPadding
             let minX = -roomWidth / 2.0 + furnitureWidth + wallPadding
             let maxX = roomWidth / 2.0 - furnitureWidth - wallPadding
             clampedPosition.x = max(minX, min(maxX, position.x))
@@ -1242,15 +1247,15 @@ struct RoomSceneView: UIViewRepresentable {
                     
                     if overlapX < overlapZ {
                         if clampedPosition.x > otherFurniture.position.x {
-                            clampedPosition.x = otherMaxX + furnitureWidth + 0.05
+                            clampedPosition.x = otherMaxX + furnitureWidth + Self.furnitureSeparationPadding
                         } else {
-                            clampedPosition.x = otherMinX - furnitureWidth - 0.05
+                            clampedPosition.x = otherMinX - furnitureWidth - Self.furnitureSeparationPadding
                         }
                     } else {
                         if clampedPosition.z > otherFurniture.position.z {
-                            clampedPosition.z = otherMaxZ + furnitureDepth + 0.05
+                            clampedPosition.z = otherMaxZ + furnitureDepth + Self.furnitureSeparationPadding
                         } else {
-                            clampedPosition.z = otherMinZ - furnitureDepth - 0.05
+                            clampedPosition.z = otherMinZ - furnitureDepth - Self.furnitureSeparationPadding
                         }
                     }
                     
@@ -1284,11 +1289,7 @@ struct RoomSceneView: UIViewRepresentable {
                     selected.scale.y * scale,
                     selected.scale.z * scale
                 )
-                let clampedScale = SCNVector3(
-                    max(0.5, min(3.0, newScale.x)),
-                    max(0.5, min(3.0, newScale.y)),
-                    max(0.5, min(3.0, newScale.z))
-                )
+                let clampedScale = clampFurnitureScale(newScale)
                 selected.scale = clampedScale
                 
                 if gesture.state == .ended {
@@ -1304,6 +1305,15 @@ struct RoomSceneView: UIViewRepresentable {
                 }
             }
             gesture.scale = 1.0
+        }
+        
+        // MARK: - Helper Methods
+        private func clampFurnitureScale(_ scale: SCNVector3) -> SCNVector3 {
+            return SCNVector3(
+                max(Self.minFurnitureScale, min(Self.maxFurnitureScale, scale.x)),
+                max(Self.minFurnitureScale, min(Self.maxFurnitureScale, scale.y)),
+                max(Self.minFurnitureScale, min(Self.maxFurnitureScale, scale.z))
+            )
         }
         
         private func distance(_ a: SCNVector3, _ b: SCNVector3) -> Float {

@@ -9,6 +9,7 @@ import {
   hashToken
 } from "../utils/security.js";
 import { authenticate } from "../middleware/authMiddleware.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 const router = express.Router();
 const MAX_REFRESH_TOKENS = Number(process.env.MAX_REFRESH_TOKENS || 5);
@@ -18,18 +19,18 @@ router.post("/register", async (req, res) => {
     const { email, password, firstName, lastName } = req.body || {};
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: "Email and password are required" });
     }
 
     if (password.length < 8) {
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: "Password must be at least 8 characters" });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
     const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
-      return res.status(409).json({ message: "Email is already registered" });
+      return res.status(HTTP_STATUS.CONFLICT).json({ message: "Email is already registered" });
     }
 
     const passwordHash = await hashPassword(password);
@@ -42,10 +43,10 @@ router.post("/register", async (req, res) => {
     });
 
     const response = await buildAuthResponse(user);
-    return res.status(201).json(response);
+    return res.status(HTTP_STATUS.CREATED).json(response);
   } catch (error) {
     console.error("Register error:", error);
-    return res.status(500).json({ message: "Unable to register user" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: "Unable to register user" });
   }
 });
 
@@ -54,27 +55,27 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body || {};
 
     if (!email || !password) {
-      return res.status(400).json({ message: "Email and password are required" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: "Email and password are required" });
     }
 
     const normalizedEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: "Invalid credentials" });
     }
 
     const isValid = await verifyPassword(password, user.passwordHash);
 
     if (!isValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: "Invalid credentials" });
     }
 
     const response = await buildAuthResponse(user);
-    return res.json(response);
+    return res.status(HTTP_STATUS.OK).json(response);
   } catch (error) {
     console.error("Login error:", error);
-    return res.status(500).json({ message: "Unable to login" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: "Unable to login" });
   }
 });
 
@@ -83,26 +84,26 @@ router.post("/refresh", async (req, res) => {
     const { refreshToken } = req.body || {};
 
     if (!refreshToken) {
-      return res.status(400).json({ message: "refreshToken is required" });
+      return res.status(HTTP_STATUS.BAD_REQUEST).json({ message: "refreshToken is required" });
     }
 
     const payload = verifyRefreshToken(refreshToken);
     const user = await User.findById(payload.sub);
 
     if (!user) {
-      return res.status(401).json({ message: "Invalid refresh token" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: "Invalid refresh token" });
     }
 
     if (!isRefreshTokenStored(user, refreshToken)) {
-      return res.status(401).json({ message: "Refresh token has been revoked" });
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: "Refresh token has been revoked" });
     }
 
     removeRefreshToken(user, refreshToken);
     const response = await buildAuthResponse(user);
-    return res.json(response);
+    return res.status(HTTP_STATUS.OK).json(response);
   } catch (error) {
     console.error("Refresh error:", error);
-    return res.status(401).json({ message: "Invalid or expired refresh token" });
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: "Invalid or expired refresh token" });
   }
 });
 
@@ -125,19 +126,19 @@ router.post("/logout", async (req, res) => {
     // Intentionally swallow errors to keep logout idempotent
   }
 
-  return res.json({ message: "Logged out" });
+  return res.status(HTTP_STATUS.OK).json({ message: "Logged out" });
 });
 
 router.get("/me", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "User not found" });
     }
-    return res.json({ user: formatUser(user) });
+    return res.status(HTTP_STATUS.OK).json({ user: formatUser(user) });
   } catch (error) {
     console.error("Fetch current user error:", error);
-    return res.status(500).json({ message: "Unable to fetch user profile" });
+    return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: "Unable to fetch user profile" });
   }
 });
 

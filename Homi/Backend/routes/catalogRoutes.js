@@ -1,6 +1,7 @@
 import express from "express";
 import Catalog from "../models/catalogModel.js";
 import { authenticate } from "../middleware/authMiddleware.js";
+import { HTTP_STATUS } from "../utils/httpStatus.js";
 
 // Create a new Express router instance
 const router = express.Router();
@@ -16,10 +17,10 @@ router.get("/", async (req, res) => {
     const catalog = await Catalog.find();
 
     // Send the catalog data as a JSON response
-    res.json(catalog);
+    res.status(HTTP_STATUS.OK).json(catalog);
   } catch (error) {
     // If something goes wrong (e.g., database error), send HTTP 500
-    res.status(500).json({ message: error.message });
+    res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 });
 
@@ -31,7 +32,7 @@ router.get("/", async (req, res) => {
 router.post("/", authenticate, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
-      return res.status(403).json({ message: "Admin access required" });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ message: "Admin access required" });
     }
 
     // Create a new Catalog document using data from the request body
@@ -41,10 +42,10 @@ router.post("/", authenticate, async (req, res) => {
     await item.save();
 
     // Respond with HTTP 201 (Created) and return the saved item
-    res.status(201).json(item);
+    res.status(HTTP_STATUS.CREATED).json(item);
   } catch (error) {
     // If validation fails or bad input is given, respond with HTTP 400
-    res.status(400).json({ message: error.message });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ message: error.message });
   }
 });
 
@@ -56,7 +57,7 @@ router.post("/", authenticate, async (req, res) => {
 router.put("/:id", authenticate, async (req, res) => {
   try {
     if (!req.user.isAdmin) {
-      return res.status(403).json({ message: "Admin access required" });
+      return res.status(HTTP_STATUS.FORBIDDEN).json({ message: "Admin access required" });
     }
 
     const item = await Catalog.findByIdAndUpdate(
@@ -66,10 +67,10 @@ router.put("/:id", authenticate, async (req, res) => {
     );
 
     if (!item) {
-      return res.status(404).json({ message: "Catalog item not found" });
+      return res.status(HTTP_STATUS.NOT_FOUND).json({ message: "Catalog item not found" });
     }
 
-    res.json(item);
+    res.status(HTTP_STATUS.OK).json(item);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
