@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import layoutRoutes from "./routes/layoutRoutes.js";
 import catalogRoutes from "./routes/catalogRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import shareRoutes from "./routes/shareRoutes.js";
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(cors());
 app.use("/api/auth", authRoutes);
 app.use("/api/layouts", layoutRoutes);
 app.use("/api/catalog", catalogRoutes);
+app.use("/api/share", shareRoutes);
 
 // ----------------------
 // DATABASE CONNECTION (SKIPPED IN TESTS)
