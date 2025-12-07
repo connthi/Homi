@@ -16,7 +16,13 @@ export const ErrorMessages = {
     INVALID_OR_EXPIRED_REFRESH_TOKEN: "Invalid or expired refresh token",
     UNABLE_TO_REGISTER: "Unable to register user",
     UNABLE_TO_LOGIN: "Unable to login",
-    UNABLE_TO_FETCH_USER: "Unable to fetch user profile"
+    UNABLE_TO_FETCH_USER: "Unable to fetch user profile",
+    // New Forgot Password Errors
+    EMAIL_REQUIRED: "Email is required",
+    TOKEN_AND_PASSWORD_REQUIRED: "Token and new password are required",
+    INVALID_OR_EXPIRED_TOKEN: "Password reset token is invalid or has expired",
+    UNABLE_TO_REQUEST_RESET: "Unable to process password reset request",
+    UNABLE_TO_RESET_PASSWORD: "Unable to reset password"
   },
 
   // Authorization errors
@@ -34,7 +40,9 @@ export const ErrorMessages = {
   // Success messages
   SUCCESS: {
     LOGGED_OUT: "Logged out",
-    LAYOUT_DELETED: "Layout deleted"
+    LAYOUT_DELETED: "Layout deleted",
+    // New Success Messages
+    PASSWORD_RESET_LINK_SENT: "If an account with that email exists, we have sent a password reset link.",
+    PASSWORD_RESET_SUCCESS: "Password has been successfully reset."
   }
 };
-

@@ -7,6 +7,12 @@ struct LoginView: View {
     @State private var isPasswordVisible = false
     @State private var errorMessage: String?
     
+    // States for Forgot Password flow
+    @State private var showForgotPassword = false
+    @State private var resetEmail = ""
+    @State private var showResetConfirmation = false
+    @State private var resetConfirmationMessage = ""
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
             
@@ -55,10 +61,14 @@ struct LoginView: View {
                 }
             }
             
-            // Placeholder for future recovery flow
-            Button("Forgot password?") {}
-                .font(.footnote.weight(.semibold))
-                .foregroundColor(Color(red: 0.35, green: 0.36, blue: 0.90))
+            // Forgot Password Button
+            Button("Forgot password?") {
+                // Prefill with the email typed in the login box if available
+                resetEmail = email
+                showForgotPassword = true
+            }
+            .font(.footnote.weight(.semibold))
+            .foregroundColor(Color(red: 0.35, green: 0.36, blue: 0.90))
             
             // Error Display
             if let error = errorMessage {
@@ -107,6 +117,24 @@ struct LoginView: View {
             .disabled(disabled)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Alert 1: Input Email
+        .alert("Reset Password", isPresented: $showForgotPassword) {
+            TextField("Email", text: $resetEmail)
+                .textInputAutocapitalization(.never)
+                .keyboardType(.emailAddress)
+            Button("Send Link") {
+                submitForgotPassword()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Enter your email address to receive a password reset link.")
+        }
+        // Alert 2: Success Confirmation
+        .alert("Check your email", isPresented: $showResetConfirmation) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(resetConfirmationMessage)
+        }
     }
     
     // Disables login button while loading or if fields are empty
@@ -152,6 +180,26 @@ struct LoginView: View {
                     } else {
                         errorMessage = error.localizedDescription
                     }
+                }
+            }
+        }
+    }
+    
+    // Handles the forgot password API call
+    private func submitForgotPassword() {
+        guard !resetEmail.isEmpty else { return }
+        errorMessage = nil
+        
+        Task {
+            do {
+                let message = try await authManager.forgotPassword(email: resetEmail)
+                await MainActor.run {
+                    resetConfirmationMessage = message
+                    showResetConfirmation = true
+                }
+            } catch {
+                await MainActor.run {
+                    errorMessage = error.localizedDescription
                 }
             }
         }

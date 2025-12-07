@@ -73,6 +73,19 @@ export function hashToken(token) {
 }
 
 /**
+ * Create a password reset token (plain text) and its SHA256 hash.
+ */
+export function createPasswordResetToken() {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  // Hash the token using SHA256
+  const tokenHash = createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  return { token: resetToken, hash: tokenHash };
+}
+
+/**
  * Create access token.
  */
 export function createAccessToken(user) {
