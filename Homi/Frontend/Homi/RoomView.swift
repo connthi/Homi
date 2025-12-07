@@ -525,7 +525,7 @@ struct RoomView: View {
                 }
                 
                 let shareId = try await layoutManager.createShareLink(layoutId: layoutId)
-                let url = URL(string: "https://homi.app/view/\(shareId)")!
+                let url = URL(string: "homi://view/\(shareId)")!
                 
                 await MainActor.run {
                     // Copy to clipboard
