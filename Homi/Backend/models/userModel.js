@@ -12,7 +12,10 @@ const userSchema = new mongoose.Schema({
   firstName: { type: String, trim: true },
   lastName: { type: String, trim: true },
   role: { type: String, default: "user" },
-  refreshTokens: [refreshTokenSchema]
+  refreshTokens: [refreshTokenSchema],
+  // New fields for Password Reset
+  passwordResetToken: { type: String },
+  passwordResetExpires: { type: Date }
 }, { timestamps: true });
 
 userSchema.index({ email: 1 }, { unique: true });
@@ -24,6 +27,9 @@ userSchema.set("toJSON", {
     delete ret.__v;
     delete ret.passwordHash;
     delete ret.refreshTokens;
+    // Ensure sensitive reset fields are not sent to frontend
+    delete ret.passwordResetToken;
+    delete ret.passwordResetExpires;
     return ret;
   }
 });

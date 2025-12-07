@@ -1,0 +1,488 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		96EED0F72EE6304100275DA5 /* LayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0EE2EE6304100275DA5 /* LayoutManager.swift */; };
+		96EED0F82EE6304100275DA5 /* CatalogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0EA2EE6304100275DA5 /* CatalogView.swift */; };
+		96EED0F92EE6304100275DA5 /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0E72EE6304100275DA5 /* AuthenticationView.swift */; };
+		96EED0FA2EE6304100275DA5 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0F02EE6304100275DA5 /* Models.swift */; };
+		96EED0FB2EE6304100275DA5 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0E92EE6304100275DA5 /* AuthService.swift */; };
+		96EED0FC2EE6304100275DA5 /* NewLayoutDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0F12EE6304100275DA5 /* NewLayoutDialog.swift */; };
+		96EED0FD2EE6304100275DA5 /* HomiApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0EC2EE6304100275DA5 /* HomiApp.swift */; };
+		96EED0FE2EE6304100275DA5 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0E82EE6304100275DA5 /* AuthManager.swift */; };
+		96EED0FF2EE6304100275DA5 /* RegisterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0F42EE6304100275DA5 /* RegisterView.swift */; };
+		96EED1002EE6304100275DA5 /* ImageExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0ED2EE6304100275DA5 /* ImageExporter.swift */; };
+		96EED1012EE6304100275DA5 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0EF2EE6304100275DA5 /* LoginView.swift */; };
+		96EED1022EE6304100275DA5 /* RoomView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0F52EE6304100275DA5 /* RoomView.swift */; };
+		96EED1032EE6304100275DA5 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0E52EE6304100275DA5 /* APIService.swift */; };
+		96EED1042EE6304100275DA5 /* UIColor+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0F62EE6304100275DA5 /* UIColor+Extensions.swift */; };
+		96EED1052EE6304100275DA5 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0EB2EE6304100275DA5 /* ContentView.swift */; };
+		96EED1062EE6304100275DA5 /* Gameready_Gaming_Chair.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0DA2EE6304100275DA5 /* Gameready_Gaming_Chair.usdz */; };
+		96EED1072EE6304100275DA5 /* L_shaped_desk.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0DB2EE6304100275DA5 /* L_shaped_desk.usdz */; };
+		96EED1082EE6304100275DA5 /* Silly_couch.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0E22EE6304100275DA5 /* Silly_couch.usdz */; };
+		96EED1092EE6304100275DA5 /* Modern_cabinent.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0DC2EE6304100275DA5 /* Modern_cabinent.usdz */; };
+		96EED10A2EE6304100275DA5 /* Modern_shelf.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0DE2EE6304100275DA5 /* Modern_shelf.usdz */; };
+		96EED10B2EE6304100275DA5 /* Fireplace.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0D92EE6304100275DA5 /* Fireplace.usdz */; };
+		96EED10C2EE6304100275DA5 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0D82EE6304100275DA5 /* Desktop_speaker_with_a_wooden_enclosure.usdz */; };
+		96EED10D2EE6304100275DA5 /* TV_cabinet.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0E32EE6304100275DA5 /* TV_cabinet.usdz */; };
+		96EED10E2EE6304100275DA5 /* Cozy_Elegance.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0D72EE6304100275DA5 /* Cozy_Elegance.usdz */; };
+		96EED10F2EE6304100275DA5 /* PorTable.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0E02EE6304100275DA5 /* PorTable.usdz */; };
+		96EED1102EE6304100275DA5 /* Bed.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0D32EE6304100275DA5 /* Bed.usdz */; };
+		96EED1112EE6304100275DA5 /* Round_table.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0E12EE6304100275DA5 /* Round_table.usdz */; };
+		96EED1122EE6304100275DA5 /* Christmas_tree.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0D62EE6304100275DA5 /* Christmas_tree.usdz */; };
+		96EED1132EE6304100275DA5 /* Bookshelf.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0D42EE6304100275DA5 /* Bookshelf.usdz */; };
+		96EED1142EE6304100275DA5 /* Children_bed.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0D52EE6304100275DA5 /* Children_bed.usdz */; };
+		96EED1152EE6304100275DA5 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0F22EE6304100275DA5 /* Preview Assets.xcassets */; };
+		96EED1162EE6304100275DA5 /* Modern_chair.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0DD2EE6304100275DA5 /* Modern_chair.usdz */; };
+		96EED1172EE6304100275DA5 /* 3_seat_couch.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0D22EE6304100275DA5 /* 3_seat_couch.usdz */; };
+		96EED1182EE6304100275DA5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0E62EE6304100275DA5 /* Assets.xcassets */; };
+		96EED1192EE6304100275DA5 /* Office_desks_wooden.usdz in Resources */ = {isa = PBXBuildFile; fileRef = 96EED0DF2EE6304100275DA5 /* Office_desks_wooden.usdz */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		96EED0C42EE62DA100275DA5 /* Homi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Homi.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		96EED0D22EE6304100275DA5 /* 3_seat_couch.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = 3_seat_couch.usdz; sourceTree = "<group>"; };
+		96EED0D32EE6304100275DA5 /* Bed.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bed.usdz; sourceTree = "<group>"; };
+		96EED0D42EE6304100275DA5 /* Bookshelf.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bookshelf.usdz; sourceTree = "<group>"; };
+		96EED0D52EE6304100275DA5 /* Children_bed.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Children_bed.usdz; sourceTree = "<group>"; };
+		96EED0D62EE6304100275DA5 /* Christmas_tree.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Christmas_tree.usdz; sourceTree = "<group>"; };
+		96EED0D72EE6304100275DA5 /* Cozy_Elegance.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Cozy_Elegance.usdz; sourceTree = "<group>"; };
+		96EED0D82EE6304100275DA5 /* Desktop_speaker_with_a_wooden_enclosure.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Desktop_speaker_with_a_wooden_enclosure.usdz; sourceTree = "<group>"; };
+		96EED0D92EE6304100275DA5 /* Fireplace.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Fireplace.usdz; sourceTree = "<group>"; };
+		96EED0DA2EE6304100275DA5 /* Gameready_Gaming_Chair.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Gameready_Gaming_Chair.usdz; sourceTree = "<group>"; };
+		96EED0DB2EE6304100275DA5 /* L_shaped_desk.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = L_shaped_desk.usdz; sourceTree = "<group>"; };
+		96EED0DC2EE6304100275DA5 /* Modern_cabinent.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Modern_cabinent.usdz; sourceTree = "<group>"; };
+		96EED0DD2EE6304100275DA5 /* Modern_chair.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Modern_chair.usdz; sourceTree = "<group>"; };
+		96EED0DE2EE6304100275DA5 /* Modern_shelf.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Modern_shelf.usdz; sourceTree = "<group>"; };
+		96EED0DF2EE6304100275DA5 /* Office_desks_wooden.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Office_desks_wooden.usdz; sourceTree = "<group>"; };
+		96EED0E02EE6304100275DA5 /* PorTable.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = PorTable.usdz; sourceTree = "<group>"; };
+		96EED0E12EE6304100275DA5 /* Round_table.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Round_table.usdz; sourceTree = "<group>"; };
+		96EED0E22EE6304100275DA5 /* Silly_couch.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Silly_couch.usdz; sourceTree = "<group>"; };
+		96EED0E32EE6304100275DA5 /* TV_cabinet.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = TV_cabinet.usdz; sourceTree = "<group>"; };
+		96EED0E52EE6304100275DA5 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = APIService.swift; path = ../APIService.swift; sourceTree = SOURCE_ROOT; };
+		96EED0E62EE6304100275DA5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = ../Assets.xcassets; sourceTree = SOURCE_ROOT; };
+		96EED0E72EE6304100275DA5 /* AuthenticationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthenticationView.swift; path = ../AuthenticationView.swift; sourceTree = SOURCE_ROOT; };
+		96EED0E82EE6304100275DA5 /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthManager.swift; path = ../AuthManager.swift; sourceTree = SOURCE_ROOT; };
+		96EED0E92EE6304100275DA5 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthService.swift; path = ../AuthService.swift; sourceTree = SOURCE_ROOT; };
+		96EED0EA2EE6304100275DA5 /* CatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CatalogView.swift; path = ../CatalogView.swift; sourceTree = SOURCE_ROOT; };
+		96EED0EB2EE6304100275DA5 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ../ContentView.swift; sourceTree = SOURCE_ROOT; };
+		96EED0EC2EE6304100275DA5 /* HomiApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomiApp.swift; path = ../HomiApp.swift; sourceTree = SOURCE_ROOT; };
+		96EED0ED2EE6304100275DA5 /* ImageExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ImageExporter.swift; path = ../ImageExporter.swift; sourceTree = SOURCE_ROOT; };
+		96EED0EE2EE6304100275DA5 /* LayoutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LayoutManager.swift; path = ../LayoutManager.swift; sourceTree = SOURCE_ROOT; };
+		96EED0EF2EE6304100275DA5 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginView.swift; path = ../LoginView.swift; sourceTree = SOURCE_ROOT; };
+		96EED0F02EE6304100275DA5 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = Models.swift; path = ../Models.swift; sourceTree = SOURCE_ROOT; };
+		96EED0F12EE6304100275DA5 /* NewLayoutDialog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = NewLayoutDialog.swift; path = ../NewLayoutDialog.swift; sourceTree = SOURCE_ROOT; };
+		96EED0F22EE6304100275DA5 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		96EED0F42EE6304100275DA5 /* RegisterView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterView.swift; path = ../RegisterView.swift; sourceTree = SOURCE_ROOT; };
+		96EED0F52EE6304100275DA5 /* RoomView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoomView.swift; path = ../RoomView.swift; sourceTree = SOURCE_ROOT; };
+		96EED0F62EE6304100275DA5 /* UIColor+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = "UIColor+Extensions.swift"; path = "../UIColor+Extensions.swift"; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		96EED0C12EE62DA100275DA5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		96EED0BB2EE62DA100275DA5 = {
+			isa = PBXGroup;
+			children = (
+				96EED0E42EE6304100275DA5 /* 3Dmodels */,
+				96EED0E52EE6304100275DA5 /* APIService.swift */,
+				96EED0E62EE6304100275DA5 /* Assets.xcassets */,
+				96EED0E72EE6304100275DA5 /* AuthenticationView.swift */,
+				96EED0E82EE6304100275DA5 /* AuthManager.swift */,
+				96EED0E92EE6304100275DA5 /* AuthService.swift */,
+				96EED0EA2EE6304100275DA5 /* CatalogView.swift */,
+				96EED0EB2EE6304100275DA5 /* ContentView.swift */,
+				96EED0EC2EE6304100275DA5 /* HomiApp.swift */,
+				96EED0ED2EE6304100275DA5 /* ImageExporter.swift */,
+				96EED0EE2EE6304100275DA5 /* LayoutManager.swift */,
+				96EED0EF2EE6304100275DA5 /* LoginView.swift */,
+				96EED0F02EE6304100275DA5 /* Models.swift */,
+				96EED0F12EE6304100275DA5 /* NewLayoutDialog.swift */,
+				96EED0F32EE6304100275DA5 /* Preview Content */,
+				96EED0F42EE6304100275DA5 /* RegisterView.swift */,
+				96EED0F52EE6304100275DA5 /* RoomView.swift */,
+				96EED0F62EE6304100275DA5 /* UIColor+Extensions.swift */,
+				96EED0C52EE62DA100275DA5 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		96EED0C52EE62DA100275DA5 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				96EED0C42EE62DA100275DA5 /* Homi.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		96EED0E42EE6304100275DA5 /* 3Dmodels */ = {
+			isa = PBXGroup;
+			children = (
+				96EED0D22EE6304100275DA5 /* 3_seat_couch.usdz */,
+				96EED0D32EE6304100275DA5 /* Bed.usdz */,
+				96EED0D42EE6304100275DA5 /* Bookshelf.usdz */,
+				96EED0D52EE6304100275DA5 /* Children_bed.usdz */,
+				96EED0D62EE6304100275DA5 /* Christmas_tree.usdz */,
+				96EED0D72EE6304100275DA5 /* Cozy_Elegance.usdz */,
+				96EED0D82EE6304100275DA5 /* Desktop_speaker_with_a_wooden_enclosure.usdz */,
+				96EED0D92EE6304100275DA5 /* Fireplace.usdz */,
+				96EED0DA2EE6304100275DA5 /* Gameready_Gaming_Chair.usdz */,
+				96EED0DB2EE6304100275DA5 /* L_shaped_desk.usdz */,
+				96EED0DC2EE6304100275DA5 /* Modern_cabinent.usdz */,
+				96EED0DD2EE6304100275DA5 /* Modern_chair.usdz */,
+				96EED0DE2EE6304100275DA5 /* Modern_shelf.usdz */,
+				96EED0DF2EE6304100275DA5 /* Office_desks_wooden.usdz */,
+				96EED0E02EE6304100275DA5 /* PorTable.usdz */,
+				96EED0E12EE6304100275DA5 /* Round_table.usdz */,
+				96EED0E22EE6304100275DA5 /* Silly_couch.usdz */,
+				96EED0E32EE6304100275DA5 /* TV_cabinet.usdz */,
+			);
+			name = 3Dmodels;
+			path = ../3Dmodels;
+			sourceTree = SOURCE_ROOT;
+		};
+		96EED0F32EE6304100275DA5 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				96EED0F22EE6304100275DA5 /* Preview Assets.xcassets */,
+			);
+			name = "Preview Content";
+			path = "../Preview Content";
+			sourceTree = SOURCE_ROOT;
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		96EED0C32EE62DA100275DA5 /* Homi */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 96EED0CF2EE62DA300275DA5 /* Build configuration list for PBXNativeTarget "Homi" */;
+			buildPhases = (
+				96EED0C02EE62DA100275DA5 /* Sources */,
+				96EED0C12EE62DA100275DA5 /* Frameworks */,
+				96EED0C22EE62DA100275DA5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Homi;
+			packageProductDependencies = (
+			);
+			productName = Homi;
+			productReference = 96EED0C42EE62DA100275DA5 /* Homi.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		96EED0BC2EE62DA100275DA5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2610;
+				LastUpgradeCheck = 2610;
+				TargetAttributes = {
+					96EED0C32EE62DA100275DA5 = {
+						CreatedOnToolsVersion = 26.1.1;
+						LastSwiftMigration = 2610;
+					};
+				};
+			};
+			buildConfigurationList = 96EED0BF2EE62DA100275DA5 /* Build configuration list for PBXProject "Homi" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 96EED0BB2EE62DA100275DA5;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 96EED0C52EE62DA100275DA5 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				96EED0C32EE62DA100275DA5 /* Homi */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		96EED0C22EE62DA100275DA5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				96EED1062EE6304100275DA5 /* Gameready_Gaming_Chair.usdz in Resources */,
+				96EED1072EE6304100275DA5 /* L_shaped_desk.usdz in Resources */,
+				96EED1082EE6304100275DA5 /* Silly_couch.usdz in Resources */,
+				96EED1092EE6304100275DA5 /* Modern_cabinent.usdz in Resources */,
+				96EED10A2EE6304100275DA5 /* Modern_shelf.usdz in Resources */,
+				96EED10B2EE6304100275DA5 /* Fireplace.usdz in Resources */,
+				96EED10C2EE6304100275DA5 /* Desktop_speaker_with_a_wooden_enclosure.usdz in Resources */,
+				96EED10D2EE6304100275DA5 /* TV_cabinet.usdz in Resources */,
+				96EED10E2EE6304100275DA5 /* Cozy_Elegance.usdz in Resources */,
+				96EED10F2EE6304100275DA5 /* PorTable.usdz in Resources */,
+				96EED1102EE6304100275DA5 /* Bed.usdz in Resources */,
+				96EED1112EE6304100275DA5 /* Round_table.usdz in Resources */,
+				96EED1122EE6304100275DA5 /* Christmas_tree.usdz in Resources */,
+				96EED1132EE6304100275DA5 /* Bookshelf.usdz in Resources */,
+				96EED1142EE6304100275DA5 /* Children_bed.usdz in Resources */,
+				96EED1152EE6304100275DA5 /* Preview Assets.xcassets in Resources */,
+				96EED1162EE6304100275DA5 /* Modern_chair.usdz in Resources */,
+				96EED1172EE6304100275DA5 /* 3_seat_couch.usdz in Resources */,
+				96EED1182EE6304100275DA5 /* Assets.xcassets in Resources */,
+				96EED1192EE6304100275DA5 /* Office_desks_wooden.usdz in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		96EED0C02EE62DA100275DA5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				96EED0F72EE6304100275DA5 /* LayoutManager.swift in Sources */,
+				96EED0F82EE6304100275DA5 /* CatalogView.swift in Sources */,
+				96EED0F92EE6304100275DA5 /* AuthenticationView.swift in Sources */,
+				96EED0FA2EE6304100275DA5 /* Models.swift in Sources */,
+				96EED0FB2EE6304100275DA5 /* AuthService.swift in Sources */,
+				96EED0FC2EE6304100275DA5 /* NewLayoutDialog.swift in Sources */,
+				96EED0FD2EE6304100275DA5 /* HomiApp.swift in Sources */,
+				96EED0FE2EE6304100275DA5 /* AuthManager.swift in Sources */,
+				96EED0FF2EE6304100275DA5 /* RegisterView.swift in Sources */,
+				96EED1002EE6304100275DA5 /* ImageExporter.swift in Sources */,
+				96EED1012EE6304100275DA5 /* LoginView.swift in Sources */,
+				96EED1022EE6304100275DA5 /* RoomView.swift in Sources */,
+				96EED1032EE6304100275DA5 /* APIService.swift in Sources */,
+				96EED1042EE6304100275DA5 /* UIColor+Extensions.swift in Sources */,
+				96EED1052EE6304100275DA5 /* ContentView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		96EED0CD2EE62DA300275DA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		96EED0CE2EE62DA300275DA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.1;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		96EED0D02EE62DA300275DA5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8QPTUJX4Z4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.phongtang.homi.Homi;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		96EED0D12EE62DA300275DA5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8QPTUJX4Z4;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.phongtang.homi.Homi;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		96EED0BF2EE62DA100275DA5 /* Build configuration list for PBXProject "Homi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				96EED0CD2EE62DA300275DA5 /* Debug */,
+				96EED0CE2EE62DA300275DA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		96EED0CF2EE62DA300275DA5 /* Build configuration list for PBXNativeTarget "Homi" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				96EED0D02EE62DA300275DA5 /* Debug */,
+				96EED0D12EE62DA300275DA5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 96EED0BC2EE62DA100275DA5 /* Project object */;
+}

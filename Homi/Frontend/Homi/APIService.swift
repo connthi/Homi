@@ -97,6 +97,16 @@ class APIService {
         return response.user
     }
     
+    /// Requests a password reset link for the given email.
+    func forgotPassword(email: String) async throws -> String {
+        let body = try encodeBody(["email": email])
+        let request = try makeRequest(path: "/auth/forgot-password", method: "POST", body: body)
+        let data = try await send(request)
+        // Decode the internal message struct and return just the message string
+        let response = try decodeResponse(APIMessageResponse.self, from: data)
+        return response.message
+    }
+    
     /// Exchanges an expired access token for a new one.
     func refreshToken(refreshToken: String) async throws -> AuthResponse {
         let body = try encodeBody(RefreshTokenPayload(refreshToken: refreshToken))

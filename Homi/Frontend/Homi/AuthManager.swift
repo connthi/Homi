@@ -109,6 +109,17 @@ class AuthManager: ObservableObject {
         }
     }
     
+    /// Sends a forgot password request to the API.
+    func forgotPassword(email: String) async throws -> String {
+        await MainActor.run { isLoading = true }
+        // Ensure loading is set to false regardless of success/failure
+        defer { Task { await MainActor.run { isLoading = false } } }
+        
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let message = try await apiService.forgotPassword(email: normalizedEmail)
+        return message
+    }
+    
     /// Refreshes the access token using the stored refresh token.
     /// Throws if no refresh token is available.
     func refreshTokenIfNeeded() async throws {
