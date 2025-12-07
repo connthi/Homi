@@ -58,6 +58,32 @@ class LayoutManager: ObservableObject {
         await MainActor.run { self.currentLayout = updatedLayout }
     }
 
+    func duplicateLayout() async throws -> Layout {
+        guard let layout = currentLayout else {
+            throw NSError(domain: "No layout to duplicate", code: 0)
+        }
+
+        // Create a new editable copy
+        let newLayout = Layout(
+            id: nil,  // ⬅️ VERY IMPORTANT: backend treats this as NEW
+            userId: layout.userId,
+            name: layout.name + " Copy",
+            createdAt: Date(),
+            furnitureItems: layout.furnitureItems
+        )
+
+        // Save new layout via backend
+        let saved = try await apiService.saveLayout(newLayout)
+
+        // Update app state
+        await MainActor.run {
+            self.currentLayout = saved
+            self.updateFurnitureNodes()
+        }
+
+        return saved
+    }
+
     // MARK: - Furniture Management
 
     /// Adds furniture to the layout and creates its SceneKit node.
@@ -240,5 +266,20 @@ class LayoutManager: ObservableObject {
     /// Retrieves a catalog item by its ID.
     func getCatalogItem(by id: String) -> CatalogItem? {
         catalogItems.first { $0.id == id }
+    }
+
+    // MARK: - Sharing Support
+
+    func createShareLink(layoutId: String) async throws -> String {
+        let response = try await apiService.createShareLink(layoutId: layoutId)
+        return response.shareId
+    }
+
+    func loadSharedLayout(shareId: String) async throws {
+        let layout = try await apiService.fetchSharedLayout(shareId: shareId)
+        await MainActor.run {
+            self.currentLayout = layout
+            self.updateFurnitureNodes()
+        }
     }
 }

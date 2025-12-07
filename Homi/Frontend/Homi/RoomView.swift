@@ -19,6 +19,8 @@ struct EditableRoom {
 struct RoomView: View {
     @EnvironmentObject var layoutManager: LayoutManager
     @Environment(\.dismiss) var dismiss
+    let isViewOnly: Bool
+    
     @State private var showingNewLayoutDialog = false
     @State private var showingCatalogSheet = false
     @State private var newLayoutName = ""
@@ -32,389 +34,548 @@ struct RoomView: View {
     @State private var showingWallColorPicker = false
     @State private var showHints = true
     @State private var sceneViewRef: SCNView?
+    @State private var showingShareSheet = false
+    @State private var shareURL: URL?
+    @State private var showingDuplicateConfirmation = false
+    @State private var successType: SuccessType?
     
     enum EditMode {
         case move, rotate, scale
     }
+
+    init(isViewOnly: Bool = false) {
+        self.isViewOnly = isViewOnly
+    }
+
+    enum SuccessType {
+        case saved, duplicated, shareCreated
+        
+        var message: String {
+            switch self {
+            case .saved: return "Layout saved successfully!"
+            case .duplicated: return "Layout duplicated successfully!"
+            case .shareCreated: return "Share link copied to clipboard!"
+            }
+        }
+    }
     
     var body: some View {
         ZStack {
-            // 3D Scene View
-            RoomSceneView(
-                furnitureNodes: layoutManager.furnitureNodes,
-                selectedNode: $selectedFurnitureNode,
-                isEditing: $isEditing,
-                editMode: $editMode,
-                isFirstPersonMode: $isFirstPersonMode,
-                isEditingRoom: $isEditingRoom,
-                roomConfig: $roomConfig,
-                wallColor: layoutManager.wallColor,
-                sceneViewRef: $sceneViewRef,
-                onFurnitureMoved: { furnitureItem, position in
-                    layoutManager.updateFurniturePosition(furnitureItem, position: position)
-                },
-                onFurnitureRotated: { furnitureItem, rotation in
-                    layoutManager.updateFurnitureRotation(furnitureItem, rotation: rotation)
-                },
-                onFurnitureScaled: { furnitureItem, scale in
-                    layoutManager.updateFurnitureScale(furnitureItem, scale: scale)
-                }
-            )
-            .ignoresSafeArea()
-            
-            // UI Overlay
-            VStack {
-                // Top Controls
-                HStack {
-                    Button(action: { dismiss() }) {
-                        HStack {
-                            Image(systemName: "chevron.left")
-                            Text("Back")
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .fixedSize()
-                    
-                    Spacer()
-                    
-                    // Right: Save button and tool buttons
-                    VStack(alignment: .trailing, spacing: 8) {
-                        if layoutManager.currentLayout != nil {
-                            Button("Save") {
-                                saveLayout()
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        
-                        VStack(spacing: 8) {
-                            Button(action: {
-                                showingWallColorPicker = true
-                            }) {
-                                HStack(spacing: 4) {
-                                    Circle()
-                                        .fill(Color(layoutManager.wallColor))
-                                        .frame(width: 16, height: 16)
-                                        .overlay(
-                                            Circle()
-                                                .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
-                                        )
-                                    Image(systemName: "paintbrush.fill")
-                                        .font(.caption)
-                                }
-                                .padding(8)
-                            }
-                            .buttonStyle(.bordered)
-                            .background(Color(.systemBackground).opacity(0.9))
-                            .cornerRadius(8)
-
-                            Button(action: {
-                                withAnimation {
-                                    isEditingRoom.toggle()
-                                    if isEditingRoom {
-                                        isEditing = false
-                                        selectedFurnitureNode = nil
-                                    }
-                                }
-                            }) {
-                                Image(systemName: isEditingRoom ? "house.fill" : "house")
-                                    .font(.body)
-                                    .padding(8)
-                            }
-                            .buttonStyle(.bordered)
-                            .background(isEditingRoom ? Color.orange.opacity(0.2) : Color(.systemBackground).opacity(0.9))
-                            .cornerRadius(8)
-                            
-                            Button(action: {
-                                withAnimation {
-                                    isFirstPersonMode.toggle()
-                                }
-                            }) {
-                                Image(systemName: isFirstPersonMode ? "camera.fill" : "person.fill")
-                                    .font(.body)
-                                    .padding(8)
-                            }
-                            .buttonStyle(.bordered)
-                            .background(isFirstPersonMode ? Color.blue.opacity(0.2) : Color(.systemBackground).opacity(0.9))
-                            .cornerRadius(8)
-                            
-                            Button(action: {
-                                withAnimation {
-                                    showHints.toggle()
-                                }
-                            }) {
-                                Image(systemName: showHints ? "eye.fill" : "eye.slash.fill")
-                                    .font(.body)
-                                    .padding(8)
-                            }
-                            .buttonStyle(.bordered)
-                            .background(Color(.systemBackground).opacity(0.9))
-                            .cornerRadius(8)
-                            .lineLimit(1)
-                            .fixedSize()
-                        }
-                    }
-                }
-                .padding()
-                
-                Spacer()
-                
-                // Room Size Editor
-                if isEditingRoom {
-                    VStack(spacing: 16) {
-                        Text("Edit Room Size")
-                            .font(.headline)
-                        
-                        // Width control
-                        HStack {
-                            Text("Width:")
-                                .frame(width: 60, alignment: .leading)
-                            Slider(value: $roomConfig.width, in: EditableRoom.minSize...EditableRoom.maxSize, step: 0.1)
-                                .onChange(of: roomConfig.width) { oldValue, newValue in
-                                    roomConfig.width = max(EditableRoom.minSize, min(EditableRoom.maxSize, (newValue * 10).rounded() / 10))
-                                }
-                            TextField("", value: $roomConfig.width, format: .number.precision(.fractionLength(1)))
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 60)
-                                .multilineTextAlignment(.center)
-                            Text("m").foregroundColor(.secondary)
-                        }
-
-                        // Length control
-                        HStack {
-                            Text("Length:")
-                                .frame(width: 60, alignment: .leading)
-                            Slider(value: $roomConfig.length, in: EditableRoom.minSize...EditableRoom.maxSize, step: 0.1)
-                                .onChange(of: roomConfig.length) { oldValue, newValue in
-                                    roomConfig.length = max(EditableRoom.minSize, min(EditableRoom.maxSize, (newValue * 10).rounded() / 10))
-                                }
-                            TextField("", value: $roomConfig.length, format: .number.precision(.fractionLength(1)))
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 60)
-                                .multilineTextAlignment(.center)
-                            Text("m").foregroundColor(.secondary)
-                        }
-
-                        // Height control
-                        HStack {
-                            Text("Height:")
-                                .frame(width: 60, alignment: .leading)
-                            Slider(value: $roomConfig.height, in: 2.0...5.0, step: 0.1)
-                                .onChange(of: roomConfig.height) { oldValue, newValue in
-                                    roomConfig.height = max(2.0, min(5.0, (newValue * 10).rounded() / 10))
-                                }
-                            TextField("", value: $roomConfig.height, format: .number.precision(.fractionLength(1)))
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 60)
-                                .multilineTextAlignment(.center)
-                            Text("m").foregroundColor(.secondary)
-                        }
-             
-                        Button("Reset to Default") {
-                            withAnimation {
-                                roomConfig = EditableRoom.default
-                            }
-                        }
-                        .buttonStyle(.bordered)
-                    }
-                    .padding()
-                    .background(Color(.systemBackground).opacity(0.95))
-                    .cornerRadius(12)
-                    .shadow(radius: 5)
-                    .padding(.horizontal)
-                }
-                
-                // Edit Mode Selector
-                if isEditing && selectedFurnitureNode != nil && !isEditingRoom {
-                    HStack(spacing: 12) {
-                        EditModeButton(
-                            mode: .move,
-                            currentMode: editMode,
-                            icon: "arrow.up.and.down.and.arrow.left.and.right",
-                            label: "Move"
-                        ) {
-                            editMode = .move
-                        }
-                        
-                        EditModeButton(
-                            mode: .rotate,
-                            currentMode: editMode,
-                            icon: "arrow.clockwise",
-                            label: "Rotate"
-                        ) {
-                            editMode = .rotate
-                        }
-                        
-                        EditModeButton(
-                            mode: .scale,
-                            currentMode: editMode,
-                            icon: "arrow.up.left.and.arrow.down.right",
-                            label: "Scale"
-                        ) {
-                            editMode = .scale
-                        }
-                    }
-                    .padding()
-                    .background(Color(.systemBackground).opacity(0.9))
-                    .cornerRadius(12)
-                    .shadow(radius: 5)
-                    .padding(.horizontal)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                
-                // Hints - Now toggleable
-                if showHints {
-                    if isEditingRoom {
-                        HintView(
-                            title: "Room Editor",
-                            icon: "house.fill",
-                            hints: [
-                                "Adjust sliders to resize room",
-                                "Furniture stays in place",
-                                "Tap house icon to exit"
-                            ],
-                            color: .orange
-                        )
-                    } else if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
-                        HintView(
-                            title: "Camera Controls",
-                            hints: [
-                                "Drag: Rotate camera",
-                                "Two fingers: Pan",
-                                "Pinch: Zoom"
-                            ]
-                        )
-                    } else if isFirstPersonMode && !isEditing {
-                        HintView(
-                            title: "First Person View",
-                            icon: "person.fill.viewfinder",
-                            hints: [
-                                "Drag: Look around",
-                                "Walls turn transparent"
-                            ],
-                            color: .blue
-                        )
-                    } else if !isEditing && selectedFurnitureNode != nil {
-                        HintView(
-                            title: "Furniture Selected",
-                            hints: ["Tap 'Edit' to modify"],
-                            color: .blue
-                        )
-                    } else if isEditing && selectedFurnitureNode != nil {
-                        HintView(
-                            title: editMode == .move ? "Move Mode" : (editMode == .rotate ? "Rotate Mode" : "Scale Mode"),
-                            hints: editMode == .move ? [
-                                "Drag to move furniture",
-                                "Collision detection active"
-                            ] : editMode == .rotate ? [
-                                "Drag left/right to rotate",
-                                "Smooth 360° rotation"
-                            ] : [
-                                "Drag up/down to scale",
-                                "Maintains proportions"
-                            ],
-                            color: .green
-                        )
-                    }
-                }
-                
-                // Bottom Controls
-                HStack(spacing: 16) {
-                    if !isEditingRoom {
-                        Button(action: {
-                            if layoutManager.currentLayout == nil {
-                                showingNewLayoutDialog = true
-                            } else {
-                                showingCatalogSheet = true
-                            }
-                        }) {
-                            Label("Add Furniture", systemImage: "plus.circle.fill")
-                                .font(.headline)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.large)
-                        
-                        if selectedFurnitureNode != nil {
-                            Button(action: {
-                                withAnimation {
-                                    isEditing.toggle()
-                                    if !isEditing {
-                                        editMode = .move
-                                    }
-                                }
-                            }) {
-                                Label(isEditing ? "Done" : "Edit", systemImage: isEditing ? "checkmark.circle" : "pencil.circle")
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.large)
-                            
-                            Button(action: {
-                                if let node = selectedFurnitureNode {
-                                    layoutManager.removeFurniture(furnitureItem: node.furnitureItem)
-                                    selectedFurnitureNode = nil
-                                }
-                            }) {
-                                Label("Delete", systemImage: "trash")
-                            }
-                            .buttonStyle(.bordered)
-                            .tint(.red)
-                            .controlSize(.large)
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemBackground).opacity(0.9))
-            }
-            
-            // Success Message
-            if showSuccessMessage {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Layout saved successfully!")
-                            .fontWeight(.semibold)
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(radius: 10)
-                    .padding(.bottom, 100)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+            sceneView
+            overlayContent
+            successMessageView
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $showingNewLayoutDialog) {
-            NewLayoutDialog(
-                layoutName: $newLayoutName,
-                isPresented: $showingNewLayoutDialog,
-                onCreate: { name, wallColor in
-                    layoutManager.createNewLayout(name: name, wallColor: wallColor)
-                    newLayoutName = ""
-                    showingCatalogSheet = true
-                }
-            )
+            newLayoutSheet
         }
         .sheet(isPresented: $showingCatalogSheet) {
-            CatalogPickerView(
-                catalogItems: layoutManager.catalogItems,
-                onSelectItem: { item in
-                    layoutManager.addFurniture(catalogItem: item, at: SCNVector3(0, 0, 0))
-                    showingCatalogSheet = false
-                },
-                onDismiss: {
-                    showingCatalogSheet = false
-                }
-            )
+            catalogSheet
         }
         .sheet(isPresented: $showingWallColorPicker) {
-            WallColorPickerSheet(
-                selectedColor: Binding(
-                    get: { Color(layoutManager.wallColor) },
-                    set: { layoutManager.wallColor = UIColor($0) }
-                )
+            wallColorSheet
+        }
+        .sheet(isPresented: $showingShareSheet) {
+            if let url = shareURL {
+                ShareSheet(items: [url])
+            }
+        }
+    }
+    
+    // MARK: - Extracted Subviews
+    
+    private var sceneView: some View {
+        RoomSceneView(
+            furnitureNodes: layoutManager.furnitureNodes,
+            selectedNode: $selectedFurnitureNode,
+            isEditing: $isEditing,
+            editMode: $editMode,
+            isFirstPersonMode: $isFirstPersonMode,
+            isEditingRoom: $isEditingRoom,
+            roomConfig: $roomConfig,
+            wallColor: layoutManager.wallColor,
+            sceneViewRef: $sceneViewRef,
+            isViewOnly: isViewOnly,
+            onFurnitureMoved: { furnitureItem, position in
+                if !isViewOnly {
+                    layoutManager.updateFurniturePosition(furnitureItem, position: position)
+                }
+            },
+            onFurnitureRotated: { furnitureItem, rotation in
+                if !isViewOnly {
+                    layoutManager.updateFurnitureRotation(furnitureItem, rotation: rotation)
+                }
+            },
+            onFurnitureScaled: { furnitureItem, scale in
+                if !isViewOnly {
+                    layoutManager.updateFurnitureScale(furnitureItem, scale: scale)
+                }
+            }
+        )
+        .ignoresSafeArea()
+    }
+    
+    private var overlayContent: some View {
+        VStack {
+            topControls
+            Spacer()
+            
+            // View-only banner
+            if isViewOnly {
+                viewOnlyBanner
+            }
+            
+            roomSizeEditor
+            editModeSelector
+            hintsView
+            bottomControls
+        }
+    }
+    
+    private var viewOnlyBanner: some View {
+        HStack {
+            Image(systemName: "eye.fill")
+            Text("View Only - Tap 'Save to My Layouts' to edit")
+                .font(.subheadline)
+        }
+        .padding()
+        .background(Color.blue.opacity(0.9))
+        .foregroundColor(.white)
+        .cornerRadius(12)
+        .padding(.horizontal)
+    }
+    
+    private var topControls: some View {
+        HStack {
+            backButton
+            Spacer()
+            rightControls
+        }
+        .padding()
+    }
+    
+    private var backButton: some View {
+        Button(action: { dismiss() }) {
+            HStack {
+                Image(systemName: "chevron.left")
+                Text("Back")
+            }
+        }
+        .buttonStyle(.bordered)
+        .fixedSize()
+    }
+    
+    private var rightControls: some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            if !isViewOnly {
+                if layoutManager.currentLayout != nil {
+                    saveButton
+                    shareButton
+                }
+                toolButtons
+            } else {
+                // View-only mode: only show camera controls
+                firstPersonButton
+                hintsToggleButton
+            }
+        }
+    }
+    
+    private var saveButton: some View {
+        Button("Save") {
+            saveLayout()
+        }
+        .buttonStyle(.borderedProminent)
+    }
+    
+    private var shareButton: some View {
+        Button(action: {
+            shareLayout()
+        }) {
+            HStack(spacing: 4) {
+                Image(systemName: "square.and.arrow.up")
+                    .font(.caption)
+            }
+            .padding(8)
+        }
+        .buttonStyle(.bordered)
+        .background(Color(.systemBackground).opacity(0.9))
+        .cornerRadius(8)
+    }
+    
+    private var toolButtons: some View {
+        VStack(spacing: 8) {
+            wallColorButton
+            roomEditButton
+            firstPersonButton
+            hintsToggleButton
+        }
+    }
+    
+    private var wallColorButton: some View {
+        Button(action: {
+            showingWallColorPicker = true
+        }) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(Color(layoutManager.wallColor))
+                    .frame(width: 16, height: 16)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
+                    )
+                Image(systemName: "paintbrush.fill")
+                    .font(.caption)
+            }
+            .padding(8)
+        }
+        .buttonStyle(.bordered)
+        .background(Color(.systemBackground).opacity(0.9))
+        .cornerRadius(8)
+    }
+    
+    private var roomEditButton: some View {
+        Button(action: {
+            withAnimation {
+                isEditingRoom.toggle()
+                if isEditingRoom {
+                    isEditing = false
+                    selectedFurnitureNode = nil
+                }
+            }
+        }) {
+            Image(systemName: isEditingRoom ? "house.fill" : "house")
+                .font(.body)
+                .padding(8)
+        }
+        .buttonStyle(.bordered)
+        .background(isEditingRoom ? Color.orange.opacity(0.2) : Color(.systemBackground).opacity(0.9))
+        .cornerRadius(8)
+    }
+    
+    private var firstPersonButton: some View {
+        Button(action: {
+            withAnimation {
+                isFirstPersonMode.toggle()
+            }
+        }) {
+            Image(systemName: isFirstPersonMode ? "camera.fill" : "person.fill")
+                .font(.body)
+                .padding(8)
+        }
+        .buttonStyle(.bordered)
+        .background(isFirstPersonMode ? Color.blue.opacity(0.2) : Color(.systemBackground).opacity(0.9))
+        .cornerRadius(8)
+    }
+    
+    private var hintsToggleButton: some View {
+        Button(action: {
+            withAnimation {
+                showHints.toggle()
+            }
+        }) {
+            Image(systemName: showHints ? "eye.fill" : "eye.slash.fill")
+                .font(.body)
+                .padding(8)
+        }
+        .buttonStyle(.bordered)
+        .background(Color(.systemBackground).opacity(0.9))
+        .cornerRadius(8)
+        .lineLimit(1)
+        .fixedSize()
+    }
+    
+    @ViewBuilder
+    private var roomSizeEditor: some View {
+        if isEditingRoom && !isViewOnly {
+            VStack(spacing: 16) {
+                Text("Edit Room Size")
+                    .font(.headline)
+                
+                roomSizeControl(label: "Width:", value: $roomConfig.width, range: EditableRoom.minSize...EditableRoom.maxSize)
+                roomSizeControl(label: "Length:", value: $roomConfig.length, range: EditableRoom.minSize...EditableRoom.maxSize)
+                roomSizeControl(label: "Height:", value: $roomConfig.height, range: 2.0...5.0)
+     
+                Button("Reset to Default") {
+                    withAnimation {
+                        roomConfig = EditableRoom.default
+                    }
+                }
+                .buttonStyle(.bordered)
+            }
+            .padding()
+            .background(Color(.systemBackground).opacity(0.95))
+            .cornerRadius(12)
+            .shadow(radius: 5)
+            .padding(.horizontal)
+        }
+    }
+    
+    private func roomSizeControl(label: String, value: Binding<Float>, range: ClosedRange<Float>) -> some View {
+        HStack {
+            Text(label)
+                .frame(width: 60, alignment: .leading)
+            Slider(value: value, in: range, step: 0.1)
+                .onChange(of: value.wrappedValue) { oldValue, newValue in
+                    value.wrappedValue = max(range.lowerBound, min(range.upperBound, (newValue * 10).rounded() / 10))
+                }
+            TextField("", value: value, format: .number.precision(.fractionLength(1)))
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 60)
+                .multilineTextAlignment(.center)
+            Text("m").foregroundColor(.secondary)
+        }
+    }
+    
+    @ViewBuilder
+    private var editModeSelector: some View {
+        if isEditing && selectedFurnitureNode != nil && !isEditingRoom && !isViewOnly {
+            HStack(spacing: 12) {
+                EditModeButton(mode: .move, currentMode: editMode, icon: "arrow.up.and.down.and.arrow.left.and.right", label: "Move") {
+                    editMode = .move
+                }
+                EditModeButton(mode: .rotate, currentMode: editMode, icon: "arrow.clockwise", label: "Rotate") {
+                    editMode = .rotate
+                }
+                EditModeButton(mode: .scale, currentMode: editMode, icon: "arrow.up.left.and.arrow.down.right", label: "Scale") {
+                    editMode = .scale
+                }
+            }
+            .padding()
+            .background(Color(.systemBackground).opacity(0.9))
+            .cornerRadius(12)
+            .shadow(radius: 5)
+            .padding(.horizontal)
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+    
+    @ViewBuilder
+    private var hintsView: some View {
+        if showHints {
+            Group {
+                if isViewOnly {
+                    HintView(title: "View Only Mode", icon: "eye.fill", hints: ["Explore the room freely", "Tap 'Save to My Layouts' to edit"], color: .blue)
+                } else if isEditingRoom {
+                    HintView(title: "Room Editor", icon: "house.fill", hints: ["Adjust sliders to resize room", "Furniture stays in place", "Tap house icon to exit"], color: .orange)
+                } else if !isEditing && !showingCatalogSheet && selectedFurnitureNode == nil && !isFirstPersonMode {
+                    HintView(title: "Camera Controls", hints: ["Drag: Rotate camera", "Two fingers: Pan", "Pinch: Zoom"])
+                } else if isFirstPersonMode && !isEditing {
+                    HintView(title: "First Person View", icon: "person.fill.viewfinder", hints: ["Drag: Look around", "Walls turn transparent"], color: .blue)
+                } else if !isEditing && selectedFurnitureNode != nil {
+                    HintView(title: "Furniture Selected", hints: ["Tap 'Edit' to modify"], color: .blue)
+                } else if isEditing && selectedFurnitureNode != nil {
+                    currentEditModeHint
+                }
+            }
+        }
+    }
+    
+    private var currentEditModeHint: some View {
+        let (title, hints) = editModeHintContent
+        return HintView(title: title, hints: hints, color: .green)
+    }
+    
+    private var editModeHintContent: (String, [String]) {
+        switch editMode {
+        case .move:
+            return ("Move Mode", ["Drag to move furniture", "Collision detection active"])
+        case .rotate:
+            return ("Rotate Mode", ["Drag left/right to rotate", "Smooth 360° rotation"])
+        case .scale:
+            return ("Scale Mode", ["Drag up/down to scale", "Maintains proportions"])
+        }
+    }
+    
+    private var bottomControls: some View {
+        HStack(spacing: 16) {
+            if isViewOnly {
+                // View-only mode: Show duplicate button
+                duplicateButtonForViewOnly
+            } else if !isEditingRoom {
+                // Normal mode: Show add/edit/delete
+                addFurnitureButton
+                if selectedFurnitureNode != nil {
+                    editButton
+                    deleteButton
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground).opacity(0.9))
+    }
+    
+    private var duplicateButtonForViewOnly: some View {
+        Button(action: {
+            duplicateSharedLayout()
+        }) {
+            Label("Save to My Layouts", systemImage: "square.and.arrow.down")
+                .font(.headline)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+    }
+    
+    private var addFurnitureButton: some View {
+        Button(action: {
+            if layoutManager.currentLayout == nil {
+                showingNewLayoutDialog = true
+            } else {
+                showingCatalogSheet = true
+            }
+        }) {
+            Label("Add Furniture", systemImage: "plus.circle.fill")
+                .font(.headline)
+        }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
+    }
+    
+    private var editButton: some View {
+        Button(action: {
+            withAnimation {
+                isEditing.toggle()
+                if !isEditing {
+                    editMode = .move
+                }
+            }
+        }) {
+            Label(isEditing ? "Done" : "Edit", systemImage: isEditing ? "checkmark.circle" : "pencil.circle")
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.large)
+    }
+    
+    private var deleteButton: some View {
+        Button(action: {
+            if let node = selectedFurnitureNode {
+                layoutManager.removeFurniture(furnitureItem: node.furnitureItem)
+                selectedFurnitureNode = nil
+            }
+        }) {
+            Label("Delete", systemImage: "trash")
+        }
+        .buttonStyle(.bordered)
+        .tint(.red)
+        .controlSize(.large)
+    }
+    
+    @ViewBuilder
+    private var successMessageView: some View {
+        if let type = successType {
+            VStack {
+                Spacer()
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text(type.message)
+                        .fontWeight(.semibold)
+                }
+                .padding()
+                .background(Color(.systemBackground))
+                .cornerRadius(12)
+                .shadow(radius: 10)
+                .padding(.bottom, 100)
+            }
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+    
+    private var newLayoutSheet: some View {
+        NewLayoutDialog(
+            layoutName: $newLayoutName,
+            isPresented: $showingNewLayoutDialog,
+            onCreate: { name, wallColor in
+                layoutManager.createNewLayout(name: name, wallColor: wallColor)
+                newLayoutName = ""
+                showingCatalogSheet = true
+            }
+        )
+    }
+    
+    private var catalogSheet: some View {
+        CatalogPickerView(
+            catalogItems: layoutManager.catalogItems,
+            onSelectItem: { item in
+                layoutManager.addFurniture(catalogItem: item, at: SCNVector3(0, 0, 0))
+                showingCatalogSheet = false
+            },
+            onDismiss: {
+                showingCatalogSheet = false
+            }
+        )
+    }
+    
+    private var wallColorSheet: some View {
+        WallColorPickerSheet(
+            selectedColor: Binding(
+                get: { Color(layoutManager.wallColor) },
+                set: { layoutManager.wallColor = UIColor($0) }
             )
+        )
+    }
+    
+    private func shareLayout() {
+        Task {
+            do {
+                guard let layout = layoutManager.currentLayout,
+                    let layoutId = layout.id else {
+                    print("No layout to share")
+                    return
+                }
+                
+                let shareId = try await layoutManager.createShareLink(layoutId: layoutId)
+                let url = URL(string: "https://homi.app/view/\(shareId)")!
+                
+                await MainActor.run {
+                    // Copy to clipboard
+                    UIPasteboard.general.string = url.absoluteString
+                    
+                    withAnimation {
+                        successType = .shareCreated
+                    }
+                }
+                
+                // Hide success message after 2 seconds
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                await MainActor.run {
+                    withAnimation {
+                        successType = nil
+                    }
+                }
+                
+                // Then show share sheet
+                await MainActor.run {
+                    self.shareURL = url
+                    self.showingShareSheet = true
+                }
+            } catch {
+                print("Failed to create share link: \(error)")
+            }
+        }
+    }
+    
+    private func duplicateSharedLayout() {
+        Task {
+            do {
+                let _ = try await layoutManager.duplicateLayout()
+                await MainActor.run {
+                    withAnimation {
+                        successType = .duplicated
+                    }
+                }
+                
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                await MainActor.run {
+                    withAnimation {
+                        successType = nil
+                    }
+                    // Optionally dismiss back to home
+                    dismiss()
+                }
+            } catch {
+                print("❌ Failed to duplicate layout:", error)
+            }
         }
     }
     
@@ -424,14 +585,14 @@ struct RoomView: View {
                 try await layoutManager.saveCurrentLayout()
                 await MainActor.run {
                     withAnimation {
-                        showSuccessMessage = true
+                        successType = .saved
                     }
                 }
                 
                 try? await Task.sleep(nanoseconds: 2_000_000_000)
                 await MainActor.run {
                     withAnimation {
-                        showSuccessMessage = false
+                        successType = nil
                     }
                 }
             } catch {
@@ -439,6 +600,21 @@ struct RoomView: View {
             }
         }
     }
+}
+
+// MARK: - Share Sheet Helper
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        let controller = UIActivityViewController(
+            activityItems: items,
+            applicationActivities: nil
+        )
+        return controller
+    }
+    
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Enhanced Catalog Picker
@@ -666,6 +842,7 @@ struct RoomSceneView: UIViewRepresentable {
     @Binding var roomConfig: EditableRoom
     let wallColor: UIColor
     @Binding var sceneViewRef: SCNView?
+    let isViewOnly: Bool
     let onFurnitureMoved: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureRotated: (FurnitureItem, SCNVector3) -> Void
     let onFurnitureScaled: (FurnitureItem, SCNVector3) -> Void
@@ -726,6 +903,7 @@ struct RoomSceneView: UIViewRepresentable {
         var isEditing: Bool = false
         var editMode: RoomView.EditMode = .move
         var isFirstPersonMode: Bool = false
+        private let dimensionLabelName = "dimensionLabel"
         
         var floorNode: SCNNode?
         var frontWallNode: SCNNode?
@@ -738,7 +916,6 @@ struct RoomSceneView: UIViewRepresentable {
         private var cameraAngleY: Float = 30.0
         private var firstPersonAngleX: Float = 0.0
         private var firstPersonAngleY: Float = 0.0
-        private let dimensionLabelName = "dimensionLabel"
         
         init(_ parent: RoomSceneView) {
             self.parent = parent
@@ -1108,6 +1285,12 @@ struct RoomSceneView: UIViewRepresentable {
             
             // CASE 1: Editing Furniture (Move / Rotate / Scale)
             if isEditing && parent.selectedNode != nil {
+                if parent.isViewOnly {
+                    // In view-only mode, editing gestures do nothing
+                    gesture.setTranslation(.zero, in: gesture.view)
+                    return
+                }
+
                 guard let selected = parent.selectedNode,
                     let scene = sceneView?.scene else { return }
 
@@ -1282,6 +1465,11 @@ struct RoomSceneView: UIViewRepresentable {
         
         @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
             if isEditing && parent.selectedNode != nil && editMode == .scale {
+                if parent.isViewOnly {
+                    gesture.scale = 1.0
+                    return
+                }
+                
                 guard let selected = parent.selectedNode else { return }
                 let scale = Float(gesture.scale)
                 let newScale = SCNVector3(
