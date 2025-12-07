@@ -69,77 +69,78 @@ class APIService {
         return try decodeResponse([CatalogItem].self, from: data)
     }
     
-    // MARK: - Authentication API Methods
-    
-    /// Logs in the user and returns access/refresh tokens.
-    func login(email: String, password: String) async throws -> AuthResponse {
-        let payload = AuthCredentials(email: email, password: password)
-        let body = try encodeBody(payload)
-        let request = try makeRequest(path: "/auth/login", method: "POST", body: body)
-        let data = try await send(request)
-        return try decodeResponse(AuthResponse.self, from: data)
-    }
-    
-    /// Registers a new user.
-    func register(email: String, password: String, firstName: String?, lastName: String?) async throws -> AuthResponse {
-        let payload = RegisterPayload(email: email, password: password, firstName: firstName, lastName: lastName)
-        let body = try encodeBody(payload)
-        let request = try makeRequest(path: "/auth/register", method: "POST", body: body)
-        let data = try await send(request, expectedStatus: 201)
-        return try decodeResponse(AuthResponse.self, from: data)
-    }
-    
-    /// Returns the authenticated user's profile info.
-    func getCurrentUser() async throws -> User {
-        let request = try makeRequest(path: "/auth/me", requiresAuth: true)
-        let data = try await send(request)
-        let response = try decodeResponse(UserEnvelope.self, from: data)
-        return response.user
-    }
-    
-    /// Requests a password reset link for the given email.
-    func forgotPassword(email: String) async throws -> String {
-        let body = try encodeBody(["email": email])
-        let request = try makeRequest(path: "/auth/forgot-password", method: "POST", body: body)
-        let data = try await send(request)
-        // Decode the internal message struct and return just the message string
-        let response = try decodeResponse(APIMessageResponse.self, from: data)
-        return response.message
-    }
-    
-    /// Exchanges an expired access token for a new one.
-    func refreshToken(refreshToken: String) async throws -> AuthResponse {
-        let body = try encodeBody(RefreshTokenPayload(refreshToken: refreshToken))
-        let request = try makeRequest(path: "/auth/refresh", method: "POST", body: body)
-        let data = try await send(request)
-        return try decodeResponse(AuthResponse.self, from: data)
-    }
-    
-    /// Invalidates the refresh token on the server.
-    func logout(refreshToken: String) async throws {
-        let body = try encodeBody(RefreshTokenPayload(refreshToken: refreshToken))
-        let request = try makeRequest(path: "/auth/logout", method: "POST", body: body, requiresAuth: true)
-        _ = try await send(request)
-    }
-    
     // MARK: - Sharing API Methods
-
-    func createShareLink(layoutId: String) async throws -> ShareLinkResponse {
-        let body = try encodeBody(["layoutId": layoutId])
-        let request = try makeRequest(path: "/share", method: "POST", body: body, requiresAuth: true)
-        let data = try await send(request, expectedStatus: 201)
-        return try decodeResponse(ShareLinkResponse.self, from: data)
-    }
-
-    func fetchSharedLayout(shareId: String) async throws -> Layout {
-        let request = try makeRequest(path: "/share/\(shareId)", requiresAuth: false)
-        let data = try await send(request)
-        return try decodeResponse(Layout.self, from: data)
-    }
 
     struct ShareLinkResponse: Codable {
         let shareId: String
         let shareUrl: String
+        let createdAt: Date?
+        let expiresAt: Date?
+    }
+
+    func createShareLink(layoutId: String) async throws -> ShareLinkResponse {
+        print("🔗 Creating share link for layout: \(layoutId)")
+        print("🌐 API Base URL: \(baseURL)")
+        
+        let body = try encodeBody(["layoutId": layoutId])
+        let request = try makeRequest(path: "/share", method: "POST", body: body, requiresAuth: true)
+        
+        print("📤 Full Request URL: \(request.url?.absoluteString ?? "nil")")
+        
+        do {
+            let data = try await send(request, expectedStatus: 201)
+            print("✅ Share link created successfully")
+            return try decodeResponse(ShareLinkResponse.self, from: data)
+        } catch {
+            print("❌ Share link error: \(error)")
+            throw error
+        }
+    }
+
+    func fetchSharedLayout(shareId: String) async throws -> Layout {
+        print("🔗 Fetching shared layout: \(shareId)")
+        print("🌐 API Base URL: \(baseURL)")
+        
+        let request = try makeRequest(path: "/share/\(shareId)", requiresAuth: false)
+        
+        print("📤 Full Request URL: \(request.url?.absoluteString ?? "nil")")
+        
+        do {
+            let data = try await send(request)
+            print("✅ Shared layout fetched successfully")
+            
+            // Decode and log the response
+            let layout = try decodeResponse(Layout.self, from: data)
+            print("   Layout ID: \(layout.id ?? "nil")")
+            print("   Layout Name: \(layout.name)")
+            print("   User ID: \(layout.userId)")
+            print("   Furniture Items: \(layout.furnitureItems.count)")
+            
+            return layout
+        } catch {
+            print("❌ Fetch shared layout error: \(error)")
+            throw error
+        }
+    }
+
+    func deleteShareLink(shareId: String) async throws {
+        let request = try makeRequest(path: "/share/\(shareId)", method: "DELETE", requiresAuth: true)
+        _ = try await send(request)
+    }
+
+    func fetchUserShareLinks() async throws -> [ShareLinkInfo] {
+        let request = try makeRequest(path: "/share", requiresAuth: true)
+        let data = try await send(request)
+        return try decodeResponse([ShareLinkInfo].self, from: data)
+    }
+
+    struct ShareLinkInfo: Codable {
+        let shareId: String
+        let shareUrl: String
+        let layoutName: String
+        let createdAt: Date
+        let expiresAt: Date?
+        let viewCount: Int
     }
 
     // MARK: - Request Construction
