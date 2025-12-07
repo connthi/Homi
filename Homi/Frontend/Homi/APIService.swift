@@ -112,6 +112,26 @@ class APIService {
         _ = try await send(request)
     }
     
+    // MARK: - Sharing API Methods
+
+    func createShareLink(layoutId: String) async throws -> ShareLinkResponse {
+        let body = try encodeBody(["layoutId": layoutId])
+        let request = try makeRequest(path: "/share", method: "POST", body: body, requiresAuth: true)
+        let data = try await send(request, expectedStatus: 201)
+        return try decodeResponse(ShareLinkResponse.self, from: data)
+    }
+
+    func fetchSharedLayout(shareId: String) async throws -> Layout {
+        let request = try makeRequest(path: "/share/\(shareId)", requiresAuth: false)
+        let data = try await send(request)
+        return try decodeResponse(Layout.self, from: data)
+    }
+
+    struct ShareLinkResponse: Codable {
+        let shareId: String
+        let shareUrl: String
+    }
+
     // MARK: - Request Construction
     
     /// Builds a properly formatted URLRequest with optional body and authorization header.
