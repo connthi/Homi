@@ -1,4 +1,5 @@
 import express from "express";
+import nodemailer from "nodemailer";
 import User from "../models/userModel.js";
 import {
   hashPassword,
@@ -15,6 +16,7 @@ import { ErrorMessages } from "../utils/errorMessages.js";
 const router = express.Router();
 const MAX_REFRESH_TOKENS = Number(process.env.MAX_REFRESH_TOKENS || 5);
 
+// POST /api/auth/register
 router.post("/register", async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body || {};
@@ -51,6 +53,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body || {};
@@ -92,27 +95,47 @@ router.post("/forgot-password", async (req, res) => {
     const normalizedEmail = email.trim().toLowerCase();
     const user = await User.findOne({ email: normalizedEmail });
 
-    // Always return success even if user not found to prevent email enumeration
+    // 1. If user doesn't exist, return success anyway (security best practice)
     if (!user) {
       return res.json({ message: ErrorMessages.SUCCESS.PASSWORD_RESET_LINK_SENT });
     }
 
-    // 1. Generate token and hash
+    // 2. Generate token and hash
     const { token: resetToken, hash: tokenHash } = createPasswordResetToken();
 
-    // 2. Set token hash and expiration (1 hour)
+    // 3. Save hash to database
     user.passwordResetToken = tokenHash;
     user.passwordResetExpires = Date.now() + 3600000; // 1 hour
-
     await user.save();
 
-    // 3. Send Email
-    // TODO: Integrate actual email service here (e.g. Nodemailer)
-    // For development, we log the token to the console so you can test it manually
-    console.log("---------------------------------------------------------");
-    console.log(`PASSWORD RESET FOR: ${user.email}`);
-    console.log(`RESET TOKEN (use this in the next step): ${resetToken}`);
-    console.log("---------------------------------------------------------");
+    // 4. Send Email via Gmail
+    // We define the transporter HERE so it loads the .env variables at request time
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const resetLink = `homi://reset-password?token=${resetToken}`; 
+    
+    const mailOptions = {
+      from: `"Homi Support" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: "Reset your Homi password",
+      html: `
+        <h3>Password Reset Request</h3>
+        <p>You requested to reset your password. Use the token below or click the link if you have the app installed:</p>
+        <p><strong>Token: ${resetToken}</strong></p>
+        <p><a href="${resetLink}">Click here to open the app and reset password</a></p>
+        <p>This link expires in 1 hour.</p>
+        <p>If you did not request this, please ignore this email.</p>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${user.email}`);
 
     return res.json({ message: ErrorMessages.SUCCESS.PASSWORD_RESET_LINK_SENT });
   } catch (error) {
@@ -134,27 +157,10 @@ router.post("/reset-password", async (req, res) => {
       return res.status(400).json({ message: ErrorMessages.AUTH.PASSWORD_TOO_SHORT });
     }
 
-    // 1. Hash the incoming plaintext token to find it in the database
-    // We use the same SHA256 hashing method as used in creation
-    const incomingTokenHash = hashToken(token); // Note: Make sure hashToken uses SHA256 or match the algo in createPasswordResetToken
-
-    // However, `hashToken` in security.js uses sha512.
-    // `createPasswordResetToken` uses sha256. 
-    // To be safe, we should use crypto to hash it manually here to match `createPasswordResetToken` logic, 
-    // OR change createPasswordResetToken to use hashToken.
-    // Let's rely on the import from security.js which we assume matches.
-    
-    // IMPORTANT FIX: In step 3 (security.js), I used sha256 for the reset token.
-    // The existing hashToken function uses sha512. 
-    // To ensure this works, we must hash it exactly how we created it.
-    
-    // NOTE: For this code to work with the security.js provided above, 
-    // we need to perform the hashing manually here or export a verify helper.
-    // Let's use the crypto module directly here to ensure it matches the `createPasswordResetToken` logic.
+    // 1. Hash the incoming token to match what is stored in DB
     const crypto = await import("crypto");
     const hashedToken = crypto.default.createHash("sha256").update(token).digest("hex");
 
-    // 2. Find user by matching token hash AND ensuring the token is not expired
     const user = await User.findOne({
       passwordResetToken: hashedToken,
       passwordResetExpires: { $gt: Date.now() }
@@ -164,15 +170,12 @@ router.post("/reset-password", async (req, res) => {
       return res.status(401).json({ message: ErrorMessages.AUTH.INVALID_OR_EXPIRED_TOKEN });
     }
 
-    // 3. Hash the new password and update user record
+    // 2. Update Password
     user.passwordHash = await hashPassword(newPassword);
-
-    // 4. Clear the token fields
+    
+    // 3. Clear Reset Fields
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-
-    // 5. Optional: Clear refresh tokens to force re-login on all devices
-    // user.refreshTokens = [];
 
     await user.save();
 
@@ -184,6 +187,7 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
+// POST /api/auth/refresh
 router.post("/refresh", async (req, res) => {
   try {
     const { refreshToken } = req.body || {};
@@ -212,6 +216,7 @@ router.post("/refresh", async (req, res) => {
   }
 });
 
+// POST /api/auth/logout
 router.post("/logout", async (req, res) => {
   const { refreshToken } = req.body || {};
 
@@ -234,6 +239,7 @@ router.post("/logout", async (req, res) => {
   return res.json({ message: ErrorMessages.SUCCESS.LOGGED_OUT });
 });
 
+// GET /api/auth/me
 router.get("/me", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -246,6 +252,8 @@ router.get("/me", authenticate, async (req, res) => {
     return res.status(500).json({ message: ErrorMessages.AUTH.UNABLE_TO_FETCH_USER });
   }
 });
+
+// --- HELPER FUNCTIONS ---
 
 async function buildAuthResponse(user) {
   pruneExpiredTokens(user);
