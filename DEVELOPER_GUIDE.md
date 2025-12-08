@@ -58,6 +58,7 @@ From the backend directory:
   - npm install
   - npm test
 This runs all tests located in:
+  - authAPI.test.js
   - catalogAPI.test.js
   - layoutAPI.test.js
   - database.test.js
@@ -147,6 +148,7 @@ iOS Architecture (SwiftUI + SceneKit)
 ├── Homi
 │   ├── Backend # Backend for Homi
 │   │   ├── BackendTests  # Backend tests for Homi
+│   │   │   ├── authAPI.test.js # Tests authentication endpoints including register, login, refresh tokens, logout, and user profile retrieval.
 │   │   │   ├── catalogAPI.test.js # Tests the Catalog API endpoints. It checks that the catalog starts empty, allows creating new items, and that the backend correctly handles GET and POST requests.
 │   │   │   ├── database.test.js # Verifies database model integrity. It ensures Catalog and Layout APIs return valid string _ids, proper date formats, and correctly structured JSON responses.
 │   │   │   └── layoutAPI.test.js # Tests the Layout API endpoints, ensuring layouts can be fetched, created, and returned correctly with valid structure and responses.
@@ -154,14 +156,16 @@ iOS Architecture (SwiftUI + SceneKit)
 │   │   │   └── authMiddelware.js # Middleware that verifies a JWT access token and attaches the authenticated user to the request. 
 │   │   ├── models # Models for Homi
 │   │   │   ├── catalogModel.js # Defines the Mongoose schema for catalog items, including furniture attributes and data transformations for JSON output.
-│   │   │   └── layoutModel.js # Defines the Mongoose schema for room layouts, including furniture positions, rotations, and properties, with JSON transformations for frontend compatibility.
-│   │   │   ├── userMode.js # Mongoose user model defining account fields, hashed passwords, refresh tokens, and safe JSON output.
+│   │   │   ├── layoutModel.js # Defines the Mongoose schema for room layouts, including furniture positions, rotations, and properties, with JSON transformations for frontend compatibility.
+│   │   │   ├── shareModel.js # Defines the Mongoose schema for shareable layout links, including shareId, layoutId, expiration, and view tracking.
+│   │   │   └── userModel.js # Mongoose user model defining account fields, hashed passwords, refresh tokens, password reset tokens, and safe JSON output.
 │   │   ├── routes # Backend routes for Homi
+│   │   │   ├── authRoutes.js # Authentication routes handling register, login, refresh tokens, logout, password reset, and fetching the current user.
 │   │   │   ├── catalogRoutes.js # Express router handling catalog API endpoints for retrieving and adding furniture items in the database.
-│   │   │   └── layoutRoutes.js # Express router managing layout endpoints for creating, retrieving, updating, and deleting room layouts.
-│   │   │   ├── authRoutes.js # Authentication routes handling register, login, refresh tokens, logout, and fetching the current user.
+│   │   │   ├── layoutRoutes.js # Express router managing layout endpoints for creating, retrieving, updating, and deleting room layouts.
+│   │   │   └── shareRoutes.js # Express router handling share link creation, retrieval, deletion, and listing for sharing layouts via deep links.
 │   │   ├── seedRealisticFurniture.js # Seeds the database with predefined 3D furniture items, clearing old catalog entries and inserting new ones for testing and demos.
-│   │   └── server.js # Main backend entry point. Sets up Express, connects to MongoDB, and registers layout and catalog API routes.
+│   │   └── server.js # Main backend entry point. Sets up Express, connects to MongoDB, and registers auth, layout, catalog, and share API routes.
 │   ├── docs # Documents for Homi
 │   │   ├── coding-guidelines # Coding guidelines
 │   │   ├── reports # Weekly reports
