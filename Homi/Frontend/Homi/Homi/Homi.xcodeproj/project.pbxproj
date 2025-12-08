@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9639BB3C2EE65BAA00E1A1D0 /* ResetPasswordView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9639BB3B2EE65BAA00E1A1D0 /* ResetPasswordView.swift */; };
 		96EED0F72EE6304100275DA5 /* LayoutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0EE2EE6304100275DA5 /* LayoutManager.swift */; };
 		96EED0F82EE6304100275DA5 /* CatalogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0EA2EE6304100275DA5 /* CatalogView.swift */; };
 		96EED0F92EE6304100275DA5 /* AuthenticationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96EED0E72EE6304100275DA5 /* AuthenticationView.swift */; };
@@ -45,6 +46,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		9639BB3B2EE65BAA00E1A1D0 /* ResetPasswordView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ResetPasswordView.swift; path = ../ResetPasswordView.swift; sourceTree = SOURCE_ROOT; };
 		96EED0C42EE62DA100275DA5 /* Homi.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Homi.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		96EED0D22EE6304100275DA5 /* 3_seat_couch.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = 3_seat_couch.usdz; sourceTree = "<group>"; };
 		96EED0D32EE6304100275DA5 /* Bed.usdz */ = {isa = PBXFileReference; lastKnownFileType = file; path = Bed.usdz; sourceTree = "<group>"; };
@@ -115,6 +117,7 @@
 				96EED0F42EE6304100275DA5 /* RegisterView.swift */,
 				96EED0F52EE6304100275DA5 /* RoomView.swift */,
 				96EED0F62EE6304100275DA5 /* UIColor+Extensions.swift */,
+				9639BB3B2EE65BAA00E1A1D0 /* ResetPasswordView.swift */,
 				96EED0C52EE62DA100275DA5 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -200,7 +203,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 96EED0BF2EE62DA100275DA5 /* Build configuration list for PBXProject "Homi" */;
+			buildConfigurationList = 96EED0BF2EE62DA100275DA5 /* Build configuration list for PBXProject "homi" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -257,6 +260,7 @@
 				96EED0F72EE6304100275DA5 /* LayoutManager.swift in Sources */,
 				96EED0F82EE6304100275DA5 /* CatalogView.swift in Sources */,
 				96EED0F92EE6304100275DA5 /* AuthenticationView.swift in Sources */,
+				9639BB3C2EE65BAA00E1A1D0 /* ResetPasswordView.swift in Sources */,
 				96EED0FA2EE6304100275DA5 /* Models.swift in Sources */,
 				96EED0FB2EE6304100275DA5 /* AuthService.swift in Sources */,
 				96EED0FC2EE6304100275DA5 /* NewLayoutDialog.swift in Sources */,
@@ -464,7 +468,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		96EED0BF2EE62DA100275DA5 /* Build configuration list for PBXProject "Homi" */ = {
+		96EED0BF2EE62DA100275DA5 /* Build configuration list for PBXProject "homi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				96EED0CD2EE62DA300275DA5 /* Debug */,

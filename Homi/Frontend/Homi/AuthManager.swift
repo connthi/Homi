@@ -63,6 +63,25 @@ class AuthManager: ObservableObject {
         }
     }
     
+    /// Sends a forgot password request to the API.
+    func forgotPassword(email: String) async throws -> String {
+        await MainActor.run { isLoading = true }
+        // Ensure loading is set to false regardless of success/failure
+        defer { Task { await MainActor.run { isLoading = false } } }
+        
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let message = try await apiService.forgotPassword(email: normalizedEmail)
+        return message
+    }
+    
+    /// Completes the password reset process.
+    func resetPassword(token: String, newPassword: String) async throws -> String {
+        await MainActor.run { isLoading = true }
+        defer { Task { await MainActor.run { isLoading = false } } }
+        
+        return try await apiService.resetPassword(token: token, newPassword: newPassword)
+    }
+    
     /// Logs the user out, clears local tokens, and resets all authentication state.
     func logout() async {
         if let refreshToken = authService.getRefreshToken() {
@@ -107,17 +126,6 @@ class AuthManager: ObservableObject {
                 }
             }
         }
-    }
-    
-    /// Sends a forgot password request to the API.
-    func forgotPassword(email: String) async throws -> String {
-        await MainActor.run { isLoading = true }
-        // Ensure loading is set to false regardless of success/failure
-        defer { Task { await MainActor.run { isLoading = false } } }
-        
-        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let message = try await apiService.forgotPassword(email: normalizedEmail)
-        return message
     }
     
     /// Refreshes the access token using the stored refresh token.

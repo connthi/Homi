@@ -13,6 +13,9 @@ struct LoginView: View {
     @State private var showResetConfirmation = false
     @State private var resetConfirmationMessage = ""
     
+    // State for Reset Password View (Token Entry)
+    @State private var showResetTokenView = false
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 26) {
             
@@ -61,14 +64,24 @@ struct LoginView: View {
                 }
             }
             
-            // Forgot Password Button
-            Button("Forgot password?") {
-                // Prefill with the email typed in the login box if available
-                resetEmail = email
-                showForgotPassword = true
+            // Forgot Password / Token Buttons
+            HStack {
+                Button("Forgot password?") {
+                    resetEmail = email
+                    showForgotPassword = true
+                }
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(Color(red: 0.35, green: 0.36, blue: 0.90))
+                
+                Spacer()
+                
+                Button("I have a token") {
+                    showResetTokenView = true
+                }
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(.secondary)
             }
-            .font(.footnote.weight(.semibold))
-            .foregroundColor(Color(red: 0.35, green: 0.36, blue: 0.90))
+            .padding(.horizontal, 4)
             
             // Error Display
             if let error = errorMessage {
@@ -117,19 +130,59 @@ struct LoginView: View {
             .disabled(disabled)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        // Alert 1: Input Email
-        .alert("Reset Password", isPresented: $showForgotPassword) {
-            TextField("Email", text: $resetEmail)
-                .textInputAutocapitalization(.never)
-                .keyboardType(.emailAddress)
-            Button("Send Link") {
-                submitForgotPassword()
+        // Sheet 1: Input Email for Reset
+        .sheet(isPresented: $showForgotPassword) {
+            NavigationView {
+                VStack(spacing: 24) {
+                    Text("Reset Password")
+                        .font(.title2.bold())
+                        .padding(.top)
+                    
+                    Text("Enter your email address to receive a password reset link.")
+                        .font(.body)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                    
+                    TextField("Email", text: $resetEmail)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .padding(.horizontal)
+                    
+                    Button {
+                        submitForgotPassword()
+                        showForgotPassword = false
+                    } label: {
+                        Text("Send Link")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                    }
+                    .padding(.horizontal)
+                    .disabled(resetEmail.isEmpty)
+                    
+                    Spacer()
+                }
+                .padding()
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Cancel") {
+                            showForgotPassword = false
+                        }
+                    }
+                }
             }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Enter your email address to receive a password reset link.")
         }
-        // Alert 2: Success Confirmation
+        // Sheet 2: Enter Token (ResetPasswordView)
+        .sheet(isPresented: $showResetTokenView) {
+            ResetPasswordView()
+        }
+        // Alert: Success Confirmation
         .alert("Check your email", isPresented: $showResetConfirmation) {
             Button("OK", role: .cancel) { }
         } message: {
