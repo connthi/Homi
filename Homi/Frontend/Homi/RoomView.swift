@@ -929,44 +929,41 @@ struct RoomSceneView: UIViewRepresentable {
         
         init(_ parent: RoomSceneView) { self.parent = parent }
         
-        // MARK: - Lighting Setup (Balanced for Contrast)
+        // MARK: - "Clean Look" Lighting Setup
+        // In RoomView.swift -> Coordinator -> setupLighting
+
         func setupLighting(scene: SCNScene) {
             scene.rootNode.childNodes.filter { $0.light != nil }.forEach { $0.removeFromParentNode() }
             
-            // 1. Low Ambient Light (Restores Shadows)
-            // Lowered from 300 to 150. This prevents the "washed out" look.
+            // 1. Ambient Light (Keep this low for contrast)
             let ambientLight = SCNLight()
             ambientLight.type = .ambient
-            ambientLight.color = UIColor(white: 0.7, alpha: 1.0)
-            ambientLight.intensity = 150 
+            ambientLight.color = UIColor(white: 0.8, alpha: 1.0)
+            ambientLight.intensity = 200 // Slightly reduced (was 250)
             let ambientNode = SCNNode()
             ambientNode.light = ambientLight
             scene.rootNode.addChildNode(ambientNode)
             
-            // 2. Central Room Light (Subtle Fill)
-            // Lowered from 500 to 300 so floor texture shows.
+            // 2. Room Fill Light (THE CULPRIT)
+            // This was making the middle too bright. We lower it and move it higher.
             let omniLight = SCNLight()
             omniLight.type = .omni
-            omniLight.intensity = 300
+            omniLight.intensity = 150 // HUGE DROP (was 300) -> Fixes the "bright middle"
             omniLight.color = UIColor(white: 0.95, alpha: 1.0)
             let omniNode = SCNNode()
             omniNode.light = omniLight
-            omniNode.position = SCNVector3(0, 2.5, 0)
+            omniNode.position = SCNVector3(0, 6.0, 0) // Moved up higher (was 3.0)
             scene.rootNode.addChildNode(omniNode)
             
-            // 3. Sunlight (Key Light)
-            // Strong light for definition
+            // 3. Directional Light (The "Good Shadows")
             let dirLight = SCNLight()
             dirLight.type = .directional
-            dirLight.intensity = 900
-            dirLight.castsShadow = true
-            dirLight.shadowMode = .deferred
-            dirLight.shadowSampleCount = 4
-            dirLight.shadowBias = 10
+            dirLight.intensity = 600 // Reduced (was 800) to stop white furninture from glowing
+            dirLight.castsShadow = false 
             
             let dirNode = SCNNode()
             dirNode.light = dirLight
-            dirNode.position = SCNVector3(5, 12, 5)
+            dirNode.position = SCNVector3(5, 10, 10)
             dirNode.look(at: SCNVector3(0, 0, 0))
             scene.rootNode.addChildNode(dirNode)
         }
@@ -980,38 +977,33 @@ struct RoomSceneView: UIViewRepresentable {
             
             let w = CGFloat(config.width); let l = CGFloat(config.length); let h = CGFloat(config.height)
             
-            // FLOOR
+            // FLOOR (Neutral Gray to show shadows well)
             let floorGeo = SCNBox(width: w, height: 0.1, length: l, chamferRadius: 0)
             let floorMat = SCNMaterial()
-            // Darker floor (0.6) improves contrast with furniture
-            floorMat.diffuse.contents = UIColor(white: 0.6, alpha: 1.0) 
+            floorMat.diffuse.contents = UIColor(white: 0.8, alpha: 1.0)
             floorMat.lightingModel = .phong
             floorGeo.materials = [floorMat]
             floorNode = SCNNode(geometry: floorGeo)
             floorNode?.position = SCNVector3(0,0,0); floorNode?.name = "floor"
             scene.rootNode.addChildNode(floorNode!)
             
-            // WALLS
+            // WALLS (Glowing for Visibility)
             let wallMat = SCNMaterial()
             wallMat.diffuse.contents = wallColor
             wallMat.lightingModel = .phong
-            // Low Emission: Just enough so it's not black
             wallMat.emission.contents = wallColor
             wallMat.emission.intensity = 0.05 
             wallMat.isDoubleSided = true
             wallMat.transparencyMode = .aOne
             wallMat.writesToDepthBuffer = true
             
-            // Wall Nodes (Ghost)
+            // Ghost Walls (No shadows cast)
             frontWallNode = createWallNode(w: w, h: h, l: 0.1, pos: SCNVector3(0, h/2, l/2), mat: wallMat, name: "frontWall")
             frontWallNode?.castsShadow = false
-            
             backWallNode = createWallNode(w: w, h: h, l: 0.1, pos: SCNVector3(0, h/2, -l/2), mat: wallMat, name: "backWall")
             backWallNode?.castsShadow = false
-            
             leftWallNode = createWallNode(w: 0.1, h: h, l: l, pos: SCNVector3(-w/2, h/2, 0), mat: wallMat, name: "leftWall")
             leftWallNode?.castsShadow = false
-            
             rightWallNode = createWallNode(w: 0.1, h: h, l: l, pos: SCNVector3(w/2, h/2, 0), mat: wallMat, name: "rightWall")
             rightWallNode?.castsShadow = false
             
@@ -1045,7 +1037,6 @@ struct RoomSceneView: UIViewRepresentable {
             cameraPivot = SCNNode(); cameraPivot?.position = SCNVector3(0, 1.5, 0)
             cameraOrbit = SCNNode(); cameraNode = SCNNode(); cameraNode?.camera = SCNCamera(); cameraNode?.camera?.zFar = 100; cameraNode?.camera?.fieldOfView = 60
             
-            // Camera Flashlight (Fill light)
             let camLight = SCNLight(); camLight.type = .omni; camLight.intensity = 200; camLight.color = UIColor(white: 0.8, alpha: 1.0); camLight.castsShadow = false
             cameraNode?.light = camLight
             
@@ -1076,8 +1067,47 @@ struct RoomSceneView: UIViewRepresentable {
         
         func updateFurnitureNodes(scene: SCNScene, nodes: [FurnitureNode]) {
             let existing = scene.rootNode.childNodes.compactMap { $0 as? FurnitureNode }
-            for node in nodes where !existing.contains(where: { $0.furnitureItem.id == node.furnitureItem.id }) { node.setupGeometryIfNeeded(); scene.rootNode.addChildNode(node) }
-            for old in existing where !nodes.contains(where: { $0.furnitureItem.id == old.furnitureItem.id }) { old.removeFromParentNode() }
+            
+            for node in nodes where !existing.contains(where: { $0.furnitureItem.id == node.furnitureItem.id }) {
+                node.setupGeometryIfNeeded()
+                
+                // --- ADD THIS LINE ---
+                applyMaterialFix(to: node)
+                // ---------------------
+                
+                scene.rootNode.addChildNode(node)
+            }
+            
+            for old in existing where !nodes.contains(where: { $0.furnitureItem.id == old.furnitureItem.id }) {
+                old.removeFromParentNode()
+            }
+        }
+        private func applyMaterialFix(to node: SCNNode) {
+            node.enumerateChildNodes { (child, _) in
+                guard let geometry = child.geometry else { return }
+                
+                for material in geometry.materials {
+                    // 1. Force Physically Based Rendering (Best for realism)
+                    material.lightingModel = .physicallyBased
+                    
+                    // 2. Kill any "Glow" (Emission)
+                    // Some models import with a white emission setting by mistake
+                    material.emission.contents = UIColor.black
+                    
+                    // 3. Reset Ambient
+                    // Ensure the object doesn't have "internal light"
+                    material.ambient.contents = UIColor.black
+                    
+                    // 4. The "Sunglasses" Trick (Multiply)
+                    // This darkens the existing texture/color by 15% without deleting it.
+                    // It turns "Blinding White" into "Realistic White".
+                    material.multiply.contents = UIColor(white: 0.85, alpha: 1.0)
+                    
+                    // 5. Soften Highlights
+                    // High roughness prevents mirror-like reflections on the white paint
+                    material.roughness.contents = 0.6
+                }
+            }
         }
         
         func setupGestures(sceneView: SCNView) {
@@ -1089,7 +1119,7 @@ struct RoomSceneView: UIViewRepresentable {
             sceneView.addGestureRecognizer(tap); sceneView.addGestureRecognizer(pan); sceneView.addGestureRecognizer(twoPan); sceneView.addGestureRecognizer(pinch)
         }
         
-        // MARK: - Highlight Selection (Blue Fix)
+        // MARK: - Highlight Selection (Cyan + Transparent)
         @objc func handleTap(_ g: UITapGestureRecognizer) {
             guard let v = g.view as? SCNView else { return }
             let hit = v.hitTest(g.location(in: v)).first; var node = hit?.node
@@ -1118,9 +1148,8 @@ struct RoomSceneView: UIViewRepresentable {
                     
                     let highlightedMaterials = originalMaterials.map { material -> SCNMaterial in
                         let newMaterial = material.copy() as! SCNMaterial
-                        // FIXED: Nice bright Light Blue (Cyan)
-                        newMaterial.emission.contents = UIColor.systemCyan
-                        newMaterial.emission.intensity = 0.8
+                        newMaterial.emission.contents = UIColor.cyan
+                        newMaterial.emission.intensity = 0.4
                         return newMaterial
                     }
                     geometry.materials = highlightedMaterials
