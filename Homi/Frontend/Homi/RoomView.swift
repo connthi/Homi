@@ -1180,7 +1180,7 @@ struct RoomSceneView: UIViewRepresentable {
             if isEditing, let sel = parent.selectedNode, let scene = sceneView?.scene {
                 let scale: Float = 0.01
                 if editMode == .move {
-                    let newPos = SCNVector3(sel.position.x + Float(t.x)*scale, sel.position.y, sel.position.z - Float(t.y)*scale)
+                    let newPos = SCNVector3(sel.position.x - Float(t.x)*scale, sel.position.y, sel.position.z - Float(t.y)*scale)
                     let clamped = applyCollisionDetection(position: newPos, furniture: sel, scene: scene)
                     sel.position = clamped; if g.state == .ended { parent.onFurnitureMoved(sel.furnitureItem, clamped) }
                 } else if editMode == .rotate {
