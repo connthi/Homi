@@ -96,21 +96,13 @@ class APIService {
         let response = try decodeResponse(UserEnvelope.self, from: data)
         return response.user
     }
-
+    
     /// Requests a password reset link for the given email.
     func forgotPassword(email: String) async throws -> String {
         let body = try encodeBody(["email": email])
         let request = try makeRequest(path: "/auth/forgot-password", method: "POST", body: body)
         let data = try await send(request)
-        let response = try decodeResponse(APIMessageResponse.self, from: data)
-        return response.message
-    }
-    
-    /// Sends the token and new password to the backend to complete the reset.
-    func resetPassword(token: String, newPassword: String) async throws -> String {
-        let body = try encodeBody(["token": token, "newPassword": newPassword])
-        let request = try makeRequest(path: "/auth/reset-password", method: "POST", body: body)
-        let data = try await send(request)
+        // Decode the internal message struct and return just the message string
         let response = try decodeResponse(APIMessageResponse.self, from: data)
         return response.message
     }
@@ -249,7 +241,6 @@ class APIService {
             return info
         }
         
-        // Use localhost for local testing (change this back to Render URL for production)
         return "https://homi-sfhr.onrender.com/api"
     }
     
