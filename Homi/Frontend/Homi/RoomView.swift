@@ -929,25 +929,25 @@ struct RoomSceneView: UIViewRepresentable {
         
         init(_ parent: RoomSceneView) { self.parent = parent }
         
-        // MARK: - Natural Lighting Setup (Dimmed)
+        // MARK: - Lighting Setup (Balanced for Contrast)
         func setupLighting(scene: SCNScene) {
             scene.rootNode.childNodes.filter { $0.light != nil }.forEach { $0.removeFromParentNode() }
             
-            // 1. Soft Ambient Light (The Foundation)
-            // Reduced to 300 so shadows are actually visible (soft gray)
+            // 1. Low Ambient Light (Restores Shadows)
+            // Lowered from 300 to 150. This prevents the "washed out" look.
             let ambientLight = SCNLight()
             ambientLight.type = .ambient
             ambientLight.color = UIColor(white: 0.7, alpha: 1.0)
-            ambientLight.intensity = 300 
+            ambientLight.intensity = 150 
             let ambientNode = SCNNode()
             ambientNode.light = ambientLight
             scene.rootNode.addChildNode(ambientNode)
             
-            // 2. Central Room Light (Fill)
-            // Reduced to 500 to prevent washing out the floor
+            // 2. Central Room Light (Subtle Fill)
+            // Lowered from 500 to 300 so floor texture shows.
             let omniLight = SCNLight()
             omniLight.type = .omni
-            omniLight.intensity = 500
+            omniLight.intensity = 300
             omniLight.color = UIColor(white: 0.95, alpha: 1.0)
             let omniNode = SCNNode()
             omniNode.light = omniLight
@@ -955,7 +955,7 @@ struct RoomSceneView: UIViewRepresentable {
             scene.rootNode.addChildNode(omniNode)
             
             // 3. Sunlight (Key Light)
-            // Main source of brightness and shadows
+            // Strong light for definition
             let dirLight = SCNLight()
             dirLight.type = .directional
             dirLight.intensity = 900
@@ -983,27 +983,26 @@ struct RoomSceneView: UIViewRepresentable {
             // FLOOR
             let floorGeo = SCNBox(width: w, height: 0.1, length: l, chamferRadius: 0)
             let floorMat = SCNMaterial()
-            floorMat.diffuse.contents = UIColor(white: 0.8, alpha: 1.0) // Slightly darker floor for contrast
+            // Darker floor (0.6) improves contrast with furniture
+            floorMat.diffuse.contents = UIColor(white: 0.6, alpha: 1.0) 
             floorMat.lightingModel = .phong
             floorGeo.materials = [floorMat]
             floorNode = SCNNode(geometry: floorGeo)
             floorNode?.position = SCNVector3(0,0,0); floorNode?.name = "floor"
             scene.rootNode.addChildNode(floorNode!)
             
-            // WALL MATERIAL
+            // WALLS
             let wallMat = SCNMaterial()
             wallMat.diffuse.contents = wallColor
             wallMat.lightingModel = .phong
-            
-            // Very Low Emission: Just enough so it's not black, but not "glowing"
+            // Low Emission: Just enough so it's not black
             wallMat.emission.contents = wallColor
             wallMat.emission.intensity = 0.05 
-            
             wallMat.isDoubleSided = true
             wallMat.transparencyMode = .aOne
             wallMat.writesToDepthBuffer = true
             
-            // WALLS (castsShadow = false allows sun to enter)
+            // Wall Nodes (Ghost)
             frontWallNode = createWallNode(w: w, h: h, l: 0.1, pos: SCNVector3(0, h/2, l/2), mat: wallMat, name: "frontWall")
             frontWallNode?.castsShadow = false
             
@@ -1090,11 +1089,52 @@ struct RoomSceneView: UIViewRepresentable {
             sceneView.addGestureRecognizer(tap); sceneView.addGestureRecognizer(pan); sceneView.addGestureRecognizer(twoPan); sceneView.addGestureRecognizer(pinch)
         }
         
+        // MARK: - Highlight Selection (Blue Fix)
         @objc func handleTap(_ g: UITapGestureRecognizer) {
             guard let v = g.view as? SCNView else { return }
             let hit = v.hitTest(g.location(in: v)).first; var node = hit?.node
+            
+            if let previousSelection = parent.selectedNode {
+                removeSelectionHighlight(from: previousSelection)
+                removeDimensionLabel(from: previousSelection)
+            }
+            
             while node != nil && !(node is FurnitureNode) { node = node?.parent }
-            parent.selectedNode = node as? FurnitureNode
+            
+            if let furniture = node as? FurnitureNode {
+                parent.selectedNode = furniture
+                addSelectionHighlight(to: furniture)
+                addDimensionLabel(to: furniture)
+            } else {
+                parent.selectedNode = nil
+            }
+        }
+        
+        private func addSelectionHighlight(to node: FurnitureNode) {
+            node.enumerateChildNodes { (child, _) in
+                if let geometry = child.geometry {
+                    let originalMaterials = geometry.materials
+                    child.setValue(originalMaterials, forKey: "originalMaterials")
+                    
+                    let highlightedMaterials = originalMaterials.map { material -> SCNMaterial in
+                        let newMaterial = material.copy() as! SCNMaterial
+                        // FIXED: Nice bright Light Blue (Cyan)
+                        newMaterial.emission.contents = UIColor.systemCyan
+                        newMaterial.emission.intensity = 0.8
+                        return newMaterial
+                    }
+                    geometry.materials = highlightedMaterials
+                }
+            }
+        }
+        
+        private func removeSelectionHighlight(from node: FurnitureNode) {
+            node.enumerateChildNodes { (child, _) in
+                if let originalMaterials = child.value(forKey: "originalMaterials") as? [SCNMaterial],
+                   let geometry = child.geometry {
+                    geometry.materials = originalMaterials
+                }
+            }
         }
         
         @objc func handlePan(_ g: UIPanGestureRecognizer) {
