@@ -80,6 +80,16 @@ struct RoomView: View {
                 ShareSheet(items: [url])
             }
         }
+        .onAppear {
+            // Check if we entered a "New Project" (no active layout)
+            // and trigger the setup dialog immediately.
+            if !isViewOnly && layoutManager.currentLayout == nil {
+                // A tiny delay ensures the view transition finishes before the sheet pops up
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showingNewLayoutDialog = true
+                }
+            }
+        }
     }
     
     // MARK: - Extracted Subviews
@@ -498,7 +508,6 @@ struct RoomView: View {
             onCreate: { name, wallColor in
                 layoutManager.createNewLayout(name: name, wallColor: wallColor)
                 newLayoutName = ""
-                showingCatalogSheet = true
             }
         )
     }
