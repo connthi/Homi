@@ -146,9 +146,19 @@ struct RoomView: View {
     }
     
     private var topControls: some View {
-        HStack {
-            backButton
+        HStack(alignment: .top) { // <--- FIXED: Align content to the top
+            Button(action: { dismiss() }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "chevron.left")
+                    Text("Back")
+                }
+            }
+            .buttonStyle(.bordered)
+            .fixedSize()
+            .padding(.top, 4) // Optional: Tiny tweak to align perfectly with right buttons
+            
             Spacer()
+            
             rightControls
         }
         .padding()
