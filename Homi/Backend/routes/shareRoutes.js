@@ -100,13 +100,13 @@ router.get("/:shareId", async (req, res) => {
     share.viewCount += 1;
     await share.save();
 
-    // Return the layout with a default userId for shared layouts
+    // Return the layout (without exposing the owner's userId)
     const sanitizedLayout = {
       _id: layout._id.toString(),
-      userId: "shared",
       name: layout.name,
       createdAt: layout.createdAt,
       furnitureItems: layout.furnitureItems,
+      // Do NOT include userId for privacy
     };
 
     res.json(sanitizedLayout);

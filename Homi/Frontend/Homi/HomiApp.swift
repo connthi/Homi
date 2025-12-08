@@ -16,7 +16,6 @@ struct HomiApp: App {
                 .environmentObject(authManager)
                 .environmentObject(layoutManager)
                 .onOpenURL { url in
-                    print("🔗 App received URL: \(url)")
                     handleDeepLink(url: url)
                 }
         }
@@ -38,9 +37,8 @@ struct HomiApp: App {
             }
             .animation(.easeInOut, value: authManager.isAuthenticated)
             .fullScreenCover(isPresented: $showSharedRoom) {
-                if let shareId = sharedLayoutId {
-                    SharedRoomView(shareId: shareId, onDismiss: {
-                        print("🚪 Dismissing shared room view")
+                if sharedLayoutId != nil {
+                    SharedRoomView(shareId: sharedLayoutId!, onDismiss: {
                         sharedLayoutId = nil
                         showSharedRoom = false
                     })
@@ -48,12 +46,8 @@ struct HomiApp: App {
                 }
             }
             .onChange(of: sharedLayoutId) { oldValue, newValue in
-                print("📝 sharedLayoutId changed from \(oldValue ?? "nil") to \(newValue ?? "nil")")
                 if newValue != nil {
-                    print("✅ Setting showSharedRoom = true")
                     showSharedRoom = true
-                } else {
-                    print("❌ sharedLayoutId is nil, not showing room")
                 }
             }
         }
@@ -63,44 +57,36 @@ struct HomiApp: App {
     
     private func handleDeepLink(url: URL) {
         print("🔗 Deep link received: \(url)")
-        print("   Scheme: \(url.scheme ?? "none")")
-        print("   Host: \(url.host ?? "none")")
-        print("   Path: \(url.path)")
-        print("   PathComponents: \(url.pathComponents)")
-
-        var shareId: String?
-
-        if url.scheme == "homi" && url.host == "view" {
-            shareId = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-            print("   Custom scheme detected, shareId from path: \(shareId ?? "none")")
-        }
-        else if url.scheme == "https" {
-            let pathComponents = url.pathComponents
+        
+        // Handle URLs like:
+        // homi://view/ABC123
+        // https://homi.app/view/ABC123
+        
+        let pathComponents = url.pathComponents
+        
+        // Check if it's a view link
+        if pathComponents.count >= 2 {
+            // pathComponents = ["/", "view", "ABC123"]
             if let viewIndex = pathComponents.firstIndex(of: "view"),
                viewIndex + 1 < pathComponents.count {
-                shareId = pathComponents[viewIndex + 1]
-                print("   HTTPS URL detected, shareId from pathComponents: \(shareId ?? "none")")
+                let shareId = pathComponents[viewIndex + 1]
+                print("✅ Extracted share ID: \(shareId)")
+                sharedLayoutId = shareId
+                return
             }
         }
         
-        if shareId == nil,
-           let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+        // Also handle query parameters: ?share=ABC123
+        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let queryItems = components.queryItems,
            let shareParam = queryItems.first(where: { $0.name == "share" }),
-           let value = shareParam.value {
-            shareId = value
-            print("   Query parameter detected, shareId: \(shareId ?? "none")")
+           let shareId = shareParam.value {
+            print("✅ Extracted share ID from query: \(shareId)")
+            sharedLayoutId = shareId
+            return
         }
         
-        if let shareId = shareId, !shareId.isEmpty {
-            print("✅ Extracted share ID: \(shareId)")
-            DispatchQueue.main.async {
-                self.sharedLayoutId = shareId
-                print("✅ Set sharedLayoutId = \(shareId)")
-            }
-        } else {
-            print("⚠️ Could not parse share ID from URL")
-        }
+        print("⚠️ Could not parse share ID from URL")
     }
     
     private func debugBundleContents() {
@@ -165,9 +151,6 @@ struct SharedRoomView: View {
                     Text("Loading shared room...")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    Text("Share ID: \(shareId)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
                 }
             } else if let error = errorMessage {
                 VStack(spacing: 20) {
@@ -189,42 +172,20 @@ struct SharedRoomView: View {
             } else {
                 RoomView(isViewOnly: true)
                     .environmentObject(layoutManager)
-                    .overlay(
-                        // Close button in top-left
-                        VStack {
-                            HStack {
-                                Button(action: onDismiss) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.title)
-                                        .foregroundColor(.white)
-                                        .background(Circle().fill(Color.black.opacity(0.5)).padding(-8))
-                                }
-                                .padding()
-                                Spacer()
-                            }
-                            Spacer()
-                        }
-                    )
             }
         }
         .task {
             await loadSharedLayout()
         }
-        .onAppear {
-            print("📱 SharedRoomView appeared with shareId: \(shareId)")
-        }
     }
     
     private func loadSharedLayout() async {
-        print("🔄 Loading shared layout: \(shareId)")
         do {
             try await layoutManager.loadSharedLayout(shareId: shareId)
-            print("✅ Shared layout loaded successfully")
             await MainActor.run {
                 isLoading = false
             }
         } catch {
-            print("❌ Failed to load shared layout: \(error)")
             await MainActor.run {
                 errorMessage = error.localizedDescription
                 isLoading = false
