@@ -261,33 +261,38 @@ struct InspirationCard: View {
     let color: Color
     
     var body: some View {
-        VStack(alignment: .leading) {
-            
-            // Icon bubble
-            Circle()
-                .fill(color.opacity(0.1))
-                .frame(width: 40, height: 40)
-                .overlay(
+        Button(action: {
+            // Add action here later if needed (e.g. filter catalog)
+        }) {
+            VStack(alignment: .leading) {
+                // Icon bubble
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.2)) // Softer, more visible background
+                        .frame(width: 44, height: 44)
+                    
                     Image(systemName: icon)
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(color)
-                        .font(.system(size: 18))
-                )
-            
-            Spacer()
-            
-            // Title
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
+                }
+                
+                Spacer()
+                
+                // Title
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(.white) // Ensure text is visible
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8) // Shrink text slightly if it's too long
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading) // FORCE FULL WIDTH
+            .frame(height: 110) // Fixed uniform height
+            .background(Color(white: 0.12)) // Dark gray card background
+            .cornerRadius(16)
         }
-        .padding()
-        .frame(height: 100)
-        .background(Color(.systemBackground))
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(.systemGray5), lineWidth: 1)
-        )
+        .buttonStyle(.plain) // Removes the default button fade effect
     }
 }
 
