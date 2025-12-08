@@ -84,6 +84,7 @@ router.post("/login", async (req, res) => {
 });
 
 // POST /api/auth/forgot-password
+// POST /api/auth/forgot-password
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body || {};
@@ -109,7 +110,6 @@ router.post("/forgot-password", async (req, res) => {
     await user.save();
 
     // 4. Send Email via Gmail
-    // We define the transporter HERE so it loads the .env variables at request time
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
@@ -118,19 +118,25 @@ router.post("/forgot-password", async (req, res) => {
       },
     });
 
-    const resetLink = `homi://reset-password?token=${resetToken}`; 
-    
     const mailOptions = {
       from: `"Homi Support" <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: "Reset your Homi password",
       html: `
-        <h3>Password Reset Request</h3>
-        <p>You requested to reset your password. Use the token below or click the link if you have the app installed:</p>
-        <p><strong>Token: ${resetToken}</strong></p>
-        <p><a href="${resetLink}">Click here to open the app and reset password</a></p>
-        <p>This link expires in 1 hour.</p>
-        <p>If you did not request this, please ignore this email.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #4A90E2;">Password Reset Request</h2>
+          <p>You requested to reset your password for Homi.</p>
+          
+          <p><strong>Step 1:</strong> Copy the security token below:</p>
+          
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 8px; border: 1px solid #ddd; font-family: monospace; font-size: 16px; margin: 20px 0; word-break: break-all; color: #333;">
+            ${resetToken}
+          </div>
+          
+          <p><strong>Step 2:</strong> Open the Homi app, tap <b>"I have a token"</b> on the login screen, and paste the code above.</p>
+          
+          <p style="color: #666; font-size: 12px; margin-top: 30px;">This token expires in 1 hour. If you did not request this, please ignore this email.</p>
+        </div>
       `
     };
 
