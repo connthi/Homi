@@ -525,7 +525,7 @@ struct RoomView: View {
                 }
                 
                 let shareId = try await layoutManager.createShareLink(layoutId: layoutId)
-                let url = URL(string: "homi://view/\(shareId)")!
+                let url = URL(string: "https://homi.app/view/\(shareId)")!
                 
                 await MainActor.run {
                     // Copy to clipboard
@@ -917,654 +917,234 @@ struct RoomSceneView: UIViewRepresentable {
         private var firstPersonAngleX: Float = 0.0
         private var firstPersonAngleY: Float = 0.0
         
-        init(_ parent: RoomSceneView) {
-            self.parent = parent
+        init(_ parent: RoomSceneView) { self.parent = parent }
+        
+        // MARK: - Natural Lighting Setup (Dimmed)
+        func setupLighting(scene: SCNScene) {
+            scene.rootNode.childNodes.filter { $0.light != nil }.forEach { $0.removeFromParentNode() }
+            
+            // 1. Soft Ambient Light (The Foundation)
+            // Reduced to 300 so shadows are actually visible (soft gray)
+            let ambientLight = SCNLight()
+            ambientLight.type = .ambient
+            ambientLight.color = UIColor(white: 0.7, alpha: 1.0)
+            ambientLight.intensity = 300 
+            let ambientNode = SCNNode()
+            ambientNode.light = ambientLight
+            scene.rootNode.addChildNode(ambientNode)
+            
+            // 2. Central Room Light (Fill)
+            // Reduced to 500 to prevent washing out the floor
+            let omniLight = SCNLight()
+            omniLight.type = .omni
+            omniLight.intensity = 500
+            omniLight.color = UIColor(white: 0.95, alpha: 1.0)
+            let omniNode = SCNNode()
+            omniNode.light = omniLight
+            omniNode.position = SCNVector3(0, 2.5, 0)
+            scene.rootNode.addChildNode(omniNode)
+            
+            // 3. Sunlight (Key Light)
+            // Main source of brightness and shadows
+            let dirLight = SCNLight()
+            dirLight.type = .directional
+            dirLight.intensity = 900
+            dirLight.castsShadow = true
+            dirLight.shadowMode = .deferred
+            dirLight.shadowSampleCount = 4
+            dirLight.shadowBias = 10
+            
+            let dirNode = SCNNode()
+            dirNode.light = dirLight
+            dirNode.position = SCNVector3(5, 12, 5)
+            dirNode.look(at: SCNVector3(0, 0, 0))
+            scene.rootNode.addChildNode(dirNode)
         }
         
-        func setupRoom(scene: SCNScene) {
-            createRoomGeometry(scene: scene, config: parent.roomConfig, wallColor: parent.wallColor)
-        }
-        
-        private func makeWallMaterial(color: UIColor) -> SCNMaterial {
-            let m = SCNMaterial()
-            m.diffuse.contents = color
-            m.lightingModel = .phong
-            m.transparency = 1.0
-            m.transparencyMode = .aOne
-            m.isDoubleSided = true
-            m.writesToDepthBuffer = true
-            m.readsFromDepthBuffer = true
-            return m
-        }
-
-        func createRoomGeometry(scene: SCNScene, config: EditableRoom) {
-            createRoomGeometry(scene: scene, config: config, wallColor: parent.wallColor)
-        }
+        // MARK: - Geometry Setup
+        func setupRoom(scene: SCNScene) { createRoomGeometry(scene: scene, config: parent.roomConfig, wallColor: parent.wallColor) }
+        func createRoomGeometry(scene: SCNScene, config: EditableRoom) { createRoomGeometry(scene: scene, config: config, wallColor: parent.wallColor) }
         
         func createRoomGeometry(scene: SCNScene, config: EditableRoom, wallColor: UIColor) {
-            floorNode?.removeFromParentNode()
-            frontWallNode?.removeFromParentNode()
-            backWallNode?.removeFromParentNode()
-            leftWallNode?.removeFromParentNode()
-            rightWallNode?.removeFromParentNode()
+            floorNode?.removeFromParentNode(); frontWallNode?.removeFromParentNode(); backWallNode?.removeFromParentNode(); leftWallNode?.removeFromParentNode(); rightWallNode?.removeFromParentNode()
             
-            let roomWidth = CGFloat(config.width)
-            let roomLength = CGFloat(config.length)
-            let roomHeight = CGFloat(config.height)
+            let w = CGFloat(config.width); let l = CGFloat(config.length); let h = CGFloat(config.height)
             
-            // Floor
-            let floorGeometry = SCNBox(width: roomWidth, height: 0.1, length: roomLength, chamferRadius: 0)
-            let floorMaterial = SCNMaterial()
-            floorMaterial.diffuse.contents = UIColor(red: 0.9, green: 0.9, blue: 0.9, alpha: 1.0)
-            floorMaterial.lightingModel = .physicallyBased
-            floorMaterial.roughness.contents = 0.8
-            floorGeometry.materials = [floorMaterial]
-            
-            floorNode = SCNNode(geometry: floorGeometry)
-            floorNode?.position = SCNVector3(0, 0, 0)
-            floorNode?.name = "floor"
+            // FLOOR
+            let floorGeo = SCNBox(width: w, height: 0.1, length: l, chamferRadius: 0)
+            let floorMat = SCNMaterial()
+            floorMat.diffuse.contents = UIColor(white: 0.8, alpha: 1.0) // Slightly darker floor for contrast
+            floorMat.lightingModel = .phong
+            floorGeo.materials = [floorMat]
+            floorNode = SCNNode(geometry: floorGeo)
+            floorNode?.position = SCNVector3(0,0,0); floorNode?.name = "floor"
             scene.rootNode.addChildNode(floorNode!)
             
-            // Wall material with custom color
-            let wallMaterial = SCNMaterial()
-            wallMaterial.diffuse.contents = wallColor
-            wallMaterial.lightingModel = .physicallyBased
-            wallMaterial.roughness.contents = 0.9
-            wallMaterial.transparency = 1.0
-            wallMaterial.transparencyMode = .aOne
-            wallMaterial.isDoubleSided = true
-            wallMaterial.writesToDepthBuffer = true
-            wallMaterial.readsFromDepthBuffer = true
+            // WALL MATERIAL
+            let wallMat = SCNMaterial()
+            wallMat.diffuse.contents = wallColor
+            wallMat.lightingModel = .phong
             
-            // Front wall
-            let frontWall = SCNBox(width: roomWidth, height: roomHeight, length: 0.1, chamferRadius: 0)
-            frontWall.materials = [wallMaterial.copy() as! SCNMaterial]
-            frontWallNode = SCNNode(geometry: frontWall)
-            frontWallNode?.position = SCNVector3(0, roomHeight/2, roomLength/2)
-            frontWallNode?.name = "frontWall"
-            scene.rootNode.addChildNode(frontWallNode!)
+            // Very Low Emission: Just enough so it's not black, but not "glowing"
+            wallMat.emission.contents = wallColor
+            wallMat.emission.intensity = 0.05 
             
-            // Back wall
-            let backWall = SCNBox(width: roomWidth, height: roomHeight, length: 0.1, chamferRadius: 0)
-            backWall.materials = [wallMaterial.copy() as! SCNMaterial]
-            backWallNode = SCNNode(geometry: backWall)
-            backWallNode?.position = SCNVector3(0, roomHeight/2, -roomLength/2)
-            backWallNode?.name = "backWall"
-            scene.rootNode.addChildNode(backWallNode!)
+            wallMat.isDoubleSided = true
+            wallMat.transparencyMode = .aOne
+            wallMat.writesToDepthBuffer = true
             
-            // Left wall
-            let leftWall = SCNBox(width: 0.1, height: roomHeight, length: roomLength, chamferRadius: 0)
-            leftWall.materials = [wallMaterial.copy() as! SCNMaterial]
-            leftWallNode = SCNNode(geometry: leftWall)
-            leftWallNode?.position = SCNVector3(-roomWidth/2, roomHeight/2, 0)
-            leftWallNode?.name = "leftWall"
-            scene.rootNode.addChildNode(leftWallNode!)
+            // WALLS (castsShadow = false allows sun to enter)
+            frontWallNode = createWallNode(w: w, h: h, l: 0.1, pos: SCNVector3(0, h/2, l/2), mat: wallMat, name: "frontWall")
+            frontWallNode?.castsShadow = false
             
-            // Right wall
-            let rightWall = SCNBox(width: 0.1, height: roomHeight, length: roomLength, chamferRadius: 0)
-            rightWall.materials = [wallMaterial.copy() as! SCNMaterial]
-            rightWallNode = SCNNode(geometry: rightWall)
-            rightWallNode?.position = SCNVector3(roomWidth/2, roomHeight/2, 0)
-            rightWallNode?.name = "rightWall"
-            scene.rootNode.addChildNode(rightWallNode!)
+            backWallNode = createWallNode(w: w, h: h, l: 0.1, pos: SCNVector3(0, h/2, -l/2), mat: wallMat, name: "backWall")
+            backWallNode?.castsShadow = false
+            
+            leftWallNode = createWallNode(w: 0.1, h: h, l: l, pos: SCNVector3(-w/2, h/2, 0), mat: wallMat, name: "leftWall")
+            leftWallNode?.castsShadow = false
+            
+            rightWallNode = createWallNode(w: 0.1, h: h, l: l, pos: SCNVector3(w/2, h/2, 0), mat: wallMat, name: "rightWall")
+            rightWallNode?.castsShadow = false
+            
+            scene.rootNode.addChildNode(frontWallNode!); scene.rootNode.addChildNode(backWallNode!)
+            scene.rootNode.addChildNode(leftWallNode!); scene.rootNode.addChildNode(rightWallNode!)
         }
         
-        func updateRoomSize(scene: SCNScene, config: EditableRoom) {
-            SCNTransaction.begin()
-            SCNTransaction.animationDuration = 0.3
-            
-            let roomWidth = CGFloat(config.width)
-            let roomLength = CGFloat(config.length)
-            let roomHeight = CGFloat(config.height)
-            
-            if let floor = floorNode, let geometry = floor.geometry as? SCNBox {
-                geometry.width = roomWidth
-                geometry.length = roomLength
-            }
-            
-            if let frontWall = frontWallNode, let geometry = frontWall.geometry as? SCNBox {
-                geometry.width = roomWidth
-                geometry.height = roomHeight
-                frontWall.position = SCNVector3(0, roomHeight/2, roomLength/2)
-            }
-            
-            if let backWall = backWallNode, let geometry = backWall.geometry as? SCNBox {
-                geometry.width = roomWidth
-                geometry.height = roomHeight
-                backWall.position = SCNVector3(0, roomHeight/2, -roomLength/2)
-            }
-            
-            if let leftWall = leftWallNode, let geometry = leftWall.geometry as? SCNBox {
-                geometry.height = roomHeight
-                geometry.length = roomLength
-                leftWall.position = SCNVector3(-roomWidth/2, roomHeight/2, 0)
-            }
-            
-            if let rightWall = rightWallNode, let geometry = rightWall.geometry as? SCNBox {
-                geometry.height = roomHeight
-                geometry.length = roomLength
-                rightWall.position = SCNVector3(roomWidth/2, roomHeight/2, 0)
-            }
-            
-            SCNTransaction.commit()
+        private func createWallNode(w: CGFloat, h: CGFloat, l: CGFloat, pos: SCNVector3, mat: SCNMaterial, name: String) -> SCNNode {
+            let geo = SCNBox(width: w, height: h, length: l, chamferRadius: 0)
+            geo.materials = [mat.copy() as! SCNMaterial]
+            let node = SCNNode(geometry: geo)
+            node.position = pos; node.name = name
+            return node
         }
         
         func updateWallColor(scene: SCNScene, color: UIColor) {
             SCNTransaction.begin()
             SCNTransaction.animationDuration = 0.3
-            
-            let walls: [SCNNode?] = [frontWallNode, backWallNode, leftWallNode, rightWallNode]
-            
+            let walls = [frontWallNode, backWallNode, leftWallNode, rightWallNode]
             for wall in walls {
-                guard let wall = wall, let geometry = wall.geometry else { continue }
-                
-                // Update all materials on this wall
-                for material in geometry.materials {
-                    material.diffuse.contents = color
-                }
+                guard let mat = wall?.geometry?.materials.first else { continue }
+                mat.diffuse.contents = color
+                mat.emission.contents = color
             }
-            
             SCNTransaction.commit()
         }
         
-        func updateWallTransparency(scene: SCNScene) {
-            // 1. Normalize Angle (0-360)
-            var angle = Int(cameraAngleY) % 360
-            if angle < 0 { angle += 360 }
-            
-            // 2. Reset: Start with all walls visible
-            frontWallNode?.isHidden = false
-            backWallNode?.isHidden = false
-            leftWallNode?.isHidden = false
-            rightWallNode?.isHidden = false
-            
-            if isFirstPersonMode {
-                // In First Person, show everything (or add custom logic)
-                return
-            }
-            
-            // 3. Independent Checks (No 'else') with Overlap
-            // We use a +/- 60 degree buffer so that at corners (like 45°), 
-            // BOTH adjacent walls will be hidden.
-            
-            // Front Wall (0°): Hide if camera is between 300° and 60°
-            if angle > 300 || angle < 60 {
-                frontWallNode?.isHidden = true
-            }
-            
-            // Right Wall (90°): Hide if camera is between 30° and 150°
-            if angle > 30 && angle < 150 {
-                rightWallNode?.isHidden = true
-            }
-            
-            // Back Wall (180°): Hide if camera is between 120° and 240°
-            if angle > 120 && angle < 240 {
-                backWallNode?.isHidden = true
-            }
-            
-            // Left Wall (270°): Hide if camera is between 210° and 330°
-            if angle > 210 && angle < 330 {
-                leftWallNode?.isHidden = true
-            }
-        }
-
-        @inline(__always) func dot(_ a: SCNVector3, _ b: SCNVector3) -> Float {
-            a.x*b.x + a.y*b.y + a.z*b.z
-        }
-        @inline(__always) func length(_ v: SCNVector3) -> Float {
-            sqrtf(v.x*v.x + v.y*v.y + v.z*v.z)
-        }
+        func updateRoomSize(scene: SCNScene, config: EditableRoom) { createRoomGeometry(scene: scene, config: config, wallColor: parent.wallColor) }
         
         func setupCamera(scene: SCNScene) {
-            cameraPivot = SCNNode()
-            cameraPivot?.position = SCNVector3(0, 1.5, 0)
+            cameraPivot = SCNNode(); cameraPivot?.position = SCNVector3(0, 1.5, 0)
+            cameraOrbit = SCNNode(); cameraNode = SCNNode(); cameraNode?.camera = SCNCamera(); cameraNode?.camera?.zFar = 100; cameraNode?.camera?.fieldOfView = 60
             
-            cameraOrbit = SCNNode()
-            cameraNode = SCNNode()
-            cameraNode?.camera = SCNCamera()
-            cameraNode?.camera?.zFar = 100
-            cameraNode?.camera?.fieldOfView = 60
+            // Camera Flashlight (Fill light)
+            let camLight = SCNLight(); camLight.type = .omni; camLight.intensity = 200; camLight.color = UIColor(white: 0.8, alpha: 1.0); camLight.castsShadow = false
+            cameraNode?.light = camLight
             
-            scene.rootNode.addChildNode(cameraPivot!)
-            cameraPivot?.addChildNode(cameraOrbit!)
-            cameraOrbit?.addChildNode(cameraNode!)
+            scene.rootNode.addChildNode(cameraPivot!); cameraPivot?.addChildNode(cameraOrbit!); cameraOrbit?.addChildNode(cameraNode!)
             
-            firstPersonCamera = SCNNode()
-            firstPersonCamera?.camera = SCNCamera()
-            firstPersonCamera?.camera?.zFar = 100
-            firstPersonCamera?.camera?.fieldOfView = 70
-            firstPersonCamera?.position = SCNVector3(0, 1.6, 0)
+            firstPersonCamera = SCNNode(); firstPersonCamera?.camera = SCNCamera(); firstPersonCamera?.position = SCNVector3(0, 1.6, 0)
             scene.rootNode.addChildNode(firstPersonCamera!)
-            
-            updateCameraPosition()
-            sceneView?.pointOfView = cameraNode
+            updateCameraPosition(); sceneView?.pointOfView = cameraNode
         }
         
-        func switchToFirstPersonView() {
-            firstPersonAngleX = 0.0
-            firstPersonAngleY = 0.0
-            firstPersonCamera?.position = SCNVector3(0, 1.6, 0)
-            firstPersonCamera?.eulerAngles = SCNVector3(0, 0, 0)
-            sceneView?.pointOfView = firstPersonCamera
-        }
-        
-        func switchToOrbitView() {
-            updateCameraPosition()
-            sceneView?.pointOfView = cameraNode
-            if let scene = sceneView?.scene { updateWallTransparency(scene: scene) }
+        func updateWallTransparency(scene: SCNScene) {
+            var angle = Int(cameraAngleY) % 360; if angle < 0 { angle += 360 }
+            frontWallNode?.isHidden = false; backWallNode?.isHidden = false; leftWallNode?.isHidden = false; rightWallNode?.isHidden = false
+            if isFirstPersonMode { return }
+            if angle > 300 || angle < 60 { frontWallNode?.isHidden = true }
+            if angle > 30 && angle < 150 { rightWallNode?.isHidden = true }
+            if angle > 120 && angle < 240 { backWallNode?.isHidden = true }
+            if angle > 210 && angle < 330 { leftWallNode?.isHidden = true }
         }
         
         func updateCameraPosition() {
             cameraNode?.position = SCNVector3(0, 0, cameraDistance)
-            cameraOrbit?.eulerAngles = SCNVector3(
-                cameraAngleX * .pi / 180.0,
-                cameraAngleY * .pi / 180.0,
-                0
-            )
+            cameraOrbit?.eulerAngles = SCNVector3(cameraAngleX * .pi / 180.0, cameraAngleY * .pi / 180.0, 0)
         }
         
-        func setupLighting(scene: SCNScene) {
-            let ambientLight = SCNLight()
-            ambientLight.type = .ambient
-            ambientLight.color = UIColor(white: 0.6, alpha: 1.0)
-            ambientLight.intensity = 800
-            let ambientNode = SCNNode()
-            ambientNode.light = ambientLight
-            scene.rootNode.addChildNode(ambientNode)
-            
-            let mainLight = SCNLight()
-            mainLight.type = .directional
-            mainLight.intensity = 1500
-            mainLight.castsShadow = true
-            mainLight.shadowMode = .deferred
-            let mainLightNode = SCNNode()
-            mainLightNode.light = mainLight
-            mainLightNode.position = SCNVector3(5, 10, 5)
-            mainLightNode.look(at: SCNVector3(0, 0, 0))
-            scene.rootNode.addChildNode(mainLightNode)
-        }
+        func switchToFirstPersonView() { firstPersonAngleX = 0; firstPersonAngleY = 0; firstPersonCamera?.eulerAngles = SCNVector3Zero; sceneView?.pointOfView = firstPersonCamera }
+        func switchToOrbitView() { updateCameraPosition(); sceneView?.pointOfView = cameraNode; if let s = sceneView?.scene { updateWallTransparency(scene: s) } }
         
         func updateFurnitureNodes(scene: SCNScene, nodes: [FurnitureNode]) {
-            let existingFurniture = scene.rootNode.childNodes.compactMap { $0 as? FurnitureNode }
-            
-            // Add new furniture nodes
-            for node in nodes where !existingFurniture.contains(where: { $0.furnitureItem.id == node.furnitureItem.id }) {
-                // Force the node to setup its geometry immediately
-                node.setupGeometryIfNeeded()
-                scene.rootNode.addChildNode(node)
-            }
-            
-            // Remove deleted furniture nodes
-            for old in existingFurniture where !nodes.contains(where: { $0.furnitureItem.id == old.furnitureItem.id }) {
-                old.removeFromParentNode()
-            }
+            let existing = scene.rootNode.childNodes.compactMap { $0 as? FurnitureNode }
+            for node in nodes where !existing.contains(where: { $0.furnitureItem.id == node.furnitureItem.id }) { node.setupGeometryIfNeeded(); scene.rootNode.addChildNode(node) }
+            for old in existing where !nodes.contains(where: { $0.furnitureItem.id == old.furnitureItem.id }) { old.removeFromParentNode() }
         }
         
         func setupGestures(sceneView: SCNView) {
             let tap = UITapGestureRecognizer(target: self, action: #selector(handleTap(_:)))
-            sceneView.addGestureRecognizer(tap)
-            
             let pan = UIPanGestureRecognizer(target: self, action: #selector(handlePan(_:)))
-            pan.minimumNumberOfTouches = 1
-            pan.maximumNumberOfTouches = 1
-            sceneView.addGestureRecognizer(pan)
-            
             let twoPan = UIPanGestureRecognizer(target: self, action: #selector(handleTwoFingerPan(_:)))
             twoPan.minimumNumberOfTouches = 2
-            sceneView.addGestureRecognizer(twoPan)
-            
             let pinch = UIPinchGestureRecognizer(target: self, action: #selector(handlePinch(_:)))
-            sceneView.addGestureRecognizer(pinch)
+            sceneView.addGestureRecognizer(tap); sceneView.addGestureRecognizer(pan); sceneView.addGestureRecognizer(twoPan); sceneView.addGestureRecognizer(pinch)
         }
         
-        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
-            guard let sceneView = gesture.view as? SCNView else { return }
-            let location = gesture.location(in: sceneView)
-            let hitResults = sceneView.hitTest(location, options: [:])
-            
-            if let previousSelection = parent.selectedNode {
-                removeSelectionHighlight(from: previousSelection)
-                removeDimensionLabel(from: previousSelection)
-            }
-            
-            if let hit = hitResults.first {
-                var currentNode = hit.node
-                var furnitureNode: FurnitureNode?
-                
-                while currentNode.parent != nil {
-                    if let furniture = currentNode as? FurnitureNode {
-                        furnitureNode = furniture
-                        break
-                    }
-                    if let furniture = currentNode.parent as? FurnitureNode {
-                        furnitureNode = furniture
-                        break
-                    }
-                    currentNode = currentNode.parent!
-                }
-                
-                if let furniture = furnitureNode {
-                    parent.selectedNode = furniture
-                    addSelectionHighlight(to: furniture)
-                    addDimensionLabel(to: furniture)
-                } else {
-                    parent.selectedNode = nil
-                }
-            } else {
-                parent.selectedNode = nil
-            }
+        @objc func handleTap(_ g: UITapGestureRecognizer) {
+            guard let v = g.view as? SCNView else { return }
+            let hit = v.hitTest(g.location(in: v)).first; var node = hit?.node
+            while node != nil && !(node is FurnitureNode) { node = node?.parent }
+            parent.selectedNode = node as? FurnitureNode
         }
         
-        private func addSelectionHighlight(to node: FurnitureNode) {
-            node.enumerateChildNodes { (child, _) in
-                if let geometry = child.geometry {
-                    let originalMaterials = geometry.materials
-                    child.setValue(originalMaterials, forKey: "originalMaterials")
-                    
-                    let highlightedMaterials = originalMaterials.map { material -> SCNMaterial in
-                        let newMaterial = material.copy() as! SCNMaterial
-                        newMaterial.emission.contents = UIColor.systemBlue.withAlphaComponent(0.3)
-                        return newMaterial
-                    }
-                    geometry.materials = highlightedMaterials
+        @objc func handlePan(_ g: UIPanGestureRecognizer) {
+            let t = g.translation(in: g.view)
+            if isEditing, let sel = parent.selectedNode, let scene = sceneView?.scene {
+                let scale: Float = 0.01
+                if editMode == .move {
+                    let newPos = SCNVector3(sel.position.x + Float(t.x)*scale, sel.position.y, sel.position.z - Float(t.y)*scale)
+                    let clamped = applyCollisionDetection(position: newPos, furniture: sel, scene: scene)
+                    sel.position = clamped; if g.state == .ended { parent.onFurnitureMoved(sel.furnitureItem, clamped) }
+                } else if editMode == .rotate {
+                    sel.eulerAngles.y -= Float(t.x) * scale; if g.state == .ended { parent.onFurnitureRotated(sel.furnitureItem, sel.eulerAngles) }
+                } else if editMode == .scale {
+                    let s = max(0.5, min(3.0, sel.scale.x - Float(t.y)*scale))
+                    sel.scale = SCNVector3(s,s,s); if g.state == .ended { parent.onFurnitureScaled(sel.furnitureItem, sel.scale) }
                 }
-            }
-        }
-        
-        private func removeSelectionHighlight(from node: FurnitureNode) {
-            node.enumerateChildNodes { (child, _) in
-                if let originalMaterials = child.value(forKey: "originalMaterials") as? [SCNMaterial],
-                   let geometry = child.geometry {
-                    geometry.materials = originalMaterials
-                }
-            }
-        }
-        
-        @objc func handlePan(_ gesture: UIPanGestureRecognizer) {
-            let translation = gesture.translation(in: gesture.view)
-            
-            // CASE 1: Editing Furniture (Move / Rotate / Scale)
-            if isEditing && parent.selectedNode != nil {
-                if parent.isViewOnly {
-                    // In view-only mode, editing gestures do nothing
-                    gesture.setTranslation(.zero, in: gesture.view)
-                    return
-                }
-
-                guard let selected = parent.selectedNode,
-                    let scene = sceneView?.scene else { return }
-
-                switch editMode {
-                case .move:
-                    let moveSpeed: Float = 0.01
-                    // Calculate new position based on drag
-                    let newPosition = SCNVector3(
-                        selected.position.x + Float(translation.x) * moveSpeed,
-                        selected.position.y,
-                        selected.position.z - Float(translation.y) * moveSpeed
-                    )
-                    
-                    // Apply collision logic to keep it inside walls
-                    let clampedPosition = applyCollisionDetection(position: newPosition, furniture: selected, scene: scene)
-                    selected.position = clampedPosition
-                    
-                    if gesture.state == .ended {
-                        parent.onFurnitureMoved(selected.furnitureItem, clampedPosition)
-                    }
-                    
-                case .rotate:
-                    let rotationSpeed: Float = 0.01
-                    let newRotation = SCNVector3(
-                        selected.eulerAngles.x,
-                        selected.eulerAngles.y - Float(translation.x) * rotationSpeed,
-                        selected.eulerAngles.z
-                    )
-                    selected.eulerAngles = newRotation
-                    
-                    if gesture.state == .ended {
-                        parent.onFurnitureRotated(selected.furnitureItem, newRotation)
-                    }
-                    
-                case .scale:
-                    let scaleSpeed: Float = 0.01
-                    // Dragging UP scales up, DOWN scales down
-                    let scaleDelta = 1.0 + Float(-translation.y) * scaleSpeed
-                    let newScale = SCNVector3(
-                        selected.scale.x * scaleDelta,
-                        selected.scale.y * scaleDelta,
-                        selected.scale.z * scaleDelta
-                    )
-                    // Clamp scale between 0.5x and 3.0x
-                    let clampedScale = SCNVector3(
-                        max(0.5, min(3.0, newScale.x)),
-                        max(0.5, min(3.0, newScale.y)),
-                        max(0.5, min(3.0, newScale.z))
-                    )
-                    selected.scale = clampedScale
-                    
-                    addDimensionLabel(to: selected)
-
-                    if gesture.state == .ended {
-                        parent.onFurnitureScaled(selected.furnitureItem, clampedScale)
-                    }
-                }
-                
-                gesture.setTranslation(.zero, in: gesture.view)
-                
-            // CASE 2: First Person Camera Look
+                g.setTranslation(.zero, in: g.view)
             } else if isFirstPersonMode {
-                firstPersonAngleY -= Float(translation.x) * 0.005
-                firstPersonAngleX -= Float(translation.y) * 0.005
-                // Limit looking up/down so you don't flip over
-                firstPersonAngleX = max(-1.5, min(1.5, firstPersonAngleX))
-                
-                firstPersonCamera?.eulerAngles = SCNVector3(firstPersonAngleX, firstPersonAngleY, 0)
-                
-                gesture.setTranslation(.zero, in: gesture.view)
-                
-                // Update walls (optional in FP mode, but good for consistency)
-                if let scene = sceneView?.scene {
-                    updateWallTransparency(scene: scene)
-                }
-                
-            // CASE 3: Orbit Camera (Standard View)
+                firstPersonAngleY -= Float(t.x) * 0.005; firstPersonAngleX -= Float(t.y) * 0.005
+                firstPersonCamera?.eulerAngles = SCNVector3(firstPersonAngleX, firstPersonAngleY, 0); g.setTranslation(.zero, in: g.view)
             } else {
-                // Rotate Camera around the room center
-                cameraAngleY -= Float(translation.x) * 0.5
-                cameraAngleX -= Float(translation.y) * 0.5
-                
-                // Clamp vertical angle so you can't go under the floor
-                cameraAngleX = max(-89, min(-5, cameraAngleX))
-                
-                updateCameraPosition()
-                gesture.setTranslation(.zero, in: gesture.view)
-                
-                // CRITICAL: Update wall visibility immediately while rotating
-                if let scene = sceneView?.scene {
-                    updateWallTransparency(scene: scene)
-                }
+                cameraAngleY -= Float(t.x) * 0.5; cameraAngleX -= Float(t.y) * 0.5; updateCameraPosition(); g.setTranslation(.zero, in: g.view)
+                if let s = sceneView?.scene { updateWallTransparency(scene: s) }
             }
         }
         
         private func applyCollisionDetection(position: SCNVector3, furniture: FurnitureNode, scene: SCNScene) -> SCNVector3 {
-            let config = parent.roomConfig
-            let roomWidth = config.width
-            let roomLength = config.length
-            
-            let furnitureWidth = Float(furniture.catalogItem?.defaultDimensions.width ?? 1.0) / 2.0
-            let furnitureDepth = Float(furniture.catalogItem?.defaultDimensions.depth ?? 1.0) / 2.0
-            
-            var clampedPosition = position
-            
-            let wallPadding: Float = 0.05
-            let minX = -roomWidth / 2.0 + furnitureWidth + wallPadding
-            let maxX = roomWidth / 2.0 - furnitureWidth - wallPadding
-            clampedPosition.x = max(minX, min(maxX, position.x))
-            
-            let minZ = -roomLength / 2.0 + furnitureDepth + wallPadding
-            let maxZ = roomLength / 2.0 - furnitureDepth - wallPadding
-            clampedPosition.z = max(minZ, min(maxZ, position.z))
-            clampedPosition.y = 0
-            
-            let allFurniture = scene.rootNode.childNodes.compactMap { $0 as? FurnitureNode }.filter { $0 !== furniture }
-            
-            for otherFurniture in allFurniture {
-                let otherWidth = Float(otherFurniture.catalogItem?.defaultDimensions.width ?? 1.0) / 2.0
-                let otherDepth = Float(otherFurniture.catalogItem?.defaultDimensions.depth ?? 1.0) / 2.0
-                
-                let thisMinX = clampedPosition.x - furnitureWidth
-                let thisMaxX = clampedPosition.x + furnitureWidth
-                let thisMinZ = clampedPosition.z - furnitureDepth
-                let thisMaxZ = clampedPosition.z + furnitureDepth
-                
-                let otherMinX = otherFurniture.position.x - otherWidth
-                let otherMaxX = otherFurniture.position.x + otherWidth
-                let otherMinZ = otherFurniture.position.z - otherDepth
-                let otherMaxZ = otherFurniture.position.z + otherDepth
-                
-                if thisMaxX > otherMinX && thisMinX < otherMaxX &&
-                   thisMaxZ > otherMinZ && thisMinZ < otherMaxZ {
-                    
-                    let overlapX = min(thisMaxX - otherMinX, otherMaxX - thisMinX)
-                    let overlapZ = min(thisMaxZ - otherMinZ, otherMaxZ - thisMinZ)
-                    
-                    if overlapX < overlapZ {
-                        if clampedPosition.x > otherFurniture.position.x {
-                            clampedPosition.x = otherMaxX + furnitureWidth + 0.05
-                        } else {
-                            clampedPosition.x = otherMinX - furnitureWidth - 0.05
-                        }
-                    } else {
-                        if clampedPosition.z > otherFurniture.position.z {
-                            clampedPosition.z = otherMaxZ + furnitureDepth + 0.05
-                        } else {
-                            clampedPosition.z = otherMinZ - furnitureDepth - 0.05
-                        }
-                    }
-                    
-                    clampedPosition.x = max(minX, min(maxX, clampedPosition.x))
-                    clampedPosition.z = max(minZ, min(maxZ, clampedPosition.z))
-                }
-            }
-            
-            return clampedPosition
+            let config = parent.roomConfig; let w = config.width; let l = config.length
+            let fw = Float(furniture.catalogItem?.defaultDimensions.width ?? 1.0) / 2.0
+            let fd = Float(furniture.catalogItem?.defaultDimensions.depth ?? 1.0) / 2.0
+            var pos = position
+            pos.x = max(-w/2 + fw + 0.05, min(w/2 - fw - 0.05, pos.x))
+            pos.z = max(-l/2 + fd + 0.05, min(l/2 - fd - 0.05, pos.z))
+            pos.y = 0; return pos
         }
         
-        @objc func handleTwoFingerPan(_ gesture: UIPanGestureRecognizer) {
+        @objc func handleTwoFingerPan(_ g: UIPanGestureRecognizer) {
             guard !isFirstPersonMode, let pivot = cameraPivot else { return }
-            let translation = gesture.translation(in: gesture.view)
-            pivot.position.x -= Float(translation.x) * 0.01
-            pivot.position.z += Float(translation.y) * 0.01
-            gesture.setTranslation(.zero, in: gesture.view)
-            
-            // Update wall transparency during camera pan
-            if let scene = sceneView?.scene {
-                updateWallTransparency(scene: scene)
-            }
+            let t = g.translation(in: g.view); pivot.position.x -= Float(t.x) * 0.01; pivot.position.z += Float(t.y) * 0.01; g.setTranslation(.zero, in: g.view)
+            if let s = sceneView?.scene { updateWallTransparency(scene: s) }
         }
         
-        @objc func handlePinch(_ gesture: UIPinchGestureRecognizer) {
-            if isEditing && parent.selectedNode != nil && editMode == .scale {
-                if parent.isViewOnly {
-                    gesture.scale = 1.0
-                    return
-                }
-                
-                guard let selected = parent.selectedNode else { return }
-                let scale = Float(gesture.scale)
-                let newScale = SCNVector3(
-                    selected.scale.x * scale,
-                    selected.scale.y * scale,
-                    selected.scale.z * scale
-                )
-                let clampedScale = SCNVector3(
-                    max(0.5, min(3.0, newScale.x)),
-                    max(0.5, min(3.0, newScale.y)),
-                    max(0.5, min(3.0, newScale.z))
-                )
-                selected.scale = clampedScale
-
-                addDimensionLabel(to: selected)
-                
-                if gesture.state == .ended {
-                    parent.onFurnitureScaled(selected.furnitureItem, clampedScale)
-                }
-            } else if !isFirstPersonMode {
-                cameraDistance /= Float(gesture.scale)
-                cameraDistance = max(5.0, min(25.0, cameraDistance))
-                updateCameraPosition()
-                
-                if let scene = sceneView?.scene {
-                    updateWallTransparency(scene: scene)
-                }
-            }
-            gesture.scale = 1.0
+        @objc func handlePinch(_ g: UIPinchGestureRecognizer) {
+            if !isFirstPersonMode { cameraDistance /= Float(g.scale); updateCameraPosition(); g.scale = 1.0 }
         }
         
         func addDimensionLabel(to furniture: FurnitureNode) {
-            // Remove any existing label first
             removeDimensionLabel(from: furniture)
-            
-            // Get bounding box dimensions
-            let (min, max) = furniture.boundingBox
-            let width = (max.x - min.x) * furniture.scale.x
-            let height = (max.y - min.y) * furniture.scale.y
-            let depth = (max.z - min.z) * furniture.scale.z
-            
-            // Create dimension text
-            let dimensionText = String(format: "%.2fm × %.2fm × %.2fm", width, height, depth)
-            let textGeometry = SCNText(string: dimensionText, extrusionDepth: 0.01)
-            
-            // Style the text
-            if let font = UIFont(name: "Helvetica-Bold", size: 18) {
-                textGeometry.font = font
-            }
-            textGeometry.flatness = 0.1
-            
-            let textMaterial = SCNMaterial()
-            textMaterial.diffuse.contents = UIColor.black
-            textMaterial.specular.contents = UIColor.black
-            
-            let outlineMaterial = SCNMaterial()
-            outlineMaterial.diffuse.contents = UIColor.black.withAlphaComponent(0.8)
-            
-            textGeometry.materials = [textMaterial, outlineMaterial]
-            
-            // Create text node
-            let textNode = SCNNode(geometry: textGeometry)
-            textNode.name = dimensionLabelName
-            
-            // Scale down the text
-            textNode.scale = SCNVector3(0.004, 0.004, 0.004)
-            
-            // Center the text horizontally
-            let textBounds = textGeometry.boundingBox
-            let textWidth = textBounds.max.x - textBounds.min.x
-            textNode.pivot = SCNMatrix4MakeTranslation(textWidth / 2, 0, 0)
-            
-            // Position above the furniture
-            textNode.position = SCNVector3(0, max.y * furniture.scale.y + 0.15, 0)
-            
-            // Make it face the camera (billboard constraint)
-            let billboardConstraint = SCNBillboardConstraint()
-            billboardConstraint.freeAxes = .Y
-            textNode.constraints = [billboardConstraint]
-            
-            // Add to furniture node
-            furniture.addChildNode(textNode)
+            let (min, max) = furniture.boundingBox; let w = (max.x - min.x) * furniture.scale.x; let h = (max.y - min.y) * furniture.scale.y; let d = (max.z - min.z) * furniture.scale.z
+            let text = SCNText(string: String(format: "%.2fm × %.2fm × %.2fm", w, h, d), extrusionDepth: 0.01)
+            text.font = UIFont(name: "Helvetica-Bold", size: 18); text.flatness = 0.1
+            text.materials = [SCNMaterial(), SCNMaterial()]; text.materials[0].diffuse.contents = UIColor.black; text.materials[1].diffuse.contents = UIColor.black.withAlphaComponent(0.8)
+            let node = SCNNode(geometry: text); node.name = dimensionLabelName; node.scale = SCNVector3(0.004, 0.004, 0.004)
+            let bounds = text.boundingBox; node.pivot = SCNMatrix4MakeTranslation((bounds.max.x - bounds.min.x)/2, 0, 0)
+            node.position = SCNVector3(0, max.y * furniture.scale.y + 0.15, 0)
+            let constraint = SCNBillboardConstraint(); constraint.freeAxes = .Y; node.constraints = [constraint]
+            furniture.addChildNode(node)
         }
 
-        /// Remove the dimension label from furniture
-        func removeDimensionLabel(from furniture: FurnitureNode) {
-            furniture.childNode(withName: dimensionLabelName, recursively: false)?.removeFromParentNode()
-        }
-
-        private func distance(_ a: SCNVector3, _ b: SCNVector3) -> Float {
-            let dx = a.x - b.x
-            let dy = a.y - b.y
-            let dz = a.z - b.z
-            return sqrt(dx*dx + dy*dy + dz*dz)
-        }
+        func removeDimensionLabel(from furniture: FurnitureNode) { furniture.childNode(withName: dimensionLabelName, recursively: false)?.removeFromParentNode() }
     }
 }
 
