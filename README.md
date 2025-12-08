@@ -69,8 +69,10 @@ Homi follows a **client-server model** optimized for modularity and performance.
 
 **Backend (Node.js + Express):**
 - Provides RESTful endpoints for:
-  - `/layouts` – Create, read, update, delete room layouts  
-  - `/catalog` – Retrieve furniture catalog data  
+  - `/api/auth` – User authentication (register, login, logout, refresh tokens, password reset)
+  - `/api/layouts` – Create, read, update, delete room layouts  
+  - `/api/catalog` – Retrieve furniture catalog data  
+  - `/api/share` – Create and manage shareable layout links
 - Interfaces with MongoDB for persistent storage  
 
 ## How to Report a Bug
